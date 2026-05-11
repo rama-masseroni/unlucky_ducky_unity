@@ -1,3 +1,6 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="UnluckyDucky.Player.Tests.csproj" />
+  <Project Path="LevelManagerTilemapTests.csproj" />
+  <Project Path="UnluckyDucky.Player.csproj" />
 </Solution>
