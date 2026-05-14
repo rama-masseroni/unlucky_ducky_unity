@@ -1,11 +1,13 @@
-using NUnit.Framework;
-using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "LevelDefinition", menuName = "Scriptable Objects/LevelDefinition")]
+[CreateAssetMenu(fileName = "LevelDefinition", menuName = "Unlucky Ducky/Levels/Level Definition")]
 public class LevelDefinition : ScriptableObject
 {
-    private const int MAX_LEVELS = 20;
-    private Vector2Int LEVEL_DIMENSION;
-    private List<PlaceableDefinition> itemsToUse;
+    [SerializeField] private string levelId;
+    [SerializeField] private string levelName;
+    [SerializeField] private PlaceableInventorySet placeableInventorySet;
+
+    public string LevelId => levelId;
+    public string LevelName => string.IsNullOrWhiteSpace(levelName) ? name : levelName;
+    public PlaceableInventorySet PlaceableInventorySet => placeableInventorySet;
 }

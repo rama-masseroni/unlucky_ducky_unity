@@ -1,21 +1,15 @@
-﻿using System;
 using UnityEngine;
-using UnityEngine.InputSystem.Controls;
 
-
-public interface PlaceableInterface
+[CreateAssetMenu(fileName = "PlaceableDefinition", menuName = "Unlucky Ducky/Placeables/Placeable Definition")]
+public class PlaceableDefinition : ScriptableObject
 {
-    string Name { get; set; }
-    int AvailableUnits { get; set; }
+    [SerializeField] private string id;
+    [SerializeField] private string displayName;
+    [SerializeField] private GameObject prefab;
+    [SerializeField] private Sprite icon;
 
-    string Rule { get; set; }
-
-
-
-}
-
-[CreateAssetMenu(fileName = "PlaceableDefinition", menuName = "Scriptable Objects/PlaceableDefinition")]
-public class PlaceableDefinition: ScriptableObject
-{
-
+    public string Id => id;
+    public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
+    public GameObject Prefab => prefab;
+    public Sprite Icon => icon;
 }
