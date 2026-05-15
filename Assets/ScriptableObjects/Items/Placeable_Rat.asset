@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7b7c5962ea1aaf49ba326b6a5d380d4, type: 3}
+  m_Name: Placeable_Rat
+  m_EditorClassIdentifier: 
+  id: rat
+  displayName: Rata
+  prefab: {fileID: 1000000000000000001, guid: 9300cf3113214dc995fc81545aeb84c2, type: 3}
+  icon: {fileID: -6201242072272981632, guid: 38d5122748bd7a842ab1774d3d79d24b, type: 3}

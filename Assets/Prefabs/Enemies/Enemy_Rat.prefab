@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1000000000000000005}
   - component: {fileID: 1000000000000000006}
   m_Layer: 0
-  m_Name: Player_Duck
+  m_Name: Enemy_Rat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,9 +82,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1510047523881541521, guid: 38d5122748bd7a842ab1774d3d79d24b, type: 3}
+  m_Sprite: {fileID: -612250569921914330, guid: 0c3c23a7c7e24914db84c5ce999ccfab, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -151,21 +151,21 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.0078049228}
+  m_Offset: {x: 0, y: 0.02}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.51, y: 0.47}
+    oldSize: {x: 0.32, y: 0.44}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.4, y: 0.3}
+  m_Size: {x: 0.32, y: 0.34}
   m_EdgeRadius: 0
 --- !u!114 &1000000000000000006
 MonoBehaviour:
@@ -176,17 +176,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1000000000000000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cce4d0c63cf84c8aa560459891132678, type: 3}
+  m_Script: {fileID: 11500000, guid: 7f3db9d87dcb4806993d3b7412acf6c4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnluckyDucky.Player::PlayerDuckController
+  m_EditorClassIdentifier: UnluckyDucky.Enemies::EnemyRatController
   walkSpeed: 2
   fallSpeed: 6
   slopeSpeedMultiplier: 0.5
-  initialDirection: 1
+  initialDirection: -1
   groundCheckDistance: 0.075
-  groundCheckOffset: {x: 0.21, y: -0.28}
+  groundCheckOffset: {x: 0.16, y: -0.28}
   groundTilemaps: []
   obstacleCheckDistance: 0.08
-  obstacleCheckOffset: {x: 0.24, y: -0.05}
-  obstacleCheckHeight: 0.24
+  obstacleCheckOffset: {x: 0.18, y: -0.04}
+  obstacleCheckHeight: 0.26
   obstacleTilemaps: []
+  killsPlayerOnContact: 1
