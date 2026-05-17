@@ -6,12 +6,13 @@ using UnityEngine.EventSystems;
 public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private PlaceableDefinition definition;
-    private PlaceableInventoryEntry inventoryEntry;
+    private PlaceableInventoryRuntimeEntry inventoryEntry;
     private BuildModePlacementController placementController;
     private int amount;
     private Image background;
     private Text amountText;
     private bool isDragging;
+    private bool interactionsAllowed = true;
 
     public UnityEvent<PlaceableInventorySlotView> Clicked { get; } = new UnityEvent<PlaceableInventorySlotView>();
 
@@ -20,7 +21,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     public static PlaceableInventorySlotView Create(
         Transform parent,
-        PlaceableInventoryEntry entry,
+        PlaceableInventoryRuntimeEntry entry,
         BuildModePlacementController placementController)
     {
         GameObject slotObject = new GameObject(entry.Definition.DisplayName, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -33,7 +34,8 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         button.interactable = entry.Amount > 0;
 
         LayoutElement layoutElement = slotObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 72f;
+        layoutElement.preferredHeight = 92f;
+        layoutElement.minHeight = 92f;
 
         PlaceableInventorySlotView slotView = slotObject.AddComponent<PlaceableInventorySlotView>();
         slotView.definition = entry.Definition;
@@ -99,15 +101,21 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
             : Color.white;
     }
 
+    public void SetInteractionAllowed(bool allowed)
+    {
+        interactionsAllowed = allowed;
+        RefreshAmount();
+    }
+
     private void Build()
     {
         HorizontalLayoutGroup layout = gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(8, 8, 6, 6);
-        layout.spacing = 8f;
-        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.padding = new RectOffset(10, 10, 8, 8);
+        layout.spacing = 10f;
+        layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlHeight = true;
-        layout.childControlWidth = false;
-        layout.childForceExpandHeight = false;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = true;
         layout.childForceExpandWidth = false;
 
         CreateIcon();
@@ -122,9 +130,11 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
     private bool CanStartDrag()
     {
         return amount > 0
+            && interactionsAllowed
             && definition != null
             && definition.Prefab != null
-            && placementController != null;
+            && placementController != null
+            && placementController.CanUseBuildMode();
     }
 
     private void CreateIcon()
@@ -138,8 +148,10 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         iconImage.color = definition.Icon != null ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
 
         LayoutElement layoutElement = iconObject.AddComponent<LayoutElement>();
-        layoutElement.preferredWidth = 42f;
-        layoutElement.preferredHeight = 42f;
+        layoutElement.minWidth = 68f;
+        layoutElement.preferredWidth = 68f;
+        layoutElement.preferredHeight = 68f;
+        layoutElement.flexibleWidth = 0f;
     }
 
     private void CreateTextBlock()
@@ -148,20 +160,23 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         textBlockObject.transform.SetParent(transform, false);
 
         VerticalLayoutGroup layout = textBlockObject.GetComponent<VerticalLayoutGroup>();
-        layout.spacing = 2f;
-        layout.childControlHeight = false;
+        layout.spacing = 4f;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlHeight = true;
         layout.childControlWidth = true;
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
 
         LayoutElement blockLayout = textBlockObject.AddComponent<LayoutElement>();
+        blockLayout.minWidth = 72f;
+        blockLayout.preferredWidth = 88f;
         blockLayout.flexibleWidth = 1f;
 
-        CreateText(textBlockObject.transform, definition.DisplayName, 12, FontStyle.Bold);
-        amountText = CreateText(textBlockObject.transform, amount.ToString(), 16, FontStyle.Normal);
+        CreateText(textBlockObject.transform, definition.DisplayName, 12, FontStyle.Bold, TextAnchor.LowerLeft);
+        amountText = CreateText(textBlockObject.transform, amount.ToString(), 18, FontStyle.Normal, TextAnchor.UpperLeft);
     }
 
-    private Text CreateText(Transform parent, string content, int fontSize, FontStyle fontStyle)
+    private Text CreateText(Transform parent, string content, int fontSize, FontStyle fontStyle, TextAnchor alignment)
     {
         GameObject textObject = new GameObject(content, typeof(RectTransform), typeof(Text));
         textObject.transform.SetParent(parent, false);
@@ -171,11 +186,14 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         text.font = GetBuiltInFont();
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
-        text.alignment = TextAnchor.MiddleLeft;
+        text.alignment = alignment;
         text.color = Color.black;
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        text.verticalOverflow = VerticalWrapMode.Truncate;
 
         LayoutElement layoutElement = textObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = fontSize + 6f;
+        layoutElement.preferredHeight = fontSize + 10f;
+        layoutElement.flexibleWidth = 1f;
 
         return text;
     }
@@ -191,7 +209,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
         if (button != null)
         {
-            button.interactable = amount > 0;
+            button.interactable = interactionsAllowed && amount > 0;
         }
     }
 

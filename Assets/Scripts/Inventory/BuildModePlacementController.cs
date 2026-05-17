@@ -7,6 +7,7 @@ public class BuildModePlacementController : MonoBehaviour
     [SerializeField] private Tilemap referenceTilemap;
     [SerializeField] private Tilemap[] blockedTilemaps;
     [SerializeField] private Transform placedObjectsRoot;
+    [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private Color validPreviewColor = new Color(1f, 1f, 1f, 0.65f);
     [SerializeField] private Color invalidPreviewColor = new Color(1f, 0.2f, 0.2f, 0.65f);
 
@@ -24,13 +25,18 @@ public class BuildModePlacementController : MonoBehaviour
 
     public void BeginDrag(PlaceableDefinition definition)
     {
+        if (!CanUseBuildMode())
+        {
+            return;
+        }
+
         activeDefinition = definition;
         CreatePreview();
     }
 
     public void UpdateDrag(Vector2 screenPosition)
     {
-        if (activeDefinition == null || referenceTilemap == null)
+        if (!CanUseBuildMode() || activeDefinition == null || referenceTilemap == null)
         {
             return;
         }
@@ -56,7 +62,7 @@ public class BuildModePlacementController : MonoBehaviour
     {
         bool placed = false;
 
-        if (activeDefinition != null && hasCurrentCell && currentCellIsValid)
+        if (CanUseBuildMode() && activeDefinition != null && hasCurrentCell && currentCellIsValid)
         {
             PlaceAt(currentCell);
             placed = true;
@@ -75,6 +81,11 @@ public class BuildModePlacementController : MonoBehaviour
         activeDefinition = null;
         hasCurrentCell = false;
         currentCellIsValid = false;
+    }
+
+    public bool CanUseBuildMode()
+    {
+        return gameStateManager == null || gameStateManager.CurrentPhase == LevelPhase.Planning;
     }
 
     private bool CanPlaceAt(Vector3Int cell)
@@ -185,6 +196,11 @@ public class BuildModePlacementController : MonoBehaviour
             }
 
             placedObjectsRoot = root.transform;
+        }
+
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.FindOrCreate();
         }
     }
 }

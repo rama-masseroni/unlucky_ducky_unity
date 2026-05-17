@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class BombExplosionAreaTests
 {
@@ -35,5 +36,36 @@ public class BombExplosionAreaTests
         Assert.IsTrue(containsBottomLeft);
         Assert.IsTrue(containsCenter);
         Assert.IsTrue(containsTopRight);
+    }
+
+    [Test]
+    public void BombController_WithoutDestructibleTilemapLayer_DoesNotDestroyArbitraryTilemaps()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        GameObject wallTilemapObject = new GameObject("Walls Tilemap", typeof(Tilemap), typeof(TilemapRenderer));
+        wallTilemapObject.transform.SetParent(gridObject.transform);
+        Tilemap wallTilemap = wallTilemapObject.GetComponent<Tilemap>();
+        Vector3Int cell = Vector3Int.zero;
+        wallTilemap.SetTile(cell, ScriptableObject.CreateInstance<Tile>());
+
+        GameObject bombObject = new GameObject("Bomb");
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+
+        try
+        {
+            MethodInfo explodeMethod = bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(explodeMethod);
+
+            explodeMethod.Invoke(bomb, null);
+
+            Assert.IsTrue(wallTilemap.HasTile(cell));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+        }
     }
 }

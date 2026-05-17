@@ -1,3 +1,4 @@
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -46,5 +47,22 @@ public class DuckMovementRulesTests
 
         Assert.AreEqual(2.6f, velocity.x, 0.001f);
         Assert.AreEqual(0f, velocity.y);
+    }
+
+    [Test]
+    public void GridWalkerController_WhenPlanning_DoesNotMove()
+    {
+        GameObject gameObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(GridWalkerController));
+        Rigidbody2D body = gameObject.GetComponent<Rigidbody2D>();
+        GridWalkerController controller = gameObject.GetComponent<GridWalkerController>();
+        body.linearVelocity = new Vector2(3f, 4f);
+
+        controller.OnLevelPhaseChanged(LevelPhase.Planning);
+        typeof(GridWalkerController)
+            .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(controller, null);
+
+        Assert.AreEqual(Vector2.zero, body.linearVelocity);
+        Object.DestroyImmediate(gameObject);
     }
 }

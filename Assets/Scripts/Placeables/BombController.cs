@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class BombController : MonoBehaviour, IBreakable
+public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
 {
     [SerializeField] private float explosionDelaySeconds = 3f;
     [SerializeField] private int explosionRadiusInCells = 1;
@@ -13,6 +13,11 @@ public class BombController : MonoBehaviour, IBreakable
     [SerializeField] private bool destroyBombAfterExplosion = true;
 
     private bool hasExploded;
+    private bool hasStartedCountdown;
+    private Coroutine explosionCoroutine;
+    private GameStateManager gameStateManager;
+
+    public bool HasStartedCountdown => hasStartedCountdown;
 
     private void Awake()
     {
@@ -21,7 +26,25 @@ public class BombController : MonoBehaviour, IBreakable
 
     private void OnEnable()
     {
-        StartCoroutine(ExplodeAfterDelay());
+        gameStateManager = GameStateManager.FindOrCreate();
+        gameStateManager.RegisterListener(this);
+    }
+
+    private void OnDisable()
+    {
+        if (explosionCoroutine != null)
+        {
+            StopCoroutine(explosionCoroutine);
+            explosionCoroutine = null;
+        }
+    }
+
+    public void OnLevelPhaseChanged(LevelPhase phase)
+    {
+        if (phase == LevelPhase.Execution)
+        {
+            StartExplosionCountdown();
+        }
     }
 
     public void Break()
@@ -33,6 +56,17 @@ public class BombController : MonoBehaviour, IBreakable
     {
         yield return new WaitForSeconds(explosionDelaySeconds);
         Explode();
+    }
+
+    private void StartExplosionCountdown()
+    {
+        if (hasExploded || hasStartedCountdown)
+        {
+            return;
+        }
+
+        hasStartedCountdown = true;
+        explosionCoroutine = StartCoroutine(ExplodeAfterDelay());
     }
 
     public void Explode()
@@ -135,11 +169,6 @@ public class BombController : MonoBehaviour, IBreakable
             {
                 destructibleTilemaps[i] = destructibleLayers[i].Tilemap;
             }
-        }
-
-        if (destructibleTilemaps == null || destructibleTilemaps.Length == 0)
-        {
-            destructibleTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
         }
 
         if (referenceTilemap == null)

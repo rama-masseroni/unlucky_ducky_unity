@@ -11,25 +11,63 @@ public class PlaceableInventoryPanel : MonoBehaviour
     [SerializeField] private Vector2 panelSize = new Vector2(180f, 360f);
     [SerializeField] private Vector2 panelOffset = new Vector2(-18f, 0f);
     [SerializeField] private BuildModePlacementController placementController;
+    [SerializeField] private GameStateManager gameStateManager;
+    [SerializeField] private StartExecutionButtonController startExecutionButton;
 
     private readonly List<PlaceableInventorySlotView> slotViews = new List<PlaceableInventorySlotView>();
     private PlaceableInventorySlotView selectedSlot;
+    private PlaceableInventoryRuntime runtimeInventory;
 
     public PlaceableDefinition SelectedDefinition => selectedSlot != null ? selectedSlot.Definition : null;
 
     private void Awake()
     {
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.FindOrCreate();
+        }
+
+        if (gameStateManager != null && inventorySet != null)
+        {
+            gameStateManager.SetFallbackInventorySet(inventorySet);
+        }
+
         EnsurePanelLayout();
 
         if (placementController == null)
         {
             placementController = FindFirstObjectByType<BuildModePlacementController>();
         }
+
+        if (startExecutionButton != null)
+        {
+            startExecutionButton.SetGameStateManager(gameStateManager);
+        }
+
     }
 
     private void Start()
     {
+        UseRuntimeInventory();
         Rebuild();
+    }
+
+    private void OnEnable()
+    {
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.FindOrCreate();
+        }
+
+        gameStateManager.PhaseChanged += HandlePhaseChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (gameStateManager != null)
+        {
+            gameStateManager.PhaseChanged -= HandlePhaseChanged;
+        }
     }
 
     public void SetInventorySet(PlaceableInventorySet newInventorySet)
@@ -47,16 +85,16 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
         ClearSlots();
 
-        if (inventorySet == null)
+        if (runtimeInventory == null)
         {
             return;
         }
 
-        IReadOnlyList<PlaceableInventoryEntry> entries = inventorySet.Entries;
+        IReadOnlyList<PlaceableInventoryRuntimeEntry> entries = runtimeInventory.Entries;
 
         for (int i = 0; i < entries.Count; i++)
         {
-            PlaceableInventoryEntry entry = entries[i];
+            PlaceableInventoryRuntimeEntry entry = entries[i];
 
             if (entry == null || entry.Definition == null)
             {
@@ -122,7 +160,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
         panelLayout.padding = new RectOffset(10, 10, 10, 10);
         panelLayout.spacing = 8f;
-        panelLayout.childControlHeight = false;
+        panelLayout.childControlHeight = true;
         panelLayout.childControlWidth = true;
         panelLayout.childForceExpandHeight = false;
         panelLayout.childForceExpandWidth = true;
@@ -131,6 +169,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         {
             CreateTitle(transform);
             slotsRoot = CreateSlotsRoot(transform);
+            startExecutionButton = CreateStartExecutionButton(transform);
         }
     }
 
@@ -170,8 +209,71 @@ public class PlaceableInventoryPanel : MonoBehaviour
         layout.childForceExpandWidth = true;
 
         LayoutElement layoutElement = slotsObject.AddComponent<LayoutElement>();
+        layoutElement.minHeight = 0f;
+        layoutElement.preferredHeight = 0f;
         layoutElement.flexibleHeight = 1f;
 
         return slotsObject.GetComponent<RectTransform>();
+    }
+
+    private StartExecutionButtonController CreateStartExecutionButton(Transform parent)
+    {
+        GameObject buttonObject = CreatePanelButton(parent, "StartExecutionButton", "PROBAR NIVEL");
+
+        StartExecutionButtonController controller = buttonObject.AddComponent<StartExecutionButtonController>();
+        controller.SetGameStateManager(gameStateManager);
+        return controller;
+    }
+
+    private GameObject CreatePanelButton(Transform parent, string objectName, string labelText)
+    {
+        GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.GetComponent<Image>();
+        image.color = Color.white;
+
+        LayoutElement layoutElement = buttonObject.AddComponent<LayoutElement>();
+        layoutElement.preferredHeight = 40f;
+
+        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
+        labelObject.transform.SetParent(buttonObject.transform, false);
+
+        RectTransform labelTransform = labelObject.GetComponent<RectTransform>();
+        labelTransform.anchorMin = Vector2.zero;
+        labelTransform.anchorMax = Vector2.one;
+        labelTransform.offsetMin = Vector2.zero;
+        labelTransform.offsetMax = Vector2.zero;
+
+        Text label = labelObject.GetComponent<Text>();
+        label.text = labelText;
+        label.font = GetBuiltInFont();
+        label.fontSize = 12;
+        label.fontStyle = FontStyle.Bold;
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.black;
+
+        return buttonObject;
+    }
+
+    private void UseRuntimeInventory()
+    {
+        if (gameStateManager != null && gameStateManager.Inventory != null)
+        {
+            runtimeInventory = gameStateManager.Inventory;
+            return;
+        }
+
+        runtimeInventory = new PlaceableInventoryRuntime(inventorySet);
+    }
+
+    private void HandlePhaseChanged(LevelPhase phase)
+    {
+        bool planning = phase == LevelPhase.Planning;
+
+        for (int i = 0; i < slotViews.Count; i++)
+        {
+            slotViews[i].SetInteractionAllowed(planning);
+        }
     }
 }

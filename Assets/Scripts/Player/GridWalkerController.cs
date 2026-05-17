@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class GridWalkerController : MonoBehaviour
+public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
 {
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 1f;
@@ -23,6 +23,7 @@ public class GridWalkerController : MonoBehaviour
 
     private Rigidbody2D body;
     private int horizontalDirection;
+    private bool canMove;
 
     public float WalkSpeed
     {
@@ -40,6 +41,7 @@ public class GridWalkerController : MonoBehaviour
         body.gravityScale = 0f;
         body.freezeRotation = true;
         horizontalDirection = initialDirection >= 0 ? 1 : -1;
+        canMove = false;
 
         if (groundTilemaps == null || groundTilemaps.Length == 0)
         {
@@ -54,6 +56,16 @@ public class GridWalkerController : MonoBehaviour
 
     protected virtual void FixedUpdate()
     {
+        if (!canMove)
+        {
+            if (body != null)
+            {
+                body.linearVelocity = Vector2.zero;
+            }
+
+            return;
+        }
+
         GroundProbe groundProbe = ProbeGround();
         Vector2 velocity = DuckMovementRules.ResolveVelocity(
             groundProbe.HasGround,
@@ -76,6 +88,16 @@ public class GridWalkerController : MonoBehaviour
         }
 
         body.linearVelocity = velocity;
+    }
+
+    public void OnLevelPhaseChanged(LevelPhase phase)
+    {
+        canMove = phase == LevelPhase.Execution;
+
+        if (!canMove && body != null)
+        {
+            body.linearVelocity = Vector2.zero;
+        }
     }
 
     protected void StopMovement()
