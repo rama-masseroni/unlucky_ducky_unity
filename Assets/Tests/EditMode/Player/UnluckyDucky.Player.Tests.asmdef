@@ -2,6 +2,7 @@
     "name": "UnluckyDucky.Player.Tests",
     "rootNamespace": "",
     "references": [
+        "UnluckyDucky.Core",
         "UnluckyDucky.Player"
     ],
     "includePlatforms": [

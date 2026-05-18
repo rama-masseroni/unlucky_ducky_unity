@@ -182,7 +182,7 @@ MonoBehaviour:
   walkSpeed: 2
   fallSpeed: 6
   slopeSpeedMultiplier: 0.5
-  initialDirection: -1
+  initialDirection: 1
   groundCheckDistance: 0.075
   groundCheckOffset: {x: 0.16, y: -0.28}
   groundTilemaps: []

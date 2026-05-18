@@ -51,4 +51,28 @@ public class PlaceableInventoryRuntime
     {
         Changed?.Invoke();
     }
+
+    public PlaceableInventoryRuntimeEntry FindEntry(PlaceableDefinition definition)
+    {
+        if (definition == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].Definition == definition)
+            {
+                return entries[i];
+            }
+        }
+
+        return null;
+    }
+
+    public bool TryReturnOne(PlaceableDefinition definition)
+    {
+        PlaceableInventoryRuntimeEntry entry = FindEntry(definition);
+        return entry != null && entry.TryReturnOne();
+    }
 }

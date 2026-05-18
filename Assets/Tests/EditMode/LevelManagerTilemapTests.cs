@@ -68,13 +68,13 @@ public class LevelManagerTilemapTests
 
 public class LevelPhaseSystemTests
 {
-    private readonly Type placeableDefinitionType = Type.GetType("PlaceableDefinition, Assembly-CSharp");
-    private readonly Type inventoryEntryType = Type.GetType("PlaceableInventoryEntry, Assembly-CSharp");
-    private readonly Type inventorySetType = Type.GetType("PlaceableInventorySet, Assembly-CSharp");
-    private readonly Type runtimeInventoryType = Type.GetType("PlaceableInventoryRuntime, Assembly-CSharp");
-    private readonly Type gameStateManagerType = Type.GetType("GameStateManager, Assembly-CSharp");
+    private readonly Type placeableDefinitionType = Type.GetType("PlaceableDefinition, UnluckyDucky.Core");
+    private readonly Type inventoryEntryType = Type.GetType("PlaceableInventoryEntry, UnluckyDucky.Core");
+    private readonly Type inventorySetType = Type.GetType("PlaceableInventorySet, UnluckyDucky.Core");
+    private readonly Type runtimeInventoryType = Type.GetType("PlaceableInventoryRuntime, UnluckyDucky.Core");
+    private readonly Type gameStateManagerType = Type.GetType("GameStateManager, UnluckyDucky.Core");
     private readonly Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
-    private readonly Type levelDefinitionType = Type.GetType("LevelDefinition, Assembly-CSharp");
+    private readonly Type levelDefinitionType = Type.GetType("LevelDefinition, UnluckyDucky.Core");
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
@@ -125,6 +125,23 @@ public class LevelPhaseSystemTests
         Assert.IsTrue(consumed);
         Assert.IsTrue((bool)runtimeInventoryType.GetProperty("AllItemsUsed").GetValue(runtimeInventory));
         Assert.AreEqual(1, inventoryEntryType.GetProperty("Amount").GetValue(authoredEntry));
+    }
+
+    [Test]
+    public void RuntimeInventory_ReturnsConsumedItemsWithoutExceedingInitialAmount()
+    {
+        ScriptableObject inventorySet = CreateInventorySetWithOneItem(1, out _);
+        object runtimeInventory = Activator.CreateInstance(runtimeInventoryType, inventorySet);
+        object runtimeEntry = GetFirstRuntimeEntry(runtimeInventory);
+
+        Assert.IsFalse((bool)runtimeEntry.GetType().GetMethod("TryReturnOne").Invoke(runtimeEntry, null));
+        Assert.IsTrue((bool)runtimeEntry.GetType().GetMethod("TryConsumeOne").Invoke(runtimeEntry, null));
+        Assert.AreEqual(0, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
+
+        Assert.IsTrue((bool)runtimeEntry.GetType().GetMethod("TryReturnOne").Invoke(runtimeEntry, null));
+        Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
+        Assert.IsFalse((bool)runtimeEntry.GetType().GetMethod("TryReturnOne").Invoke(runtimeEntry, null));
+        Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
     }
 
     [Test]

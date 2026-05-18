@@ -2,6 +2,7 @@
     "name": "UnluckyDucky.Enemies",
     "rootNamespace": "",
     "references": [
+        "UnluckyDucky.Core",
         "UnluckyDucky.Player"
     ],
     "includePlatforms": [],

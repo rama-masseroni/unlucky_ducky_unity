@@ -2,6 +2,7 @@
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="UnluckyDucky.Player.csproj" />
   <Project Path="UnluckyDucky.Player.Tests.csproj" />
+  <Project Path="UnluckyDucky.Core.csproj" />
   <Project Path="LevelManagerTilemapTests.csproj" />
   <Project Path="UnluckyDucky.Enemies.csproj" />
 </Solution>

@@ -49,6 +49,16 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         return slotView;
     }
 
+    public void RefreshFromRuntimeEntry()
+    {
+        if (inventoryEntry != null)
+        {
+            amount = inventoryEntry.Amount;
+        }
+
+        RefreshAmount();
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!CanStartDrag())
@@ -84,8 +94,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
         if (placed && inventoryEntry.TryConsumeOne())
         {
-            amount = inventoryEntry.Amount;
-            RefreshAmount();
+            RefreshFromRuntimeEntry();
         }
     }
 
@@ -200,6 +209,11 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     private void RefreshAmount()
     {
+        if (inventoryEntry != null)
+        {
+            amount = inventoryEntry.Amount;
+        }
+
         if (amountText != null)
         {
             amountText.text = amount.ToString();

@@ -1,9 +1,7 @@
 {
-    "name": "UnluckyDucky.Player",
+    "name": "UnluckyDucky.Core",
     "rootNamespace": "",
-    "references": [
-        "UnluckyDucky.Core"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

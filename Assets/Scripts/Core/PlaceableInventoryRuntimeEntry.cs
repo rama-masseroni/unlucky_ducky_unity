@@ -29,4 +29,16 @@ public class PlaceableInventoryRuntimeEntry
         owner.NotifyChanged();
         return true;
     }
+
+    public bool TryReturnOne()
+    {
+        if (amount >= InitialAmount)
+        {
+            return false;
+        }
+
+        amount++;
+        owner.NotifyChanged();
+        return true;
+    }
 }

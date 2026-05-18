@@ -17,6 +17,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
     private readonly List<PlaceableInventorySlotView> slotViews = new List<PlaceableInventorySlotView>();
     private PlaceableInventorySlotView selectedSlot;
     private PlaceableInventoryRuntime runtimeInventory;
+    private RectTransform panelRectTransform;
 
     public PlaceableDefinition SelectedDefinition => selectedSlot != null ? selectedSlot.Definition : null;
 
@@ -60,6 +61,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         }
 
         gameStateManager.PhaseChanged += HandlePhaseChanged;
+
     }
 
     private void OnDisable()
@@ -67,6 +69,11 @@ public class PlaceableInventoryPanel : MonoBehaviour
         if (gameStateManager != null)
         {
             gameStateManager.PhaseChanged -= HandlePhaseChanged;
+        }
+
+        if (runtimeInventory != null)
+        {
+            runtimeInventory.Changed -= HandleInventoryChanged;
         }
     }
 
@@ -136,6 +143,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
             rectTransform = gameObject.AddComponent<RectTransform>();
         }
 
+        panelRectTransform = rectTransform;
         rectTransform.anchorMin = new Vector2(1f, 0.5f);
         rectTransform.anchorMax = new Vector2(1f, 0.5f);
         rectTransform.pivot = new Vector2(1f, 0.5f);
@@ -258,13 +266,31 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
     private void UseRuntimeInventory()
     {
+        if (runtimeInventory != null)
+        {
+            runtimeInventory.Changed -= HandleInventoryChanged;
+        }
+
         if (gameStateManager != null && gameStateManager.Inventory != null)
         {
             runtimeInventory = gameStateManager.Inventory;
+            runtimeInventory.Changed += HandleInventoryChanged;
             return;
         }
 
         runtimeInventory = new PlaceableInventoryRuntime(inventorySet);
+        runtimeInventory.Changed += HandleInventoryChanged;
+    }
+
+    public bool ContainsScreenPoint(Vector2 screenPosition)
+    {
+        RectTransform rectTransform = panelRectTransform != null ? panelRectTransform : GetComponent<RectTransform>();
+        return rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition);
+    }
+
+    public bool TryReturnOne(PlaceableDefinition definition)
+    {
+        return runtimeInventory != null && runtimeInventory.TryReturnOne(definition);
     }
 
     private void HandlePhaseChanged(LevelPhase phase)
@@ -274,6 +300,14 @@ public class PlaceableInventoryPanel : MonoBehaviour
         for (int i = 0; i < slotViews.Count; i++)
         {
             slotViews[i].SetInteractionAllowed(planning);
+        }
+    }
+
+    private void HandleInventoryChanged()
+    {
+        for (int i = 0; i < slotViews.Count; i++)
+        {
+            slotViews[i].RefreshFromRuntimeEntry();
         }
     }
 }
