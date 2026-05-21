@@ -47,6 +47,26 @@ public class PlaceableInventoryRuntime
         }
     }
 
+    public bool AllRequiredPlanningItemsUsed
+    {
+        get
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                PlaceableInventoryRuntimeEntry entry = entries[i];
+
+                if (entry.Definition != null
+                    && entry.Definition.RequiresPlacementBeforeExecution
+                    && entry.Amount > 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     public void NotifyChanged()
     {
         Changed?.Invoke();
@@ -62,6 +82,19 @@ public class PlaceableInventoryRuntime
         for (int i = 0; i < entries.Count; i++)
         {
             if (entries[i].Definition == definition)
+            {
+                return entries[i];
+            }
+        }
+
+        return null;
+    }
+
+    public PlaceableInventoryRuntimeEntry FindFirstEntryByUseMode(PlaceableUseMode useMode)
+    {
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].Definition != null && entries[i].Definition.UseMode == useMode)
             {
                 return entries[i];
             }

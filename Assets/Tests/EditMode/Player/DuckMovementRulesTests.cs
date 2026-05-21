@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class DuckMovementRulesTests
 {
@@ -64,5 +65,167 @@ public class DuckMovementRulesTests
 
         Assert.AreEqual(Vector2.zero, body.linearVelocity);
         Object.DestroyImmediate(gameObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenPlanning_DoesNotDieOnHazardTile()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Planning);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsFalse(killed);
+        Assert.IsFalse(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenExecution_DiesOnHazardTile()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsTrue(killed);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenStandingOnSolidHazard_DiesInExecution()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        duckObject.transform.position = tilemap.GetCellCenterWorld(cell) + Vector3.up * 0.65f;
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsTrue(killed);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenMovementGroundProbeReachesHazard_DiesInExecution()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        duckObject.transform.position = tilemap.GetCellCenterWorld(cell) + Vector3.up * 0.78f;
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsTrue(killed);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenFacingSolidHazard_DiesInExecution()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        duckObject.transform.position = tilemap.GetCellCenterWorld(cell) + Vector3.left * 0.7f;
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsTrue(killed);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenTilemapIsNotHazard_DoesNotDie()
+    {
+        GameObject gridObject = CreateTilemapWithTile(includeHazardLayer: false, out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsFalse(killed);
+        Assert.IsFalse(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenHazardTilemapCellIsEmpty_DoesNotDie()
+    {
+        GameObject gridObject = CreateTilemapWithTile(includeHazardLayer: true, out Tilemap tilemap, out _);
+        Vector3Int emptyCell = new Vector3Int(2, 2, 0);
+        GameObject duckObject = CreateDuckOnCell(tilemap, emptyCell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsFalse(killed);
+        Assert.IsFalse(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    private static GameObject CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell)
+    {
+        return CreateTilemapWithTile(includeHazardLayer: true, out tilemap, out cell);
+    }
+
+    private static GameObject CreateTilemapWithTile(bool includeHazardLayer, out Tilemap tilemap, out Vector3Int cell)
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        GameObject tilemapObject = new GameObject("Tilemap", typeof(Tilemap), typeof(TilemapRenderer));
+        tilemapObject.transform.SetParent(gridObject.transform);
+
+        if (includeHazardLayer)
+        {
+            tilemapObject.AddComponent<HazardTilemapLayer>();
+        }
+
+        tilemap = tilemapObject.GetComponent<Tilemap>();
+        cell = new Vector3Int(1, 1, 0);
+        Tile tile = ScriptableObject.CreateInstance<Tile>();
+        tilemap.SetTile(cell, tile);
+        return gridObject;
+    }
+
+    private static GameObject CreateDuckOnCell(Tilemap tilemap, Vector3Int cell)
+    {
+        GameObject duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        duckObject.transform.position = tilemap.GetCellCenterWorld(cell);
+
+        BoxCollider2D collider = duckObject.GetComponent<BoxCollider2D>();
+        collider.size = new Vector2(0.4f, 0.3f);
+
+        PlayerDuckController duck = duckObject.AddComponent<PlayerDuckController>();
+        typeof(PlayerDuckController)
+            .GetField("resetLevelOnDeath", BindingFlags.NonPublic | BindingFlags.Instance)
+            .SetValue(duck, false);
+
+        return duckObject;
     }
 }

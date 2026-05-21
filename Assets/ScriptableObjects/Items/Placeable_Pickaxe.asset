@@ -9,9 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbd7f21863fd4217964468bc133bdd41, type: 3}
-  m_Name: Level_01_InventorySet
+  m_Script: {fileID: 11500000, guid: b7b7c5962ea1aaf49ba326b6a5d380d4, type: 3}
+  m_Name: Placeable_Pickaxe
   m_EditorClassIdentifier: 
-  entries:
-  - definition: {fileID: 11400000, guid: 7ba5900b014d4aa2ba7df5936ff908b9, type: 2}
-    amount: 2
+  id: pickaxe
+  displayName: Pico
+  prefab: {fileID: 0}
+  icon: {fileID: -6834912700274363195, guid: 9a8c0cc29410bc44cb22b31ce206dfa1, type: 3}
+  useMode: 1

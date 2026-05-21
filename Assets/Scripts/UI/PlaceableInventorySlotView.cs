@@ -133,7 +133,10 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     private void NotifyClicked()
     {
-        Clicked.Invoke(this);
+        if (definition != null && definition.UseMode == PlaceableUseMode.DragToPlace)
+        {
+            Clicked.Invoke(this);
+        }
     }
 
     private bool CanStartDrag()
@@ -141,6 +144,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         return amount > 0
             && interactionsAllowed
             && definition != null
+            && definition.UseMode == PlaceableUseMode.DragToPlace
             && definition.Prefab != null
             && placementController != null
             && placementController.CanUseBuildMode();

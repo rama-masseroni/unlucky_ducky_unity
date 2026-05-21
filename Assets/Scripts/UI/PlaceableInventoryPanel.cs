@@ -299,7 +299,13 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
         for (int i = 0; i < slotViews.Count; i++)
         {
-            slotViews[i].SetInteractionAllowed(planning);
+            PlaceableDefinition definition = slotViews[i].Definition;
+            bool allowInteraction = definition != null
+                && definition.UseMode == PlaceableUseMode.ExecutionClickToDestroyTile
+                ? phase == LevelPhase.Execution
+                : planning;
+
+            slotViews[i].SetInteractionAllowed(allowInteraction);
         }
     }
 

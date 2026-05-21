@@ -1,12 +1,14 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 public class GameStateManager : MonoBehaviour
 {
     [SerializeField] private LevelDefinition levelDefinition;
     [SerializeField] private PlaceableInventorySet fallbackInventorySet;
-    [SerializeField] private bool enablePlanningTileDestructionWhenNoLevelDefinition = true;
+    [FormerlySerializedAs("enablePlanningTileDestructionWhenNoLevelDefinition")]
+    [SerializeField] private bool enableTileDestructionToolWhenNoLevelDefinition = true;
     [SerializeField] private MonoBehaviour[] phaseListeners;
     [SerializeField] private bool autoDiscoverPhaseListeners = true;
 
@@ -22,9 +24,9 @@ public class GameStateManager : MonoBehaviour
     public LevelPhase CurrentPhase { get; private set; } = LevelPhase.Planning;
     public LevelDefinition CurrentLevelDefinition => levelDefinition;
     public PlaceableInventoryRuntime Inventory => inventory;
-    public bool CanStartExecution => inventory == null || inventory.AllItemsUsed;
+    public bool CanStartExecution => inventory == null || inventory.AllRequiredPlanningItemsUsed;
 
-    public bool IsPlanningTileDestructionEnabled
+    public bool IsTileDestructionToolEnabled
     {
         get
         {
@@ -32,10 +34,10 @@ public class GameStateManager : MonoBehaviour
 
             if (worldDefinition != null)
             {
-                return worldDefinition.EnablePlanningTileDestruction;
+                return worldDefinition.EnableTileDestructionTool;
             }
 
-            return enablePlanningTileDestructionWhenNoLevelDefinition;
+            return enableTileDestructionToolWhenNoLevelDefinition;
         }
     }
 

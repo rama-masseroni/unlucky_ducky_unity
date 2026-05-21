@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class LevelManager : MonoBehaviour
 {
@@ -23,23 +24,61 @@ public class LevelManager : MonoBehaviour
 
     private void Update()
     {
-        if (tilemap == null || Mouse.current == null || Camera.main == null || !CanDestroyTilesByClick())
+        if (tilemap == null || Mouse.current == null || Camera.main == null || !CanUseTileDestructionTool())
         {
             return;
         }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (Mouse.current.leftButton.wasPressedThisFrame && !IsPointerOverUi())
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            TryDestroyTileAtWorldPosition(tilemap, mousePosition);
+            TryUseTileDestructionTool(mousePosition);
         }
     }
 
-    private bool CanDestroyTilesByClick()
+    private bool CanUseTileDestructionTool()
     {
         return gameStateManager != null
-            && gameStateManager.CurrentPhase == LevelPhase.Planning
-            && gameStateManager.IsPlanningTileDestructionEnabled;
+            && gameStateManager.CurrentPhase == LevelPhase.Execution
+            && gameStateManager.IsTileDestructionToolEnabled;
+    }
+
+    public bool TryUseTileDestructionTool(Vector3 worldPosition)
+    {
+        if (!CanUseTileDestructionTool())
+        {
+            return false;
+        }
+
+        PlaceableInventoryRuntimeEntry entry = GetTileDestructionToolEntry();
+
+        if (entry == null || entry.Amount <= 0)
+        {
+            return false;
+        }
+
+        if (!TryDestroyTileAtWorldPosition(tilemap, worldPosition))
+        {
+            return false;
+        }
+
+        entry.TryConsumeOne();
+        return true;
+    }
+
+    private PlaceableInventoryRuntimeEntry GetTileDestructionToolEntry()
+    {
+        if (gameStateManager == null || gameStateManager.Inventory == null)
+        {
+            return null;
+        }
+
+        return gameStateManager.Inventory.FindFirstEntryByUseMode(PlaceableUseMode.ExecutionClickToDestroyTile);
+    }
+
+    private static bool IsPointerOverUi()
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
 
     public static bool TryDestroyTileAtWorldPosition(Tilemap tilemap, Vector3 worldPosition)

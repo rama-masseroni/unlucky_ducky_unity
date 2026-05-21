@@ -90,7 +90,7 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
         body.linearVelocity = velocity;
     }
 
-    public void OnLevelPhaseChanged(LevelPhase phase)
+    public virtual void OnLevelPhaseChanged(LevelPhase phase)
     {
         canMove = phase == LevelPhase.Execution;
 

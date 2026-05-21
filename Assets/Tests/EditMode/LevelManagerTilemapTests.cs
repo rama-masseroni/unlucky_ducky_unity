@@ -69,6 +69,7 @@ public class LevelManagerTilemapTests
 public class LevelPhaseSystemTests
 {
     private readonly Type placeableDefinitionType = Type.GetType("PlaceableDefinition, UnluckyDucky.Core");
+    private readonly Type placeableUseModeType = Type.GetType("PlaceableUseMode, UnluckyDucky.Core");
     private readonly Type inventoryEntryType = Type.GetType("PlaceableInventoryEntry, UnluckyDucky.Core");
     private readonly Type inventorySetType = Type.GetType("PlaceableInventorySet, UnluckyDucky.Core");
     private readonly Type runtimeInventoryType = Type.GetType("PlaceableInventoryRuntime, UnluckyDucky.Core");
@@ -78,11 +79,14 @@ public class LevelPhaseSystemTests
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
+    private readonly Type levelManagerType = Type.GetType("LevelManager, Assembly-CSharp");
 
     private GameObject gameStateObject;
     private GameObject duckObject;
     private GameObject goalObject;
     private GameObject resetButtonObject;
+    private GameObject gridObject;
+    private GameObject tilemapObject;
 
     [TearDown]
     public void TearDown()
@@ -105,6 +109,11 @@ public class LevelPhaseSystemTests
         if (resetButtonObject != null)
         {
             UnityEngine.Object.DestroyImmediate(resetButtonObject);
+        }
+
+        if (gridObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(gridObject);
         }
 
         goalPointControllerType?.GetProperty("SceneLoadOverride").SetValue(null, null);
@@ -161,6 +170,70 @@ public class LevelPhaseSystemTests
         Assert.IsTrue((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
         Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
         Assert.AreEqual("Execution", gameStateManagerType.GetProperty("CurrentPhase").GetValue(manager).ToString());
+    }
+
+    [Test]
+    public void GameStateManager_CanStartExecutionWithUnusedExecutionTileDestructionTool()
+    {
+        ScriptableObject inventorySet = CreateInventorySetWithOneItem(
+            1,
+            GetUseMode("ExecutionClickToDestroyTile"),
+            out _);
+        object manager = CreateGameStateManager();
+        gameStateManagerType.GetMethod("SetFallbackInventorySet").Invoke(manager, new object[] { inventorySet });
+
+        Assert.IsTrue((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+    }
+
+    [Test]
+    public void LevelManager_TileDestructionTool_DoesNotDestroyOrConsumeInPlanning()
+    {
+        CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        Vector3Int cellPosition = new Vector3Int(2, 3, 0);
+        Tile tile = ScriptableObject.CreateInstance<Tile>();
+        testTilemap.SetTile(cellPosition, tile);
+
+        bool used = (bool)levelManagerType
+            .GetMethod("TryUseTileDestructionTool")
+            .Invoke(levelManager, new object[] { testTilemap.GetCellCenterWorld(cellPosition) });
+
+        Assert.IsFalse(used);
+        Assert.IsTrue(testTilemap.HasTile(cellPosition));
+        Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
+    }
+
+    [Test]
+    public void LevelManager_TileDestructionTool_DestroyingTileConsumesOneInExecution()
+    {
+        object manager = CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+
+        Vector3Int cellPosition = new Vector3Int(2, 3, 0);
+        Tile tile = ScriptableObject.CreateInstance<Tile>();
+        testTilemap.SetTile(cellPosition, tile);
+
+        bool used = (bool)levelManagerType
+            .GetMethod("TryUseTileDestructionTool")
+            .Invoke(levelManager, new object[] { testTilemap.GetCellCenterWorld(cellPosition) });
+
+        Assert.IsTrue(used);
+        Assert.IsFalse(testTilemap.HasTile(cellPosition));
+        Assert.AreEqual(0, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
+    }
+
+    [Test]
+    public void LevelManager_TileDestructionTool_ClickingEmptyCellDoesNotConsume()
+    {
+        object manager = CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+
+        bool used = (bool)levelManagerType
+            .GetMethod("TryUseTileDestructionTool")
+            .Invoke(levelManager, new object[] { testTilemap.GetCellCenterWorld(new Vector3Int(2, 3, 0)) });
+
+        Assert.IsFalse(used);
+        Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
     }
 
     [Test]
@@ -261,12 +334,19 @@ public class LevelPhaseSystemTests
 
     private ScriptableObject CreateInventorySetWithOneItem(int amount, out object authoredEntry)
     {
+        return CreateInventorySetWithOneItem(amount, GetUseMode("DragToPlace"), out authoredEntry);
+    }
+
+    private ScriptableObject CreateInventorySetWithOneItem(int amount, object useMode, out object authoredEntry)
+    {
         Assert.IsNotNull(placeableDefinitionType);
+        Assert.IsNotNull(placeableUseModeType);
         Assert.IsNotNull(inventoryEntryType);
         Assert.IsNotNull(inventorySetType);
         Assert.IsNotNull(runtimeInventoryType);
 
         ScriptableObject definition = ScriptableObject.CreateInstance(placeableDefinitionType);
+        SetPrivateField(definition, "useMode", useMode);
         authoredEntry = Activator.CreateInstance(inventoryEntryType);
         SetPrivateField(authoredEntry, "definition", definition);
         SetPrivateField(authoredEntry, "amount", amount);
@@ -276,6 +356,41 @@ public class LevelPhaseSystemTests
             .GetValue(inventorySet);
         entries.Add(authoredEntry);
         return inventorySet;
+    }
+
+    private object CreateLevelManagerWithPickaxe(
+        int amount,
+        out Component levelManager,
+        out Tilemap testTilemap,
+        out object runtimeEntry)
+    {
+        ScriptableObject inventorySet = CreateInventorySetWithOneItem(
+            amount,
+            GetUseMode("ExecutionClickToDestroyTile"),
+            out _);
+        object manager = CreateGameStateManager();
+        gameStateManagerType.GetMethod("SetFallbackInventorySet").Invoke(manager, new object[] { inventorySet });
+
+        gridObject = new GameObject("Grid", typeof(Grid));
+        tilemapObject = new GameObject("Tilemap", typeof(Tilemap), typeof(TilemapRenderer));
+        tilemapObject.transform.SetParent(gridObject.transform);
+        testTilemap = tilemapObject.GetComponent<Tilemap>();
+
+        GameObject levelManagerObject = new GameObject("LevelManager");
+        levelManagerObject.transform.SetParent(gridObject.transform);
+        levelManager = levelManagerObject.AddComponent(levelManagerType);
+        SetPrivateField(levelManager, "tilemap", testTilemap);
+        SetPrivateField(levelManager, "gameStateManager", manager);
+
+        object runtimeInventory = gameStateManagerType.GetProperty("Inventory").GetValue(manager);
+        runtimeEntry = GetFirstRuntimeEntry(runtimeInventory);
+        return manager;
+    }
+
+    private object GetUseMode(string name)
+    {
+        Assert.IsNotNull(placeableUseModeType);
+        return Enum.Parse(placeableUseModeType, name);
     }
 
     private object GetFirstRuntimeEntry(object runtimeInventory)
