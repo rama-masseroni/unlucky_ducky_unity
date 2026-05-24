@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cce4d0c63cf84c8aa560459891132678, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnluckyDucky.Player::PlayerDuckController
-  walkSpeed: 2
+  walkSpeed: 5
   fallSpeed: 6
   slopeSpeedMultiplier: 0.5
   initialDirection: 1
@@ -190,3 +190,7 @@ MonoBehaviour:
   obstacleCheckOffset: {x: 0.24, y: -0.05}
   obstacleCheckHeight: 0.24
   obstacleTilemaps: []
+  resetLevelOnDeath: 1
+  deathResetDelaySeconds: 0.5
+  gameStateManager: {fileID: 0}
+  hazardContactProbeDistance: 0.25
