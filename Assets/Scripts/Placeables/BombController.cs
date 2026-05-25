@@ -10,6 +10,8 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
     [SerializeField] private Tilemap referenceTilemap;
     [SerializeField] private Tilemap[] destructibleTilemaps;
     [SerializeField] private LayerMask destructibleObjectMask = ~0;
+    [SerializeField] private bool killsPlayerInExplosionArea = true;
+    [SerializeField] private LayerMask playerKillMask = ~0;
     [SerializeField] private bool destroyBombAfterExplosion = true;
 
     private bool hasExploded;
@@ -89,6 +91,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
 
         DestroyTiles(affectedCells);
         BreakObjectsInCells(affectedCells);
+        KillPlayersInCells(affectedCells);
 
         if (destroyBombAfterExplosion)
         {
@@ -154,6 +157,32 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
 
                 brokenObjects.Add(breakableObject);
                 breakable.Break();
+            }
+        }
+    }
+
+    private void KillPlayersInCells(IReadOnlyList<Vector3Int> affectedCells)
+    {
+        if (!killsPlayerInExplosionArea)
+        {
+            return;
+        }
+
+        for (int i = 0; i < affectedCells.Count; i++)
+        {
+            Vector3 cellCenter = referenceTilemap.GetCellCenterWorld(affectedCells[i]);
+            Collider2D[] hits = Physics2D.OverlapBoxAll(cellCenter, referenceTilemap.layoutGrid.cellSize, 0f, playerKillMask);
+
+            for (int hitIndex = 0; hitIndex < hits.Length; hitIndex++)
+            {
+                Collider2D hit = hits[hitIndex];
+
+                if (hit == null || hit.gameObject == gameObject)
+                {
+                    continue;
+                }
+
+                PlayerKillRules.TryKillPlayer(hit);
             }
         }
     }

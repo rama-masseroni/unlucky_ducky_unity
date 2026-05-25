@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cce4d0c63cf84c8aa560459891132678, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnluckyDucky.Player::PlayerDuckController
-  walkSpeed: 5
+  walkSpeed: 3
   fallSpeed: 6
   slopeSpeedMultiplier: 0.5
   initialDirection: 1

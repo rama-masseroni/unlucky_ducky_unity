@@ -10,6 +10,8 @@ public class BuildModePlacementController : MonoBehaviour
     [SerializeField] private Transform placedObjectsRoot;
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private PlaceableInventoryPanel inventoryPanel;
+    [SerializeField] private LayerMask occupancyMask = ~0;
+    [SerializeField] private float occupancyBoxInset = 0.05f;
     [SerializeField] private Color validPreviewColor = new Color(1f, 1f, 1f, 0.65f);
     [SerializeField] private Color invalidPreviewColor = new Color(1f, 0.2f, 0.2f, 0.65f);
 
@@ -163,22 +165,12 @@ public class BuildModePlacementController : MonoBehaviour
             return false;
         }
 
-        if (blockedTilemaps == null)
+        if (IsCellBlockedByTilemap(cell))
         {
-            return true;
+            return false;
         }
 
-        for (int i = 0; i < blockedTilemaps.Length; i++)
-        {
-            Tilemap tilemap = blockedTilemaps[i];
-
-            if (tilemap != null && tilemap.HasTile(cell) && (activeMoveInstance == null || cell != originalMoveCell))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return !IsCellOccupiedByCollider(cell);
     }
 
     private void PlaceAt(Vector3Int cell)
@@ -315,9 +307,15 @@ public class BuildModePlacementController : MonoBehaviour
             referenceTilemap = FindFirstObjectByType<Tilemap>();
         }
 
+        Tilemap[] sceneTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+
         if (blockedTilemaps == null || blockedTilemaps.Length == 0)
         {
-            blockedTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+            blockedTilemaps = sceneTilemaps;
+        }
+        else
+        {
+            blockedTilemaps = MergeTilemaps(blockedTilemaps, sceneTilemaps);
         }
 
         if (placedObjectsRoot == null)
@@ -341,5 +339,109 @@ public class BuildModePlacementController : MonoBehaviour
         {
             inventoryPanel = FindFirstObjectByType<PlaceableInventoryPanel>();
         }
+    }
+
+    private bool IsCellBlockedByTilemap(Vector3Int cell)
+    {
+        if (blockedTilemaps == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < blockedTilemaps.Length; i++)
+        {
+            Tilemap tilemap = blockedTilemaps[i];
+
+            if (tilemap != null && tilemap.HasTile(cell))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsCellOccupiedByCollider(Vector3Int cell)
+    {
+        Vector3 cellCenter = referenceTilemap.GetCellCenterWorld(cell);
+        Vector3 cellSize = referenceTilemap.layoutGrid.cellSize;
+        Vector2 overlapSize = new Vector2(
+            Mathf.Max(0.01f, cellSize.x - occupancyBoxInset),
+            Mathf.Max(0.01f, cellSize.y - occupancyBoxInset));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(cellCenter, overlapSize, 0f, occupancyMask);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit == null || IsActiveMoveInstance(hit))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsActiveMoveInstance(Collider2D collider)
+    {
+        return activeMoveInstance != null
+            && collider.GetComponentInParent<PlacedPlaceableInstance>() == activeMoveInstance;
+    }
+
+    private static Tilemap[] MergeTilemaps(Tilemap[] configuredTilemaps, Tilemap[] discoveredTilemaps)
+    {
+        if (configuredTilemaps == null || configuredTilemaps.Length == 0)
+        {
+            return discoveredTilemaps;
+        }
+
+        if (discoveredTilemaps == null || discoveredTilemaps.Length == 0)
+        {
+            return configuredTilemaps;
+        }
+
+        Tilemap[] mergedTilemaps = new Tilemap[configuredTilemaps.Length + discoveredTilemaps.Length];
+        int count = 0;
+
+        for (int i = 0; i < configuredTilemaps.Length; i++)
+        {
+            AddUniqueTilemap(mergedTilemaps, ref count, configuredTilemaps[i]);
+        }
+
+        for (int i = 0; i < discoveredTilemaps.Length; i++)
+        {
+            AddUniqueTilemap(mergedTilemaps, ref count, discoveredTilemaps[i]);
+        }
+
+        if (count == mergedTilemaps.Length)
+        {
+            return mergedTilemaps;
+        }
+
+        Tilemap[] trimmedTilemaps = new Tilemap[count];
+        System.Array.Copy(mergedTilemaps, trimmedTilemaps, count);
+        return trimmedTilemaps;
+    }
+
+    private static void AddUniqueTilemap(Tilemap[] tilemaps, ref int count, Tilemap candidate)
+    {
+        if (candidate == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            if (tilemaps[i] == candidate)
+            {
+                return;
+            }
+        }
+
+        tilemaps[count] = candidate;
+        count++;
     }
 }

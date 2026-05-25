@@ -68,4 +68,64 @@ public class BombExplosionAreaTests
             UnityEngine.Object.DestroyImmediate(gridObject);
         }
     }
+
+    [Test]
+    public void BombController_WhenDuckIsInsideExplosionArea_KillsDuck()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        GameObject tilemapObject = new GameObject("Reference Tilemap", typeof(Tilemap), typeof(TilemapRenderer));
+        tilemapObject.transform.SetParent(gridObject.transform);
+        Tilemap referenceTilemap = tilemapObject.GetComponent<Tilemap>();
+        Vector3Int centerCell = Vector3Int.zero;
+
+        GameObject bombObject = new GameObject("Bomb");
+        bombObject.transform.position = referenceTilemap.GetCellCenterWorld(centerCell);
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "destroyBombAfterExplosion", false);
+
+        Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
+        Assert.IsNotNull(playerDuckControllerType);
+        GameObject duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        duckObject.transform.position = referenceTilemap.GetCellCenterWorld(centerCell);
+        Component duck = duckObject.AddComponent(playerDuckControllerType);
+        SetPrivateField(duck, "resetLevelOnDeath", false);
+        Physics2D.SyncTransforms();
+
+        try
+        {
+            MethodInfo explodeMethod = bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(explodeMethod);
+
+            explodeMethod.Invoke(bomb, null);
+
+            Assert.IsTrue((bool)playerDuckControllerType.GetProperty("IsDead").GetValue(duck));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(duckObject);
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+        }
+    }
+
+    [Test]
+    public void EnemyRatController_IsBreakableSoBombExplosionCanDestroyIt()
+    {
+        Type enemyRatControllerType = Type.GetType("EnemyRatController, UnluckyDucky.Enemies");
+        Type breakableType = Type.GetType("IBreakable, UnluckyDucky.Core");
+
+        Assert.IsNotNull(enemyRatControllerType);
+        Assert.IsNotNull(breakableType);
+        Assert.IsTrue(breakableType.IsAssignableFrom(enemyRatControllerType));
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+        target.GetType()
+            .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)
+            .SetValue(target, value);
+    }
 }

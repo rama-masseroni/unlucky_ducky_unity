@@ -79,6 +79,7 @@ public class LevelPhaseSystemTests
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
+    private readonly Type buildModePlacementControllerType = Type.GetType("BuildModePlacementController, Assembly-CSharp");
     private readonly Type levelManagerType = Type.GetType("LevelManager, Assembly-CSharp");
 
     private GameObject gameStateObject;
@@ -326,6 +327,87 @@ public class LevelPhaseSystemTests
         Assert.AreEqual(1, reloadRequests);
     }
 
+    [Test]
+    public void BuildModePlacementController_CannotPlaceOnDiscoveredBlockedTilemap()
+    {
+        Assert.IsNotNull(buildModePlacementControllerType);
+
+        GameObject placedRoot = new GameObject("PlacedObjectsRoot");
+        GameObject controllerObject = new GameObject("BuildModePlacementController");
+        GameObject prefab = new GameObject("BombPrefab");
+        CreateGameStateManager();
+        GameObject grid = CreatePlacementGrid(
+            out Tilemap referenceTilemap,
+            out Tilemap configuredBreakableTilemap,
+            out Tilemap discoveredWallTilemap);
+        Vector3Int blockedCell = new Vector3Int(2, 1, 0);
+        discoveredWallTilemap.SetTile(blockedCell, ScriptableObject.CreateInstance<Tile>());
+        Component controller = controllerObject.AddComponent(buildModePlacementControllerType);
+
+        try
+        {
+            ScriptableObject definition = CreatePlaceableDefinitionWithPrefab(prefab);
+            SetPrivateField(controller, "activeDefinition", definition);
+            SetPrivateField(controller, "referenceTilemap", referenceTilemap);
+            SetPrivateField(controller, "blockedTilemaps", new[] { configuredBreakableTilemap });
+
+            buildModePlacementControllerType
+                .GetMethod("ResolveSceneReferences", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(controller, null);
+
+            bool canPlace = InvokeCanPlaceAt(controller, blockedCell);
+
+            Assert.IsFalse(canPlace);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(controllerObject);
+            UnityEngine.Object.DestroyImmediate(prefab);
+            UnityEngine.Object.DestroyImmediate(grid);
+            UnityEngine.Object.DestroyImmediate(placedRoot);
+        }
+    }
+
+    [Test]
+    public void BuildModePlacementController_CannotPlaceOnOccupiedColliderCell()
+    {
+        Assert.IsNotNull(buildModePlacementControllerType);
+
+        GameObject placedRoot = new GameObject("PlacedObjectsRoot");
+        GameObject controllerObject = new GameObject("BuildModePlacementController");
+        GameObject prefab = new GameObject("BombPrefab");
+        CreateGameStateManager();
+        GameObject grid = CreatePlacementGrid(
+            out Tilemap referenceTilemap,
+            out _,
+            out _);
+        Vector3Int occupiedCell = new Vector3Int(3, 1, 0);
+        GameObject occupyingObject = new GameObject("OccupyingObject", typeof(BoxCollider2D));
+        occupyingObject.transform.position = referenceTilemap.GetCellCenterWorld(occupiedCell);
+        Component controller = controllerObject.AddComponent(buildModePlacementControllerType);
+
+        try
+        {
+            ScriptableObject definition = CreatePlaceableDefinitionWithPrefab(prefab);
+            SetPrivateField(controller, "activeDefinition", definition);
+            SetPrivateField(controller, "referenceTilemap", referenceTilemap);
+            SetPrivateField(controller, "blockedTilemaps", Array.Empty<Tilemap>());
+            Physics2D.SyncTransforms();
+
+            bool canPlace = InvokeCanPlaceAt(controller, occupiedCell);
+
+            Assert.IsFalse(canPlace);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(occupyingObject);
+            UnityEngine.Object.DestroyImmediate(controllerObject);
+            UnityEngine.Object.DestroyImmediate(prefab);
+            UnityEngine.Object.DestroyImmediate(grid);
+            UnityEngine.Object.DestroyImmediate(placedRoot);
+        }
+    }
+
     private object CreateGameStateManager()
     {
         gameStateObject = new GameObject("GameStateManager");
@@ -404,6 +486,39 @@ public class LevelPhaseSystemTests
 
         Assert.Fail("Expected at least one runtime inventory entry.");
         return null;
+    }
+
+    private GameObject CreatePlacementGrid(
+        out Tilemap referenceTilemap,
+        out Tilemap breakableTilemap,
+        out Tilemap wallTilemap)
+    {
+        gridObject = new GameObject("Grid", typeof(Grid));
+        referenceTilemap = CreateChildTilemap(gridObject.transform, "Reference Tilemap");
+        breakableTilemap = CreateChildTilemap(gridObject.transform, "Breakable Tilemap");
+        wallTilemap = CreateChildTilemap(gridObject.transform, "Walls Tilemap");
+        return gridObject;
+    }
+
+    private static Tilemap CreateChildTilemap(Transform parent, string name)
+    {
+        GameObject tilemapObject = new GameObject(name, typeof(Tilemap), typeof(TilemapRenderer));
+        tilemapObject.transform.SetParent(parent);
+        return tilemapObject.GetComponent<Tilemap>();
+    }
+
+    private ScriptableObject CreatePlaceableDefinitionWithPrefab(GameObject prefab)
+    {
+        ScriptableObject definition = ScriptableObject.CreateInstance(placeableDefinitionType);
+        SetPrivateField(definition, "prefab", prefab);
+        return definition;
+    }
+
+    private bool InvokeCanPlaceAt(Component controller, Vector3Int cell)
+    {
+        return (bool)buildModePlacementControllerType
+            .GetMethod("CanPlaceAt", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(controller, new object[] { cell });
     }
 
     private static void SetPrivateField(object target, string fieldName, object value)

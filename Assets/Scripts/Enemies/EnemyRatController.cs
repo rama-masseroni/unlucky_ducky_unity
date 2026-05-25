@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class EnemyRatController : GridWalkerController
+public class EnemyRatController : GridWalkerController, IBreakable
 {
     [SerializeField] private bool killsPlayerOnContact = true;
 
@@ -16,20 +16,16 @@ public class EnemyRatController : GridWalkerController
 
     private void TryKillPlayer(Collider2D other)
     {
-        if (!killsPlayerOnContact || other == null)
+        if (!killsPlayerOnContact)
         {
             return;
         }
 
-        PlayerDuckController player = other.GetComponentInParent<PlayerDuckController>();
-
-        if (player == null || player.IsDead)
-        {
-            return;
-        }
-
-        player.Kill();
+        PlayerKillRules.TryKillPlayer(other);
     }
 
-
+    public void Break()
+    {
+        Destroy(gameObject);
+    }
 }

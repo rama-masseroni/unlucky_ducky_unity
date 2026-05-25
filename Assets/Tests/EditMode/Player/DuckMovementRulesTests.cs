@@ -190,6 +190,54 @@ public class DuckMovementRulesTests
         Object.DestroyImmediate(gridObject);
     }
 
+    [Test]
+    public void PlayerKillRules_WhenColliderBelongsToLivingDuck_KillsDuck()
+    {
+        GameObject gridObject = CreateTilemapWithTile(includeHazardLayer: false, out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+        Collider2D collider = duckObject.GetComponent<Collider2D>();
+
+        bool killed = PlayerKillRules.TryKillPlayer(collider);
+
+        Assert.IsTrue(killed);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerKillRules_WhenColliderHasNoDuck_ReturnsFalse()
+    {
+        GameObject objectWithoutDuck = new GameObject("ObjectWithoutDuck", typeof(BoxCollider2D));
+        Collider2D collider = objectWithoutDuck.GetComponent<Collider2D>();
+
+        bool killed = PlayerKillRules.TryKillPlayer(collider);
+
+        Assert.IsFalse(killed);
+
+        Object.DestroyImmediate(objectWithoutDuck);
+    }
+
+    [Test]
+    public void PlayerKillRules_WhenDuckIsAlreadyDead_ReturnsFalse()
+    {
+        GameObject gridObject = CreateTilemapWithTile(includeHazardLayer: false, out Tilemap tilemap, out Vector3Int cell);
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+        Collider2D collider = duckObject.GetComponent<Collider2D>();
+
+        duck.Kill();
+        bool killedAgain = PlayerKillRules.TryKillPlayer(collider);
+
+        Assert.IsFalse(killedAgain);
+        Assert.IsTrue(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
     private static GameObject CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell)
     {
         return CreateTilemapWithTile(includeHazardLayer: true, out tilemap, out cell);
