@@ -367,6 +367,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1839735485 &1386946288 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 6615835071309689078, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
+  m_PrefabInstance: {fileID: 7619253643994207242}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1542036074
 GameObject:
   m_ObjectHideFlags: 0
@@ -1118,6 +1123,14 @@ PrefabInstance:
       propertyPath: m_CompositePaths.m_Paths.Array.data[0].Array.data[3].y
       value: -0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 5522481975988281426, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
+      propertyPath: supportTilemaps.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5522481975988281426, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
+      propertyPath: 'supportTilemaps.Array.data[2]'
+      value: 
+      objectReference: {fileID: 1386946288}
     - target: {fileID: 6615835071309689078, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
       propertyPath: m_Size.y
       value: 9
