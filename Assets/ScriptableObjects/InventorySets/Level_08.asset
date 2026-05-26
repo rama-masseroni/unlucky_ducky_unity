@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::PlaceableInventorySet
   entries:
   - definition: {fileID: 11400000, guid: d0728b15cdbd4b20996301c375bcd5fb, type: 2}
-    amount: 2
+    amount: 3
+  - definition: {fileID: 11400000, guid: 7ba5900b014d4aa2ba7df5936ff908b9, type: 2}
+    amount: 3

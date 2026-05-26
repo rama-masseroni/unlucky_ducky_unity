@@ -100,6 +100,18 @@ public class LevelManager : MonoBehaviour
         }
 
         tilemap.SetTile(gridPosition, null);
+        RefreshTilemapCollider(tilemap);
+        TilemapDestructionEvents.RaiseTileDestroyed(tilemap, gridPosition);
         return true;
+    }
+
+    private static void RefreshTilemapCollider(Tilemap tilemap)
+    {
+        TilemapCollider2D tilemapCollider = tilemap.GetComponent<TilemapCollider2D>();
+
+        if (tilemapCollider != null)
+        {
+            tilemapCollider.ProcessTilemapChanges();
+        }
     }
 }
