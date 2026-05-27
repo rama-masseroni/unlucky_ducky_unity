@@ -89,9 +89,18 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
         Vector3Int centerCell = referenceTilemap.WorldToCell(transform.position);
         IReadOnlyList<Vector3Int> affectedCells = BombExplosionArea.GetCells(centerCell, explosionRadiusInCells);
 
-        DestroyTiles(affectedCells);
-        BreakObjectsInCells(affectedCells);
-        KillPlayersInCells(affectedCells);
+        TilemapDestructionEvents.BeginBatch();
+
+        try
+        {
+            DestroyTiles(affectedCells);
+            BreakObjectsInCells(affectedCells);
+            KillPlayersInCells(affectedCells);
+        }
+        finally
+        {
+            TilemapDestructionEvents.EndBatch();
+        }
 
         if (destroyBombAfterExplosion)
         {
@@ -117,7 +126,9 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
 
             for (int cellIndex = 0; cellIndex < affectedCells.Count; cellIndex++)
             {
-                LevelManager.TryDestroyTileAtCell(tilemap, affectedCells[cellIndex]);
+                Vector3 cellCenter = referenceTilemap.GetCellCenterWorld(affectedCells[cellIndex]);
+                Vector3Int tilemapCell = tilemap.WorldToCell(cellCenter);
+                LevelManager.TryDestroyTileAtCell(tilemap, tilemapCell);
             }
         }
     }

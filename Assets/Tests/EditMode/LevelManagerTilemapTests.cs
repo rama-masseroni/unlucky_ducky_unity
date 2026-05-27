@@ -80,6 +80,9 @@ public class LevelPhaseSystemTests
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
     private readonly Type buildModePlacementControllerType = Type.GetType("BuildModePlacementController, Assembly-CSharp");
+    private readonly Type fallingDestructibleTilemapLayerType = Type.GetType("FallingDestructibleTilemapLayer, Assembly-CSharp");
+    private readonly Type fallingTileBlockType = Type.GetType("FallingTileBlock, Assembly-CSharp");
+    private readonly Type breakableType = Type.GetType("IBreakable, UnluckyDucky.Core");
     private readonly Type levelManagerType = Type.GetType("LevelManager, Assembly-CSharp");
 
     private GameObject gameStateObject;
@@ -408,6 +411,389 @@ public class LevelPhaseSystemTests
         }
     }
 
+    [Test]
+    public void FallingDestructibleTilemapLayer_WhenExecution_ConvertsUnsupportedTileToFallingBlock()
+    {
+        Assert.IsNotNull(fallingDestructibleTilemapLayerType);
+        Assert.IsNotNull(fallingTileBlockType);
+
+        GameObject grid = CreatePlacementGrid(out Tilemap fallingTilemap, out _, out _);
+        Vector3Int fallingCell = new Vector3Int(0, 1, 0);
+        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        Component layer = fallingTilemap.gameObject.AddComponent(fallingDestructibleTilemapLayerType);
+        SetPrivateField(layer, "supportTilemaps", new[] { fallingTilemap });
+
+        try
+        {
+            InvokeLevelPhase(layer, "Execution");
+
+            Assert.IsFalse(fallingTilemap.HasTile(fallingCell));
+            Assert.AreEqual(1, CountFallingBlocks());
+        }
+        finally
+        {
+            DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(grid);
+        }
+    }
+
+    [Test]
+    public void FallingDestructibleTilemapLayer_WhenTileHasSupport_DoesNotFall()
+    {
+        Assert.IsNotNull(fallingDestructibleTilemapLayerType);
+
+        GameObject grid = CreatePlacementGrid(out Tilemap fallingTilemap, out Tilemap supportTilemap, out _);
+        Vector3Int fallingCell = new Vector3Int(0, 1, 0);
+        Vector3Int supportCell = new Vector3Int(0, 0, 0);
+        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        supportTilemap.SetTile(supportCell, ScriptableObject.CreateInstance<Tile>());
+        Component layer = fallingTilemap.gameObject.AddComponent(fallingDestructibleTilemapLayerType);
+        SetPrivateField(layer, "supportTilemaps", new[] { supportTilemap });
+
+        try
+        {
+            InvokeLevelPhase(layer, "Execution");
+
+            Assert.IsTrue(fallingTilemap.HasTile(fallingCell));
+            Assert.AreEqual(0, CountFallingBlocks());
+        }
+        finally
+        {
+            DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(grid);
+        }
+    }
+
+    [Test]
+    public void FallingDestructibleTilemapLayer_UsesWorldPositionForSupportTilemaps()
+    {
+        Assert.IsNotNull(fallingDestructibleTilemapLayerType);
+
+        GameObject fallingGrid = new GameObject("Falling Grid", typeof(Grid));
+        Tilemap fallingTilemap = CreateChildTilemap(fallingGrid.transform, "Falling Tilemap");
+        GameObject supportGrid = new GameObject("Support Grid", typeof(Grid));
+        supportGrid.transform.position = new Vector3(3f, 0f, 0f);
+        Tilemap supportTilemap = CreateChildTilemap(supportGrid.transform, "Support Tilemap");
+        Vector3Int fallingCell = new Vector3Int(0, 1, 0);
+        Vector3Int localSupportCell = supportTilemap.WorldToCell(fallingTilemap.GetCellCenterWorld(new Vector3Int(0, 0, 0)));
+        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        supportTilemap.SetTile(localSupportCell, ScriptableObject.CreateInstance<Tile>());
+        Component layer = fallingTilemap.gameObject.AddComponent(fallingDestructibleTilemapLayerType);
+        SetPrivateField(layer, "supportTilemaps", new[] { supportTilemap });
+
+        try
+        {
+            InvokeLevelPhase(layer, "Execution");
+
+            Assert.IsTrue(fallingTilemap.HasTile(fallingCell));
+            Assert.AreEqual(0, CountFallingBlocks());
+        }
+        finally
+        {
+            DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(supportGrid);
+            UnityEngine.Object.DestroyImmediate(fallingGrid);
+        }
+    }
+
+    [Test]
+    public void FallingDestructibleTilemapLayer_WhenPlanning_DoesNotFall()
+    {
+        Assert.IsNotNull(fallingDestructibleTilemapLayerType);
+
+        GameObject grid = CreatePlacementGrid(out Tilemap fallingTilemap, out _, out _);
+        Vector3Int fallingCell = new Vector3Int(0, 1, 0);
+        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        Component layer = fallingTilemap.gameObject.AddComponent(fallingDestructibleTilemapLayerType);
+        SetPrivateField(layer, "supportTilemaps", new[] { fallingTilemap });
+
+        try
+        {
+            InvokeLevelPhase(layer, "Planning");
+
+            Assert.IsTrue(fallingTilemap.HasTile(fallingCell));
+            Assert.AreEqual(0, CountFallingBlocks());
+        }
+        finally
+        {
+            DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(grid);
+        }
+    }
+
+    [Test]
+    public void FallingDestructibleTilemapLayer_WhenSupportTileIsDestroyed_ReevaluatesTileAbove()
+    {
+        Assert.IsNotNull(fallingDestructibleTilemapLayerType);
+        Assert.IsNotNull(levelManagerType);
+
+        GameObject grid = CreatePlacementGrid(out Tilemap fallingTilemap, out Tilemap supportTilemap, out _);
+        Vector3Int fallingCell = new Vector3Int(0, 1, 0);
+        Vector3Int supportCell = new Vector3Int(0, 0, 0);
+        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        supportTilemap.SetTile(supportCell, ScriptableObject.CreateInstance<Tile>());
+        Component layer = fallingTilemap.gameObject.AddComponent(fallingDestructibleTilemapLayerType);
+        SetPrivateField(layer, "supportTilemaps", new[] { supportTilemap });
+
+        try
+        {
+            InvokeLevelPhase(layer, "Execution");
+            Assert.IsTrue(fallingTilemap.HasTile(fallingCell));
+
+            levelManagerType
+                .GetMethod("TryDestroyTileAtCell", BindingFlags.Public | BindingFlags.Static)
+                .Invoke(null, new object[] { supportTilemap, supportCell });
+
+            Assert.IsFalse(fallingTilemap.HasTile(fallingCell));
+            Assert.AreEqual(1, CountFallingBlocks());
+        }
+        finally
+        {
+            DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(grid);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_ImplementsBreakable()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+        Assert.IsNotNull(breakableType);
+
+        Assert.IsTrue(breakableType.IsAssignableFrom(fallingTileBlockType));
+    }
+
+    [Test]
+    public void FallingTileBlock_LandsOnLogicalSupportTilemap()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+
+        GameObject supportGrid = new GameObject("Support Grid", typeof(Grid));
+        Tilemap supportTilemap = CreateChildTilemap(supportGrid.transform, "Support Tilemap");
+        Vector3Int supportCell = Vector3Int.zero;
+        supportTilemap.SetTile(supportCell, ScriptableObject.CreateInstance<Tile>());
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = supportTilemap.GetCellCenterWorld(new Vector3Int(0, 1, 0));
+
+        try
+        {
+            fallingTileBlockType
+                .GetMethod("Initialize")
+                .Invoke(block, new object[]
+                {
+                    null,
+                    Color.white,
+                    Vector3.one,
+                    1f,
+                    true,
+                    new[] { supportTilemap },
+                    new LayerMask { value = 0 }
+                });
+
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            body.linearVelocity = Vector2.down;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.AreEqual(RigidbodyType2D.Static, body.bodyType);
+            Assert.AreEqual(1f, blockObject.transform.position.y, 0.001f);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(blockObject);
+            UnityEngine.Object.DestroyImmediate(supportGrid);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_WhenVelocityIsZero_DoesNotLandBeforePhysicsMovesIt()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+
+        GameObject supportGrid = new GameObject("Support Grid", typeof(Grid));
+        Tilemap supportTilemap = CreateChildTilemap(supportGrid.transform, "Support Tilemap");
+        Vector3Int supportCell = Vector3Int.zero;
+        supportTilemap.SetTile(supportCell, ScriptableObject.CreateInstance<Tile>());
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = supportTilemap.GetCellCenterWorld(new Vector3Int(0, 1, 0));
+
+        try
+        {
+            fallingTileBlockType
+                .GetMethod("Initialize")
+                .Invoke(block, new object[]
+                {
+                    null,
+                    Color.white,
+                    Vector3.one,
+                    1f,
+                    true,
+                    new[] { supportTilemap },
+                    new LayerMask { value = 0 }
+                });
+
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            body.linearVelocity = Vector2.zero;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.AreEqual(RigidbodyType2D.Dynamic, body.bodyType);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(blockObject);
+            UnityEngine.Object.DestroyImmediate(supportGrid);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_WhenItMovesPastLogicalSupport_LandsOnSupport()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+
+        GameObject supportGrid = new GameObject("Support Grid", typeof(Grid));
+        Tilemap supportTilemap = CreateChildTilemap(supportGrid.transform, "Support Tilemap");
+        supportTilemap.SetTile(Vector3Int.zero, ScriptableObject.CreateInstance<Tile>());
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = supportTilemap.GetCellCenterWorld(new Vector3Int(0, 2, 0));
+
+        try
+        {
+            fallingTileBlockType
+                .GetMethod("Initialize")
+                .Invoke(block, new object[]
+                {
+                    null,
+                    Color.white,
+                    Vector3.one,
+                    1f,
+                    true,
+                    new[] { supportTilemap },
+                    new LayerMask { value = 0 }
+                });
+
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            blockObject.transform.position = supportTilemap.GetCellCenterWorld(new Vector3Int(0, 0, 0));
+            body.linearVelocity = Vector2.down * 8f;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.AreEqual(RigidbodyType2D.Static, body.bodyType);
+            Assert.AreEqual(1f, blockObject.transform.position.y, 0.001f);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(blockObject);
+            UnityEngine.Object.DestroyImmediate(supportGrid);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_WhenFallingOntoDuck_KillsDuck()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+        Assert.IsNotNull(playerDuckControllerType);
+
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = new Vector3(0f, 2f, 0f);
+        GameObject duckObject = CreateTestDuck(new Vector3(0f, 0.8f, 0f));
+
+        try
+        {
+            InitializeFallingBlock(block, new Tilemap[0]);
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            blockObject.transform.position = new Vector3(0f, 1.2f, 0f);
+            body.linearVelocity = Vector2.down * 8f;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.IsTrue(IsDuckDead(duckObject));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(duckObject);
+            UnityEngine.Object.DestroyImmediate(blockObject);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_WhenStaticAndTouchingDuck_DoesNotKillDuck()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+        Assert.IsNotNull(playerDuckControllerType);
+
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = new Vector3(0f, 1.2f, 0f);
+        GameObject duckObject = CreateTestDuck(new Vector3(0f, 0.8f, 0f));
+
+        try
+        {
+            InitializeFallingBlock(block, new Tilemap[0]);
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Static;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.IsFalse(IsDuckDead(duckObject));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(duckObject);
+            UnityEngine.Object.DestroyImmediate(blockObject);
+        }
+    }
+
+    [Test]
+    public void FallingTileBlock_WhenNotFallingDownAndTouchingDuck_DoesNotKillDuck()
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+        Assert.IsNotNull(playerDuckControllerType);
+
+        GameObject blockObject = new GameObject("FallingTileBlock");
+        Component block = blockObject.AddComponent(fallingTileBlockType);
+        blockObject.transform.position = new Vector3(0f, 1.2f, 0f);
+        GameObject duckObject = CreateTestDuck(new Vector3(0f, 0.8f, 0f));
+
+        try
+        {
+            InitializeFallingBlock(block, new Tilemap[0]);
+            Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
+            body.linearVelocity = Vector2.zero;
+            Physics2D.SyncTransforms();
+
+            fallingTileBlockType
+                .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(block, null);
+
+            Assert.IsFalse(IsDuckDead(duckObject));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(duckObject);
+            UnityEngine.Object.DestroyImmediate(blockObject);
+        }
+    }
+
     private object CreateGameStateManager()
     {
         gameStateObject = new GameObject("GameStateManager");
@@ -519,6 +905,66 @@ public class LevelPhaseSystemTests
         return (bool)buildModePlacementControllerType
             .GetMethod("CanPlaceAt", BindingFlags.NonPublic | BindingFlags.Instance)
             .Invoke(controller, new object[] { cell });
+    }
+
+    private void InvokeLevelPhase(Component listener, string phaseName)
+    {
+        Type levelPhaseType = Type.GetType("LevelPhase, UnluckyDucky.Core");
+        Assert.IsNotNull(levelPhaseType);
+        object phase = Enum.Parse(levelPhaseType, phaseName);
+
+        listener.GetType()
+            .GetMethod("OnLevelPhaseChanged", BindingFlags.Public | BindingFlags.Instance)
+            .Invoke(listener, new[] { phase });
+    }
+
+    private int CountFallingBlocks()
+    {
+        UnityEngine.Object[] blocks = UnityEngine.Object.FindObjectsByType(fallingTileBlockType, FindObjectsSortMode.None);
+        return blocks.Length;
+    }
+
+    private void InitializeFallingBlock(Component block, Tilemap[] supportTilemaps)
+    {
+        fallingTileBlockType
+            .GetMethod("Initialize")
+            .Invoke(block, new object[]
+            {
+                null,
+                Color.white,
+                Vector3.one,
+                1f,
+                true,
+                supportTilemaps,
+                new LayerMask { value = 0 }
+            });
+    }
+
+    private GameObject CreateTestDuck(Vector3 position)
+    {
+        GameObject duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        duckObject.transform.position = position;
+        BoxCollider2D collider = duckObject.GetComponent<BoxCollider2D>();
+        collider.size = new Vector2(0.4f, 0.3f);
+        Component duck = duckObject.AddComponent(playerDuckControllerType);
+        SetPrivateField(duck, "resetLevelOnDeath", false);
+        return duckObject;
+    }
+
+    private bool IsDuckDead(GameObject duckObject)
+    {
+        Component duck = duckObject.GetComponent(playerDuckControllerType);
+        return (bool)playerDuckControllerType.GetProperty("IsDead").GetValue(duck);
+    }
+
+    private static void DestroyFallingBlocksRoot()
+    {
+        GameObject root = GameObject.Find("FallingBlocksRoot");
+
+        if (root != null)
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+        }
     }
 
     private static void SetPrivateField(object target, string fieldName, object value)

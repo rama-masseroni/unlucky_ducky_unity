@@ -14,12 +14,16 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
     [SerializeField] private float groundCheckDistance = 0.08f;
     [SerializeField] private Vector2 groundCheckOffset = new Vector2(-0.24f, -0.28f);
     [SerializeField] private Tilemap[] groundTilemaps;
+    [SerializeField] private LayerMask groundObjectMask = 0;
+    [SerializeField] private float groundObjectProbeRadius = 0.04f;
 
     [Header("Obstacle Check")]
     [SerializeField] private float obstacleCheckDistance = 0.08f;
     [SerializeField] private Vector2 obstacleCheckOffset = new Vector2(0.24f, -0.05f);
     [SerializeField] private float obstacleCheckHeight = 0.24f;
     [SerializeField] private Tilemap[] obstacleTilemaps;
+    [SerializeField] private LayerMask obstacleObjectMask = 0;
+    [SerializeField] private float obstacleObjectProbeRadius = 0.04f;
 
     private Rigidbody2D body;
     private int horizontalDirection;
@@ -119,6 +123,11 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
             return tilemapProbe;
         }
 
+        if (HasGroundObjectAlongProbe(origin))
+        {
+            return new GroundProbe(true, Vector2.up);
+        }
+
         return new GroundProbe(false, Vector2.up);
     }
 
@@ -168,13 +177,27 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
         return false;
     }
 
-    private bool HasObstacleAhead()
+    private bool HasGroundObjectAlongProbe(Vector2 worldPosition)
     {
-        if (obstacleTilemaps == null)
+        const int sampleCount = 4;
+
+        for (int i = 0; i <= sampleCount; i++)
         {
-            return false;
+            float distance = groundCheckDistance * i / sampleCount;
+            Vector2 samplePosition = worldPosition + Vector2.down * distance;
+
+            if (HasColliderAtProbe(samplePosition, groundObjectProbeRadius, groundObjectMask)
+                || HasGridWalkerSolidAtProbe(samplePosition, groundObjectProbeRadius))
+            {
+                return true;
+            }
         }
 
+        return false;
+    }
+
+    private bool HasObstacleAhead()
+    {
         Vector2 origin = (Vector2)transform.position + GetDirectionalObstacleCheckOffset();
         const int verticalSamples = 3;
 
@@ -188,6 +211,11 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
             {
                 return true;
             }
+
+            if (HasObstacleObjectAlongProbe(sampleOrigin))
+            {
+                return true;
+            }
         }
 
         return false;
@@ -195,6 +223,11 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
 
     private bool HasObstacleTileAlongProbe(Vector2 worldPosition)
     {
+        if (obstacleTilemaps == null)
+        {
+            return false;
+        }
+
         const int horizontalSamples = 4;
 
         for (int i = 0; i < obstacleTilemaps.Length; i++)
@@ -216,6 +249,66 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
                 {
                     return true;
                 }
+            }
+        }
+
+        return false;
+    }
+
+    private bool HasObstacleObjectAlongProbe(Vector2 worldPosition)
+    {
+        const int horizontalSamples = 4;
+
+        for (int x = 0; x <= horizontalSamples; x++)
+        {
+            float distance = obstacleCheckDistance * x / horizontalSamples;
+            Vector2 samplePosition = worldPosition + Vector2.right * horizontalDirection * distance;
+
+            if (HasColliderAtProbe(samplePosition, obstacleObjectProbeRadius, obstacleObjectMask)
+                || HasGridWalkerSolidAtProbe(samplePosition, obstacleObjectProbeRadius))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool HasColliderAtProbe(Vector2 position, float radius, LayerMask mask)
+    {
+        if (mask.value == 0)
+        {
+            return false;
+        }
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(position, radius, mask);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit != null && !hit.transform.IsChildOf(transform))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool HasGridWalkerSolidAtProbe(Vector2 position, float radius)
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(position, radius);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit != null
+                && !hit.transform.IsChildOf(transform)
+                && hit.GetComponentInParent<IGridWalkerSolid>() != null)
+            {
+                return true;
             }
         }
 
