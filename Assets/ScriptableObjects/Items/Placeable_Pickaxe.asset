@@ -15,5 +15,5 @@ MonoBehaviour:
   id: pickaxe
   displayName: Pico
   prefab: {fileID: 0}
-  icon: {fileID: -6834912700274363195, guid: 9a8c0cc29410bc44cb22b31ce206dfa1, type: 3}
+  icon: {fileID: 21300000, guid: 4149e022a90b4a0e8fb01741a2250aeb, type: 3}
   useMode: 1
