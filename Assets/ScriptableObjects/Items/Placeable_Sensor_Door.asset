@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7b7c5962ea1aaf49ba326b6a5d380d4, type: 3}
+  m_Name: Placeable_Sensor_Door
+  m_EditorClassIdentifier: 
+  id: sensor_door
+  displayName: Puerta Sensor
+  prefab: {fileID: 1000000000000000001, guid: 16bfb52b90924d6eb3a0bd61eb4031f8, type: 3}
+  icon: {fileID: -3011696200367987486, guid: 3ab17030b1989c5458b4eff1e29f4dbc, type: 3}
+  useMode: 0

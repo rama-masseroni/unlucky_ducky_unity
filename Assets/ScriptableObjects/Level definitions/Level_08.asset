@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelId: level_08
   levelName: Level 8
-  nextSceneName: Scene_00_01
+  nextSceneName: Scene_02_04
   worldDefinition: {fileID: 11400000, guid: d4cd0f2cf0ff9684c897f1c32758d5a6, type: 2}
   placeableInventorySet: {fileID: 11400000, guid: 8e27c08b5b155d4429597a52202a155b, type: 2}

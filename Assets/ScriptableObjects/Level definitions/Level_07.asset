@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd98bae406ae6a440a52b3b6133e2ea9, type: 3}
   m_Name: Level_07
   m_EditorClassIdentifier: 
-  levelId: level_06
-  levelName: Level 6
-  nextSceneName: Scene_00_01
+  levelId: level_07
+  levelName: Level 7
+  nextSceneName: Scene_02_03
   worldDefinition: {fileID: 11400000, guid: d4cd0f2cf0ff9684c897f1c32758d5a6, type: 2}
-  placeableInventorySet: {fileID: 11400000, guid: ebaa677c0b8ac2d449aaa9bcd1f23d04, type: 2}
+  placeableInventorySet: {fileID: 11400000, guid: c2c16d25df2784b4db61512ce35b23c6, type: 2}

@@ -5,10 +5,16 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 public class PlaceableInventoryPanel : MonoBehaviour
 {
+    private const float TitleHeight = 24f;
+    private const float StartButtonHeight = 40f;
+    private const float BaseSlotHeight = 92f;
+    private const float BaseSlotSpacing = 8f;
+    private static readonly Vector2 MinimumPanelSize = new Vector2(220f, 640f);
+
     [SerializeField] private PlaceableInventorySet inventorySet;
     [SerializeField] private RectTransform slotsRoot;
     [SerializeField] private string title = "OBJETOS";
-    [SerializeField] private Vector2 panelSize = new Vector2(180f, 360f);
+    [SerializeField] private Vector2 panelSize = new Vector2(220f, 640f);
     [SerializeField] private Vector2 panelOffset = new Vector2(-18f, 0f);
     [SerializeField] private BuildModePlacementController placementController;
     [SerializeField] private GameStateManager gameStateManager;
@@ -97,18 +103,20 @@ public class PlaceableInventoryPanel : MonoBehaviour
             return;
         }
 
-        IReadOnlyList<PlaceableInventoryRuntimeEntry> entries = runtimeInventory.Entries;
+        List<PlaceableInventoryRuntimeEntry> entries = GetVisibleEntries();
+        SlotLayout slotLayout = CalculateSlotLayout(entries.Count);
+        ApplySlotsRootLayout(slotLayout);
 
         for (int i = 0; i < entries.Count; i++)
         {
             PlaceableInventoryRuntimeEntry entry = entries[i];
 
-            if (entry == null || entry.Definition == null)
-            {
-                continue;
-            }
-
-            PlaceableInventorySlotView slotView = PlaceableInventorySlotView.Create(slotsRoot, entry, placementController);
+            PlaceableInventorySlotView slotView = PlaceableInventorySlotView.Create(
+                slotsRoot,
+                entry,
+                placementController,
+                slotLayout.SlotHeight,
+                slotLayout.Scale);
             slotView.Clicked.AddListener(SelectSlot);
             slotViews.Add(slotView);
         }
@@ -147,7 +155,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         rectTransform.anchorMin = new Vector2(1f, 0.5f);
         rectTransform.anchorMax = new Vector2(1f, 0.5f);
         rectTransform.pivot = new Vector2(1f, 0.5f);
-        rectTransform.sizeDelta = panelSize;
+        rectTransform.sizeDelta = ResolvePanelSize();
         rectTransform.anchoredPosition = panelOffset;
 
         Image panelImage = GetComponent<Image>();
@@ -195,7 +203,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         titleText.color = Color.black;
 
         LayoutElement layoutElement = titleObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 24f;
+        layoutElement.preferredHeight = TitleHeight;
     }
 
     private Font GetBuiltInFont()
@@ -210,8 +218,8 @@ public class PlaceableInventoryPanel : MonoBehaviour
         slotsObject.transform.SetParent(parent, false);
 
         VerticalLayoutGroup layout = slotsObject.GetComponent<VerticalLayoutGroup>();
-        layout.spacing = 8f;
-        layout.childControlHeight = false;
+        layout.spacing = BaseSlotSpacing;
+        layout.childControlHeight = true;
         layout.childControlWidth = true;
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
@@ -242,7 +250,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         image.color = Color.white;
 
         LayoutElement layoutElement = buttonObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 40f;
+        layoutElement.preferredHeight = StartButtonHeight;
 
         GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
         labelObject.transform.SetParent(buttonObject.transform, false);
@@ -282,6 +290,81 @@ public class PlaceableInventoryPanel : MonoBehaviour
         runtimeInventory.Changed += HandleInventoryChanged;
     }
 
+    private List<PlaceableInventoryRuntimeEntry> GetVisibleEntries()
+    {
+        IReadOnlyList<PlaceableInventoryRuntimeEntry> runtimeEntries = runtimeInventory.Entries;
+        List<PlaceableInventoryRuntimeEntry> entries = new List<PlaceableInventoryRuntimeEntry>();
+
+        for (int i = 0; i < runtimeEntries.Count; i++)
+        {
+            PlaceableInventoryRuntimeEntry entry = runtimeEntries[i];
+
+            if (entry != null && entry.Definition != null)
+            {
+                entries.Add(entry);
+            }
+        }
+
+        return entries;
+    }
+
+    private SlotLayout CalculateSlotLayout(int entryCount)
+    {
+        if (entryCount <= 0)
+        {
+            return new SlotLayout(BaseSlotHeight, BaseSlotSpacing, 1f);
+        }
+
+        float availableHeight = GetAvailableSlotsHeight();
+        float desiredHeight = entryCount * BaseSlotHeight + Mathf.Max(0, entryCount - 1) * BaseSlotSpacing;
+        float scale = desiredHeight > 0f ? Mathf.Min(1f, availableHeight / desiredHeight) : 1f;
+        return new SlotLayout(BaseSlotHeight * scale, BaseSlotSpacing * scale, scale);
+    }
+
+    private float GetAvailableSlotsHeight()
+    {
+        RectTransform rectTransform = panelRectTransform != null ? panelRectTransform : GetComponent<RectTransform>();
+        float height = rectTransform != null && rectTransform.rect.height > 0f
+            ? rectTransform.rect.height
+            : panelSize.y;
+        VerticalLayoutGroup panelLayout = GetComponent<VerticalLayoutGroup>();
+        float padding = panelLayout != null ? panelLayout.padding.top + panelLayout.padding.bottom : 0f;
+        float panelSpacing = panelLayout != null ? panelLayout.spacing * 2f : 0f;
+        return Mathf.Max(0f, height - padding - TitleHeight - StartButtonHeight - panelSpacing);
+    }
+
+    private Vector2 ResolvePanelSize()
+    {
+        Vector2 resolvedSize = new Vector2(
+            Mathf.Max(panelSize.x, MinimumPanelSize.x),
+            Mathf.Max(panelSize.y, MinimumPanelSize.y));
+        RectTransform parentRect = transform.parent as RectTransform;
+
+        if (parentRect != null && parentRect.rect.height > 0f)
+        {
+            resolvedSize.y = Mathf.Min(resolvedSize.y, Mathf.Max(0f, parentRect.rect.height - 36f));
+        }
+
+        return resolvedSize;
+    }
+
+    private void ApplySlotsRootLayout(SlotLayout slotLayout)
+    {
+        if (slotsRoot == null)
+        {
+            return;
+        }
+
+        VerticalLayoutGroup layout = slotsRoot.GetComponent<VerticalLayoutGroup>();
+
+        if (layout != null)
+        {
+            layout.spacing = slotLayout.Spacing;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+        }
+    }
+
     public bool ContainsScreenPoint(Vector2 screenPosition)
     {
         RectTransform rectTransform = panelRectTransform != null ? panelRectTransform : GetComponent<RectTransform>();
@@ -315,5 +398,19 @@ public class PlaceableInventoryPanel : MonoBehaviour
         {
             slotViews[i].RefreshFromRuntimeEntry();
         }
+    }
+
+    private readonly struct SlotLayout
+    {
+        public SlotLayout(float slotHeight, float spacing, float scale)
+        {
+            SlotHeight = slotHeight;
+            Spacing = spacing;
+            Scale = scale;
+        }
+
+        public float SlotHeight { get; }
+        public float Spacing { get; }
+        public float Scale { get; }
     }
 }

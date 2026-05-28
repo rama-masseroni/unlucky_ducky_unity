@@ -5,6 +5,10 @@ using UnityEngine.EventSystems;
 
 public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+    private const float BaseSlotHeight = 92f;
+    private const float BaseIconSize = 68f;
+    private const float MinimumIconSize = 24f;
+
     private PlaceableDefinition definition;
     private PlaceableInventoryRuntimeEntry inventoryEntry;
     private BuildModePlacementController placementController;
@@ -13,6 +17,8 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
     private Text amountText;
     private bool isDragging;
     private bool interactionsAllowed = true;
+    private float slotHeight = BaseSlotHeight;
+    private float layoutScale = 1f;
 
     public UnityEvent<PlaceableInventorySlotView> Clicked { get; } = new UnityEvent<PlaceableInventorySlotView>();
 
@@ -24,6 +30,16 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         PlaceableInventoryRuntimeEntry entry,
         BuildModePlacementController placementController)
     {
+        return Create(parent, entry, placementController, BaseSlotHeight, 1f);
+    }
+
+    public static PlaceableInventorySlotView Create(
+        Transform parent,
+        PlaceableInventoryRuntimeEntry entry,
+        BuildModePlacementController placementController,
+        float slotHeight,
+        float layoutScale)
+    {
         GameObject slotObject = new GameObject(entry.Definition.DisplayName, typeof(RectTransform), typeof(Image), typeof(Button));
         slotObject.transform.SetParent(parent, false);
 
@@ -34,8 +50,8 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         button.interactable = entry.Amount > 0;
 
         LayoutElement layoutElement = slotObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 92f;
-        layoutElement.minHeight = 92f;
+        layoutElement.preferredHeight = slotHeight;
+        layoutElement.minHeight = slotHeight;
 
         PlaceableInventorySlotView slotView = slotObject.AddComponent<PlaceableInventorySlotView>();
         slotView.definition = entry.Definition;
@@ -43,6 +59,8 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         slotView.placementController = placementController;
         slotView.amount = entry.Amount;
         slotView.background = slotBackground;
+        slotView.slotHeight = slotHeight;
+        slotView.layoutScale = Mathf.Max(0.01f, layoutScale);
         slotView.Build();
         button.onClick.AddListener(slotView.NotifyClicked);
 
@@ -119,8 +137,8 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
     private void Build()
     {
         HorizontalLayoutGroup layout = gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(10, 10, 8, 8);
-        layout.spacing = 10f;
+        layout.padding = new RectOffset(ScaledInt(10f), ScaledInt(10f), ScaledInt(8f), ScaledInt(8f));
+        layout.spacing = Scaled(10f);
         layout.childAlignment = TextAnchor.MiddleCenter;
         layout.childControlHeight = true;
         layout.childControlWidth = true;
@@ -161,9 +179,10 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         iconImage.color = definition.Icon != null ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
 
         LayoutElement layoutElement = iconObject.AddComponent<LayoutElement>();
-        layoutElement.minWidth = 68f;
-        layoutElement.preferredWidth = 68f;
-        layoutElement.preferredHeight = 68f;
+        float iconSize = Mathf.Max(MinimumIconSize, BaseIconSize * layoutScale);
+        layoutElement.minWidth = iconSize;
+        layoutElement.preferredWidth = iconSize;
+        layoutElement.preferredHeight = Mathf.Min(iconSize, Mathf.Max(8f, slotHeight - Scaled(16f)));
         layoutElement.flexibleWidth = 0f;
     }
 
@@ -173,7 +192,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         textBlockObject.transform.SetParent(transform, false);
 
         VerticalLayoutGroup layout = textBlockObject.GetComponent<VerticalLayoutGroup>();
-        layout.spacing = 4f;
+        layout.spacing = Scaled(4f);
         layout.childAlignment = TextAnchor.MiddleLeft;
         layout.childControlHeight = true;
         layout.childControlWidth = true;
@@ -181,15 +200,15 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         layout.childForceExpandWidth = true;
 
         LayoutElement blockLayout = textBlockObject.AddComponent<LayoutElement>();
-        blockLayout.minWidth = 72f;
-        blockLayout.preferredWidth = 88f;
+        blockLayout.minWidth = Scaled(72f);
+        blockLayout.preferredWidth = Scaled(88f);
         blockLayout.flexibleWidth = 1f;
 
         CreateText(textBlockObject.transform, definition.DisplayName, 12, FontStyle.Bold, TextAnchor.LowerLeft);
         amountText = CreateText(textBlockObject.transform, amount.ToString(), 18, FontStyle.Normal, TextAnchor.UpperLeft);
     }
 
-    private Text CreateText(Transform parent, string content, int fontSize, FontStyle fontStyle, TextAnchor alignment)
+    private Text CreateText(Transform parent, string content, int baseFontSize, FontStyle fontStyle, TextAnchor alignment)
     {
         GameObject textObject = new GameObject(content, typeof(RectTransform), typeof(Text));
         textObject.transform.SetParent(parent, false);
@@ -197,6 +216,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         Text text = textObject.GetComponent<Text>();
         text.text = content;
         text.font = GetBuiltInFont();
+        int fontSize = Mathf.Max(fontStyle == FontStyle.Bold ? 7 : 9, Mathf.RoundToInt(baseFontSize * layoutScale));
         text.fontSize = fontSize;
         text.fontStyle = fontStyle;
         text.alignment = alignment;
@@ -205,7 +225,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         text.verticalOverflow = VerticalWrapMode.Truncate;
 
         LayoutElement layoutElement = textObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = fontSize + 10f;
+        layoutElement.preferredHeight = fontSize + Mathf.Max(4f, 10f * layoutScale);
         layoutElement.flexibleWidth = 1f;
 
         return text;
@@ -235,5 +255,15 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
     {
         Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
+    }
+
+    private float Scaled(float value)
+    {
+        return Mathf.Max(1f, value * layoutScale);
+    }
+
+    private int ScaledInt(float value)
+    {
+        return Mathf.Max(1, Mathf.RoundToInt(value * layoutScale));
     }
 }
