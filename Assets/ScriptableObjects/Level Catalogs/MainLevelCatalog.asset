@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c32cb846d449f6b36feced6b0ef72c, type: 3}
+  m_Name: MainLevelCatalog
+  m_EditorClassIdentifier: 
+  entries:
+  - levelDefinition: {fileID: 11400000, guid: da58bca4fd964da18945d02c4571f709, type: 2}
+    sceneName: Scene_00_01
+    worldLabel: Mundo 1
+    displayOrder: 1
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: 38f21ae20ee7f79429b76049a8120d64, type: 2}
+    sceneName: Scene_00_02
+    worldLabel: Mundo 1
+    displayOrder: 2
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: b57c99113211975479b04b94c5243ffa, type: 2}
+    sceneName: Scene_00_03
+    worldLabel: Mundo 1
+    displayOrder: 3
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: 897f5efea691dd24b839d92611636dc4, type: 2}
+    sceneName: Scene_00_04
+    worldLabel: Mundo 1
+    displayOrder: 4
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: 92c3ea0445cca094994804b5d1ca998d, type: 2}
+    sceneName: Scene_00_05
+    worldLabel: Mundo 1
+    displayOrder: 5
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: dc5dae82b0b3d4d4bbdf0637bc6a24dc, type: 2}
+    sceneName: Scene_02_01
+    worldLabel: Mundo 2
+    displayOrder: 6
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: da9e3484f9ffb9e41ae348110838c761, type: 2}
+    sceneName: Scene_02_02
+    worldLabel: Mundo 2
+    displayOrder: 7
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: 439319b21bbba1e408d60c58d7a8ddfe, type: 2}
+    sceneName: Scene_02_03
+    worldLabel: Mundo 2
+    displayOrder: 8
+    unlockedByDefault: 1
+  - levelDefinition: {fileID: 11400000, guid: 580b05bf673394746a7363f3ec9987f0, type: 2}
+    sceneName: Scene_02_04
+    worldLabel: Mundo 2
+    displayOrder: 9
+    unlockedByDefault: 1

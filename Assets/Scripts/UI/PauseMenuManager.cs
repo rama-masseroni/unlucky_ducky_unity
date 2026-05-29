@@ -35,7 +35,7 @@ public class PauseMenuManager : MonoBehaviour
 
     public void ReturnToMainMenuButton()
     {
-        //TODO: Add main menu scene name to load
-        //UnityEngine.SceneManagement.SceneManager.LoadScene("");
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
     }
 }
