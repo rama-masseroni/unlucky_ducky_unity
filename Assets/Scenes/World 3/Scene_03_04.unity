@@ -769,6 +769,16 @@ MonoBehaviour:
   placedObjectsRoot: {fileID: 0}
   gameStateManager: {fileID: 0}
   inventoryPanel: {fileID: 0}
+  usePlacementAreaLimit: 1
+  placementAreaMode: 1
+  wallBoundaryTilemap: {fileID: 0}
+  useManualPlacementArea: 1
+  placementAreaMinCell: {x: -8, y: -4, z: 0}
+  placementAreaSize: {x: 16, y: 8}
+  automaticPlacementAreaPadding: 2
+  wallBoundarySearchPadding: 2
+  invalidAreaOverlayPadding: 4
+  placementAreaOverlayVisualizer: {fileID: 0}
   occupancyMask:
     serializedVersion: 2
     m_Bits: 4294967295

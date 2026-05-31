@@ -1,15 +1,37 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 
-public class BuildModePlacementController : MonoBehaviour
+public enum PlacementAreaMode
 {
+    Rectangle = 0,
+    WallBoundary = 1
+}
+
+public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, IExecutionStartValidator
+{
+    [Header("Scene References")]
     [SerializeField] private Camera worldCamera;
     [SerializeField] private Tilemap referenceTilemap;
     [SerializeField] private Tilemap[] blockedTilemaps;
     [SerializeField] private Transform placedObjectsRoot;
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private PlaceableInventoryPanel inventoryPanel;
+
+    [Header("Placement Area")]
+    [SerializeField] private bool usePlacementAreaLimit = true;
+    [SerializeField] private PlacementAreaMode placementAreaMode = PlacementAreaMode.WallBoundary;
+    [SerializeField] private Tilemap wallBoundaryTilemap;
+    [SerializeField] private bool useManualPlacementArea = false;
+    [SerializeField] private Vector3Int placementAreaMinCell = new Vector3Int(-8, -4, 0);
+    [SerializeField] private Vector2Int placementAreaSize = new Vector2Int(16, 8);
+    [SerializeField] private int automaticPlacementAreaPadding = 2;
+    [SerializeField] private int wallBoundarySearchPadding = 2;
+    [SerializeField] private int invalidAreaOverlayPadding = 4;
+    [SerializeField] private PlacementAreaOverlayVisualizer placementAreaOverlayVisualizer;
+
+    [Header("Placement Rules")]
     [SerializeField] private LayerMask occupancyMask = ~0;
     [SerializeField] private float occupancyBoxInset = 0.05f;
     [SerializeField] private Color validPreviewColor = new Color(1f, 1f, 1f, 0.65f);
@@ -25,10 +47,15 @@ public class BuildModePlacementController : MonoBehaviour
     private Vector3 originalMovePosition;
     private bool hasCurrentCell;
     private bool currentCellIsValid;
+    private bool hasResolvedPlacementArea;
+    private HashSet<Vector3Int> wallBoundaryPlacementCells;
+    private BoundsInt wallBoundaryDrawArea;
+    private string placementAreaValidationError;
 
     private void Awake()
     {
         ResolveSceneReferences();
+        RefreshPlacementAreaOverlay();
     }
 
     public void BeginDrag(PlaceableDefinition definition)
@@ -160,9 +187,37 @@ public class BuildModePlacementController : MonoBehaviour
         return gameStateManager == null || gameStateManager.CurrentPhase == LevelPhase.Planning;
     }
 
+    public void OnLevelPhaseChanged(LevelPhase phase)
+    {
+        if (phase == LevelPhase.Planning)
+        {
+            RefreshPlacementAreaOverlay();
+        }
+        else
+        {
+            placementAreaOverlayVisualizer?.Hide();
+        }
+    }
+
+    public BoundsInt PlacementArea => new BoundsInt(
+        placementAreaMinCell,
+        new Vector3Int(Mathf.Max(0, placementAreaSize.x), Mathf.Max(0, placementAreaSize.y), 1));
+
+    public bool CanStartExecution(out string failureReason)
+    {
+        ResolvePlacementArea();
+        failureReason = placementAreaValidationError;
+        return string.IsNullOrWhiteSpace(failureReason);
+    }
+
     private bool CanPlaceAt(Vector3Int cell)
     {
         if (activeDefinition == null || activeDefinition.Prefab == null || referenceTilemap == null)
+        {
+            return false;
+        }
+
+        if (!IsCellInsidePlacementArea(cell))
         {
             return false;
         }
@@ -343,6 +398,326 @@ public class BuildModePlacementController : MonoBehaviour
         {
             inventoryPanel = FindFirstObjectByType<PlaceableInventoryPanel>();
         }
+
+        hasResolvedPlacementArea = false;
+        ResolvePlacementArea();
+        ResolvePlacementAreaOverlayVisualizer();
+    }
+
+    private void ResolvePlacementArea()
+    {
+        if (!usePlacementAreaLimit || hasResolvedPlacementArea)
+        {
+            hasResolvedPlacementArea = true;
+            return;
+        }
+
+        placementAreaValidationError = null;
+
+        if (placementAreaMode == PlacementAreaMode.WallBoundary)
+        {
+            ResolveWallBoundaryTilemap();
+
+            if (wallBoundaryTilemap == null)
+            {
+                placementAreaValidationError = "Execution blocked: Placement Area Mode is WallBoundary, but no Walls Tilemap was assigned or found by name.";
+                wallBoundaryPlacementCells = null;
+                hasResolvedPlacementArea = true;
+                return;
+            }
+
+            if (!TryBuildWallBoundaryPlacementArea())
+            {
+                placementAreaValidationError = $"Execution blocked: '{wallBoundaryTilemap.gameObject.name}' does not define a closed wall boundary with a valid interior placement area.";
+                wallBoundaryPlacementCells = null;
+                hasResolvedPlacementArea = true;
+                return;
+            }
+
+            placementAreaValidationError = null;
+            hasResolvedPlacementArea = true;
+            return;
+        }
+
+        if (useManualPlacementArea)
+        {
+            hasResolvedPlacementArea = true;
+            return;
+        }
+
+        if (TryGetUsedTilemapBounds(blockedTilemaps, out BoundsInt bounds)
+            || referenceTilemap != null && TryGetUsedTilemapBounds(new[] { referenceTilemap }, out bounds))
+        {
+            ApplyAutomaticPlacementArea(bounds);
+        }
+
+        hasResolvedPlacementArea = true;
+    }
+
+    private void ResolveWallBoundaryTilemap()
+    {
+        if (wallBoundaryTilemap != null)
+        {
+            return;
+        }
+
+        wallBoundaryTilemap = FindWallBoundaryTilemap(blockedTilemaps);
+
+        if (wallBoundaryTilemap == null)
+        {
+            Tilemap[] sceneTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+            wallBoundaryTilemap = FindWallBoundaryTilemap(sceneTilemaps);
+        }
+    }
+
+    private bool TryBuildWallBoundaryPlacementArea()
+    {
+        if (wallBoundaryTilemap == null || wallBoundaryTilemap.GetUsedTilesCount() == 0)
+        {
+            return false;
+        }
+
+        BoundsInt wallBounds = wallBoundaryTilemap.cellBounds;
+        int padding = Mathf.Max(1, wallBoundarySearchPadding);
+        BoundsInt searchBounds = Expand(wallBounds, padding);
+        HashSet<Vector3Int> wallCells = GetTileCells(wallBoundaryTilemap);
+        HashSet<Vector3Int> outsideCells = FloodFillOutside(searchBounds, wallCells);
+        HashSet<Vector3Int> validCells = new HashSet<Vector3Int>();
+
+        for (int y = searchBounds.yMin; y < searchBounds.yMax; y++)
+        {
+            for (int x = searchBounds.xMin; x < searchBounds.xMax; x++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, searchBounds.zMin);
+
+                if (!wallCells.Contains(cell) && !outsideCells.Contains(cell))
+                {
+                    validCells.Add(cell);
+                }
+            }
+        }
+
+        if (validCells.Count == 0)
+        {
+            return false;
+        }
+
+        wallBoundaryPlacementCells = validCells;
+        wallBoundaryDrawArea = searchBounds;
+        return true;
+    }
+
+    private void ApplyAutomaticPlacementArea(BoundsInt bounds)
+    {
+        int padding = Mathf.Max(0, automaticPlacementAreaPadding);
+        placementAreaMinCell = new Vector3Int(bounds.xMin - padding, bounds.yMin - padding, bounds.zMin);
+        placementAreaSize = new Vector2Int(bounds.size.x + padding * 2, bounds.size.y + padding * 2);
+    }
+
+    private static bool TryGetUsedTilemapBounds(Tilemap[] tilemaps, out BoundsInt bounds)
+    {
+        bounds = default;
+        bool hasBounds = false;
+
+        if (tilemaps == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            Tilemap tilemap = tilemaps[i];
+
+            if (tilemap == null || tilemap.GetUsedTilesCount() == 0)
+            {
+                continue;
+            }
+
+            BoundsInt tilemapBounds = tilemap.cellBounds;
+
+            if (!hasBounds)
+            {
+                bounds = tilemapBounds;
+                hasBounds = true;
+                continue;
+            }
+
+            bounds = Encapsulate(bounds, tilemapBounds);
+        }
+
+        return hasBounds;
+    }
+
+    private static Tilemap FindWallBoundaryTilemap(Tilemap[] tilemaps)
+    {
+        if (tilemaps == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            Tilemap tilemap = tilemaps[i];
+
+            if (tilemap == null)
+            {
+                continue;
+            }
+
+            string objectName = tilemap.gameObject.name.ToLowerInvariant();
+
+            if (objectName.Contains("wall") || objectName.Contains("walls"))
+            {
+                return tilemap;
+            }
+        }
+
+        return null;
+    }
+
+    private static HashSet<Vector3Int> GetTileCells(Tilemap tilemap)
+    {
+        HashSet<Vector3Int> tileCells = new HashSet<Vector3Int>();
+        BoundsInt bounds = tilemap.cellBounds;
+
+        for (int y = bounds.yMin; y < bounds.yMax; y++)
+        {
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, bounds.zMin);
+
+                if (tilemap.HasTile(cell))
+                {
+                    tileCells.Add(cell);
+                }
+            }
+        }
+
+        return tileCells;
+    }
+
+    private static HashSet<Vector3Int> FloodFillOutside(BoundsInt bounds, HashSet<Vector3Int> blockedCells)
+    {
+        HashSet<Vector3Int> outsideCells = new HashSet<Vector3Int>();
+        Queue<Vector3Int> frontier = new Queue<Vector3Int>();
+        Vector3Int startCell = new Vector3Int(bounds.xMin, bounds.yMin, bounds.zMin);
+
+        if (!blockedCells.Contains(startCell))
+        {
+            frontier.Enqueue(startCell);
+            outsideCells.Add(startCell);
+        }
+
+        Vector3Int[] directions =
+        {
+            Vector3Int.left,
+            Vector3Int.right,
+            Vector3Int.up,
+            Vector3Int.down
+        };
+
+        while (frontier.Count > 0)
+        {
+            Vector3Int current = frontier.Dequeue();
+
+            for (int i = 0; i < directions.Length; i++)
+            {
+                Vector3Int next = current + directions[i];
+
+                if (!bounds.Contains(next) || blockedCells.Contains(next) || outsideCells.Contains(next))
+                {
+                    continue;
+                }
+
+                outsideCells.Add(next);
+                frontier.Enqueue(next);
+            }
+        }
+
+        return outsideCells;
+    }
+
+    private static BoundsInt Expand(BoundsInt bounds, int padding)
+    {
+        return new BoundsInt(
+            new Vector3Int(bounds.xMin - padding, bounds.yMin - padding, bounds.zMin),
+            new Vector3Int(bounds.size.x + padding * 2, bounds.size.y + padding * 2, Mathf.Max(1, bounds.size.z)));
+    }
+
+    private static BoundsInt Encapsulate(BoundsInt first, BoundsInt second)
+    {
+        int xMin = Mathf.Min(first.xMin, second.xMin);
+        int yMin = Mathf.Min(first.yMin, second.yMin);
+        int zMin = Mathf.Min(first.zMin, second.zMin);
+        int xMax = Mathf.Max(first.xMax, second.xMax);
+        int yMax = Mathf.Max(first.yMax, second.yMax);
+        int zMax = Mathf.Max(first.zMax, second.zMax);
+        return new BoundsInt(
+            new Vector3Int(xMin, yMin, zMin),
+            new Vector3Int(xMax - xMin, yMax - yMin, zMax - zMin));
+    }
+
+    private void ResolvePlacementAreaOverlayVisualizer()
+    {
+        if (placementAreaOverlayVisualizer != null)
+        {
+            return;
+        }
+
+        placementAreaOverlayVisualizer = GetComponent<PlacementAreaOverlayVisualizer>();
+
+        if (placementAreaOverlayVisualizer == null)
+        {
+            placementAreaOverlayVisualizer = gameObject.AddComponent<PlacementAreaOverlayVisualizer>();
+        }
+    }
+
+    private void RefreshPlacementAreaOverlay()
+    {
+        if (!usePlacementAreaLimit || placementAreaOverlayVisualizer == null)
+        {
+            placementAreaOverlayVisualizer?.Hide();
+            return;
+        }
+
+        if (CanUseBuildMode())
+        {
+            if (placementAreaMode == PlacementAreaMode.WallBoundary && wallBoundaryPlacementCells != null)
+            {
+                placementAreaOverlayVisualizer.Show(referenceTilemap, wallBoundaryDrawArea, wallBoundaryPlacementCells);
+            }
+            else
+            {
+                placementAreaOverlayVisualizer.Show(referenceTilemap, PlacementArea, invalidAreaOverlayPadding);
+            }
+        }
+        else
+        {
+            placementAreaOverlayVisualizer.Hide();
+        }
+    }
+
+    private bool IsCellInsidePlacementArea(Vector3Int cell)
+    {
+        if (!usePlacementAreaLimit)
+        {
+            return true;
+        }
+
+        ResolvePlacementArea();
+
+        if (!string.IsNullOrWhiteSpace(placementAreaValidationError))
+        {
+            return false;
+        }
+
+        if (placementAreaMode == PlacementAreaMode.WallBoundary && wallBoundaryPlacementCells != null)
+        {
+            return wallBoundaryPlacementCells.Contains(new Vector3Int(cell.x, cell.y, wallBoundaryDrawArea.zMin));
+        }
+
+        BoundsInt area = PlacementArea;
+        return area.size.x > 0 && area.size.y > 0 && area.Contains(new Vector3Int(cell.x, cell.y, area.zMin));
     }
 
     private bool IsCellBlockedByTilemap(Vector3Int cell)
