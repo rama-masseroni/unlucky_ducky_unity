@@ -13,6 +13,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
     [SerializeField] private bool killsPlayerInExplosionArea = true;
     [SerializeField] private LayerMask playerKillMask = ~0;
     [SerializeField] private bool destroyBombAfterExplosion = true;
+    [SerializeField] private BombExplosionAreaVisualizer areaVisualizer;
 
     private bool hasExploded;
     private bool hasStartedCountdown;
@@ -20,10 +21,30 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
     private GameStateManager gameStateManager;
 
     public bool HasStartedCountdown => hasStartedCountdown;
+    public int ExplosionRadiusInCells => explosionRadiusInCells;
+
+    public Tilemap ReferenceTilemap
+    {
+        get
+        {
+            if (referenceTilemap == null)
+            {
+                ResolveTilemaps();
+            }
+
+            return referenceTilemap;
+        }
+    }
 
     private void Awake()
     {
         ResolveTilemaps();
+        ResolveAreaVisualizer();
+
+        if (areaVisualizer != null)
+        {
+            areaVisualizer.Show(referenceTilemap);
+        }
     }
 
     private void OnEnable()
@@ -38,6 +59,11 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
         {
             StopCoroutine(explosionCoroutine);
             explosionCoroutine = null;
+        }
+
+        if (areaVisualizer != null)
+        {
+            areaVisualizer.Clear();
         }
     }
 
@@ -80,6 +106,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
 
         hasExploded = true;
         ResolveTilemaps();
+        ClearAreaVisualizer();
 
         if (referenceTilemap == null)
         {
@@ -193,6 +220,8 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
             return;
         }
 
+        HashSet<Vector3Int> affectedCellSet = new HashSet<Vector3Int>(affectedCells);
+
         for (int i = 0; i < affectedCells.Count; i++)
         {
             Vector3 cellCenter = referenceTilemap.GetCellCenterWorld(affectedCells[i]);
@@ -207,9 +236,22 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
                     continue;
                 }
 
+                if (!IsPlayerInAffectedCell(hit, affectedCellSet))
+                {
+                    continue;
+                }
+
                 PlayerKillRules.TryKillPlayer(hit);
             }
         }
+    }
+
+    private bool IsPlayerInAffectedCell(Collider2D hit, HashSet<Vector3Int> affectedCellSet)
+    {
+        PlayerDuckController player = hit.GetComponentInParent<PlayerDuckController>();
+        Vector3 samplePosition = player != null ? player.transform.position : hit.transform.position;
+        Vector3Int playerCell = referenceTilemap.WorldToCell(samplePosition);
+        return affectedCellSet.Contains(playerCell);
     }
 
     private void ResolveTilemaps()
@@ -230,6 +272,24 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
             referenceTilemap = destructibleTilemaps != null && destructibleTilemaps.Length > 0
                 ? destructibleTilemaps[0]
                 : FindFirstObjectByType<Tilemap>();
+        }
+    }
+
+    private void ResolveAreaVisualizer()
+    {
+        if (areaVisualizer == null)
+        {
+            areaVisualizer = GetComponent<BombExplosionAreaVisualizer>();
+        }
+    }
+
+    private void ClearAreaVisualizer()
+    {
+        ResolveAreaVisualizer();
+
+        if (areaVisualizer != null)
+        {
+            areaVisualizer.Clear();
         }
     }
 

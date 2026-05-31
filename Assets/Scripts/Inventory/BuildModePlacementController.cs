@@ -19,6 +19,7 @@ public class BuildModePlacementController : MonoBehaviour
     private PlacedPlaceableInstance activeMoveInstance;
     private GameObject previewInstance;
     private SpriteRenderer previewRenderer;
+    private BombExplosionAreaVisualizer previewBombAreaVisualizer;
     private Vector3Int currentCell;
     private Vector3Int originalMoveCell;
     private Vector3 originalMovePosition;
@@ -57,6 +58,7 @@ public class BuildModePlacementController : MonoBehaviour
         {
             previewInstance.transform.position = referenceTilemap.GetCellCenterWorld(currentCell);
             previewInstance.SetActive(true);
+            previewBombAreaVisualizer?.Show(referenceTilemap);
         }
 
         if (previewRenderer != null)
@@ -200,6 +202,7 @@ public class BuildModePlacementController : MonoBehaviour
         previewInstance = Instantiate(activeDefinition.Prefab);
         previewInstance.name = activeDefinition.Prefab.name + "_Preview";
         previewRenderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
+        previewBombAreaVisualizer = previewInstance.GetComponentInChildren<BombExplosionAreaVisualizer>(true);
 
         Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
 
@@ -227,6 +230,7 @@ public class BuildModePlacementController : MonoBehaviour
 
         previewInstance = null;
         previewRenderer = null;
+        previewBombAreaVisualizer = null;
     }
 
     private void ResetPlacementState()

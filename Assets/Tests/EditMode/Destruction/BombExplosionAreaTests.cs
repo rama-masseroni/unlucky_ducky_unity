@@ -113,6 +113,104 @@ public class BombExplosionAreaTests
     }
 
     [Test]
+    public void BombController_WhenDuckColliderBleedsIntoExplosionEdge_DoesNotKillOutsideCell()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        GameObject tilemapObject = new GameObject("Reference Tilemap", typeof(Tilemap), typeof(TilemapRenderer));
+        tilemapObject.transform.SetParent(gridObject.transform);
+        Tilemap referenceTilemap = tilemapObject.GetComponent<Tilemap>();
+
+        GameObject bombObject = new GameObject("Bomb");
+        bombObject.transform.position = referenceTilemap.GetCellCenterWorld(Vector3Int.zero);
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "destroyBombAfterExplosion", false);
+
+        Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
+        Assert.IsNotNull(playerDuckControllerType);
+        GameObject duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        duckObject.transform.position = referenceTilemap.GetCellCenterWorld(new Vector3Int(2, 0, 0));
+        duckObject.GetComponent<BoxCollider2D>().size = new Vector2(1.02f, 1f);
+        Component duck = duckObject.AddComponent(playerDuckControllerType);
+        SetPrivateField(duck, "resetLevelOnDeath", false);
+        Physics2D.SyncTransforms();
+
+        try
+        {
+            MethodInfo explodeMethod = bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(explodeMethod);
+
+            explodeMethod.Invoke(bomb, null);
+
+            Assert.IsFalse((bool)playerDuckControllerType.GetProperty("IsDead").GetValue(duck));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(duckObject);
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+            DestroyGameStateManager();
+        }
+    }
+
+    [Test]
+    public void BombExplosionAreaVisualizer_WithRadiusOne_ShowsNineCells()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        Tilemap referenceTilemap = CreateTilemap(gridObject.transform, "Reference Tilemap");
+        GameObject bombObject = new GameObject("Bomb");
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Type visualizerType = Type.GetType("BombExplosionAreaVisualizer, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Assert.IsNotNull(visualizerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        Component visualizer = bombObject.AddComponent(visualizerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "explosionRadiusInCells", 1);
+
+        try
+        {
+            visualizerType.GetMethod("Show", new[] { typeof(Tilemap) }).Invoke(visualizer, new object[] { referenceTilemap });
+
+            Assert.IsTrue((bool)visualizerType.GetProperty("IsVisible").GetValue(visualizer));
+            Assert.AreEqual(9, (int)visualizerType.GetProperty("VisibleCellCount").GetValue(visualizer));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+            DestroyGameStateManager();
+        }
+    }
+
+    [Test]
+    public void BombExplosionAreaVisualizer_WhenDisabled_CanStillShowForPlacementPreview()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        Tilemap referenceTilemap = CreateTilemap(gridObject.transform, "Reference Tilemap");
+        GameObject bombObject = new GameObject("Bomb");
+        Type visualizerType = Type.GetType("BombExplosionAreaVisualizer, Assembly-CSharp");
+        Assert.IsNotNull(visualizerType);
+        Behaviour visualizer = (Behaviour)bombObject.AddComponent(visualizerType);
+        visualizer.enabled = false;
+
+        try
+        {
+            visualizerType.GetMethod("Show", new[] { typeof(Tilemap) }).Invoke(visualizer, new object[] { referenceTilemap });
+
+            Assert.IsTrue((bool)visualizerType.GetProperty("IsVisible").GetValue(visualizer));
+            Assert.AreEqual(9, (int)visualizerType.GetProperty("VisibleCellCount").GetValue(visualizer));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+        }
+    }
+
+    [Test]
     public void BombController_WithOffsetDestructibleTilemap_OnlyDestroysWorldCellsInExplosionArea()
     {
         GameObject referenceGridObject = new GameObject("Reference Grid", typeof(Grid));
@@ -157,6 +255,42 @@ public class BombExplosionAreaTests
             UnityEngine.Object.DestroyImmediate(fallingGridObject);
             UnityEngine.Object.DestroyImmediate(breakableGridObject);
             UnityEngine.Object.DestroyImmediate(referenceGridObject);
+        }
+    }
+
+    [Test]
+    public void BombController_WhenExploded_ClearsExplosionAreaVisualizer()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        Tilemap referenceTilemap = CreateTilemap(gridObject.transform, "Reference Tilemap");
+        GameObject bombObject = new GameObject("Bomb");
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Type visualizerType = Type.GetType("BombExplosionAreaVisualizer, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Assert.IsNotNull(visualizerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        Component visualizer = bombObject.AddComponent(visualizerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "destructibleTilemaps", Array.Empty<Tilemap>());
+        SetPrivateField(bomb, "destroyBombAfterExplosion", false);
+        SetPrivateField(bomb, "areaVisualizer", visualizer);
+        visualizerType.GetMethod("Show", new[] { typeof(Tilemap) }).Invoke(visualizer, new object[] { referenceTilemap });
+
+        try
+        {
+            MethodInfo explodeMethod = bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(explodeMethod);
+
+            explodeMethod.Invoke(bomb, null);
+
+            Assert.IsFalse((bool)visualizerType.GetProperty("IsVisible").GetValue(visualizer));
+            Assert.AreEqual(0, (int)visualizerType.GetProperty("VisibleCellCount").GetValue(visualizer));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+            DestroyGameStateManager();
         }
     }
 
@@ -290,6 +424,16 @@ public class BombExplosionAreaTests
         if (root != null)
         {
             UnityEngine.Object.DestroyImmediate(root);
+        }
+    }
+
+    private static void DestroyGameStateManager()
+    {
+        GameObject manager = GameObject.Find("GameStateManager");
+
+        if (manager != null)
+        {
+            UnityEngine.Object.DestroyImmediate(manager);
         }
     }
 
