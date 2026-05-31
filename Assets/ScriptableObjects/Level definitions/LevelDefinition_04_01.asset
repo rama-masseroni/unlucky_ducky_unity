@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd98bae406ae6a440a52b3b6133e2ea9, type: 3}
+  m_Name: LevelDefinition_04_01
+  m_EditorClassIdentifier: 
+  levelId: Level_04_01
+  levelName: Level 4-1
+  nextSceneName: Scene_04_02
+  worldDefinition: {fileID: 11400000, guid: 044a71e220ee9684791c5317f5a12997, type: 2}
+  placeableInventorySet: {fileID: 11400000, guid: db83e7b58cc5a154fbe69172cc4bc357, type: 2}
