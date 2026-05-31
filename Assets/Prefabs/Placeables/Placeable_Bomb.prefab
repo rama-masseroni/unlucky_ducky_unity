@@ -141,11 +141,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e24f3ac9c2346eb912ec441991d9b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombController
-  explosionDelaySeconds: 3
+  explosionDelaySeconds: 2
   explosionRadiusInCells: 1
   referenceTilemap: {fileID: 0}
   destructibleTilemaps: []
   destructibleObjectMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  killsPlayerInExplosionArea: 1
+  playerKillMask:
     serializedVersion: 2
     m_Bits: 4294967295
   destroyBombAfterExplosion: 1

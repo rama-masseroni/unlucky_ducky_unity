@@ -14,27 +14,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - levelDefinition: {fileID: 11400000, guid: da58bca4fd964da18945d02c4571f709, type: 2}
-    sceneName: Scene_00_01
+    sceneName: Scene_01_01
     worldLabel: Mundo 1
     displayOrder: 1
     unlockedByDefault: 1
   - levelDefinition: {fileID: 11400000, guid: 38f21ae20ee7f79429b76049a8120d64, type: 2}
-    sceneName: Scene_00_02
+    sceneName: Scene_01_02
     worldLabel: Mundo 1
     displayOrder: 2
     unlockedByDefault: 1
   - levelDefinition: {fileID: 11400000, guid: b57c99113211975479b04b94c5243ffa, type: 2}
-    sceneName: Scene_00_03
+    sceneName: Scene_01_03
     worldLabel: Mundo 1
     displayOrder: 3
     unlockedByDefault: 1
   - levelDefinition: {fileID: 11400000, guid: 897f5efea691dd24b839d92611636dc4, type: 2}
-    sceneName: Scene_00_04
+    sceneName: Scene_01_04
     worldLabel: Mundo 1
     displayOrder: 4
     unlockedByDefault: 1
   - levelDefinition: {fileID: 11400000, guid: 92c3ea0445cca094994804b5d1ca998d, type: 2}
-    sceneName: Scene_00_05
+    sceneName: Scene_01_05
     worldLabel: Mundo 1
     displayOrder: 5
     unlockedByDefault: 1

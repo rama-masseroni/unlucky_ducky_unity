@@ -4,6 +4,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.TestTools;
 
 public class BombExplosionAreaTests
 {
@@ -203,6 +204,51 @@ public class BombExplosionAreaTests
         finally
         {
             DestroyFallingBlocksRoot();
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator BombController_WhenBreakableObjectColliderBleedsIntoExplosionEdge_DoesNotBreakOutsideCell()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        Tilemap referenceTilemap = CreateTilemap(gridObject.transform, "Reference Tilemap");
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Type destructibleObjectType = Type.GetType("DestructibleObject, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Assert.IsNotNull(destructibleObjectType);
+
+        GameObject bombObject = new GameObject("Bomb");
+        bombObject.transform.position = referenceTilemap.GetCellCenterWorld(Vector3Int.zero);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "destructibleTilemaps", Array.Empty<Tilemap>());
+        SetPrivateField(bomb, "destroyBombAfterExplosion", false);
+
+        GameObject outsideObject = new GameObject("OutsideBreakable", typeof(BoxCollider2D));
+        outsideObject.transform.position = referenceTilemap.GetCellCenterWorld(new Vector3Int(2, 0, 0));
+        outsideObject.GetComponent<BoxCollider2D>().size = new Vector2(1.02f, 1f);
+        outsideObject.AddComponent(destructibleObjectType);
+        Physics2D.SyncTransforms();
+
+        try
+        {
+            MethodInfo explodeMethod = bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance);
+            Assert.IsNotNull(explodeMethod);
+
+            explodeMethod.Invoke(bomb, null);
+            yield return null;
+
+            Assert.IsFalse(outsideObject == null);
+        }
+        finally
+        {
+            if (outsideObject != null)
+            {
+                UnityEngine.Object.DestroyImmediate(outsideObject);
+            }
+
             UnityEngine.Object.DestroyImmediate(bombObject);
             UnityEngine.Object.DestroyImmediate(gridObject);
         }

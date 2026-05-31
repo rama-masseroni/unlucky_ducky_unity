@@ -49,11 +49,11 @@ public class MainMenuPrototypeTests
         Assert.IsNotNull(levelSelectControllerType);
 
         ScriptableObject catalog = CreateCatalog(
-            ("Scene_00_01", "Mundo 1", 1),
-            ("Scene_00_02", "Mundo 1", 2),
-            ("Scene_00_03", "Mundo 1", 3),
-            ("Scene_00_04", "Mundo 1", 4),
-            ("Scene_00_05", "Mundo 1", 5),
+            ("Scene_01_01", "Mundo 1", 1),
+            ("Scene_01_02", "Mundo 1", 2),
+            ("Scene_01_03", "Mundo 1", 3),
+            ("Scene_01_04", "Mundo 1", 4),
+            ("Scene_01_05", "Mundo 1", 5),
             ("Scene_02_01", "Mundo 2", 6),
             ("Scene_02_02", "Mundo 2", 7));
         GameObject contentObject = CreateGameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup));

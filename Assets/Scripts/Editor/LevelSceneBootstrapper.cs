@@ -13,7 +13,8 @@ public static class LevelSceneBootstrapper
     private const string AutoBootstrapPreferenceKey = "UnluckyDucky.LevelSceneBootstrapper.AutoBootstrapNewScenes";
     private const string LevelDefinitionsFolder = "Assets/ScriptableObjects/Level definitions";
     private const string InventorySetsFolder = "Assets/ScriptableObjects/InventorySets";
-    private const string DefaultWorldDefinitionPath = "Assets/ScriptableObjects/Worlds/World_01.asset";
+    private const string WorldDefinitionsFolder = "Assets/ScriptableObjects/World Definitions";
+    private const string DefaultWorldDefinitionPath = WorldDefinitionsFolder + "/World_01.asset";
     private static readonly HashSet<int> AutoBootstrappedSceneHandles = new HashSet<int>();
 
     static LevelSceneBootstrapper()
@@ -186,14 +187,15 @@ public static class LevelSceneBootstrapper
         EnsureFolder(InventorySetsFolder);
 
         LevelAssetNames names = LevelAssetNames.FromSceneName(scene.name);
-        string inventoryPath = $"{InventorySetsFolder}/{names.AssetName}.asset";
-        string levelPath = $"{LevelDefinitionsFolder}/{names.AssetName}.asset";
+        string inventoryPath = $"{InventorySetsFolder}/{names.InventorySetAssetName}.asset";
+        string levelPath = $"{LevelDefinitionsFolder}/{names.LevelDefinitionAssetName}.asset";
 
         PlaceableInventorySet inventorySet = AssetDatabase.LoadAssetAtPath<PlaceableInventorySet>(inventoryPath);
 
         if (inventorySet == null)
         {
             inventorySet = ScriptableObject.CreateInstance<PlaceableInventorySet>();
+            inventorySet.name = names.InventorySetAssetName;
             AssetDatabase.CreateAsset(inventorySet, inventoryPath);
         }
 
@@ -203,6 +205,7 @@ public static class LevelSceneBootstrapper
         if (levelDefinition == null)
         {
             levelDefinition = ScriptableObject.CreateInstance<LevelDefinition>();
+            levelDefinition.name = names.LevelDefinitionAssetName;
             AssetDatabase.CreateAsset(levelDefinition, levelPath);
             createdLevelDefinition = true;
         }
@@ -236,7 +239,9 @@ public static class LevelSceneBootstrapper
 
         if (worldDefinition.objectReferenceValue == null)
         {
-            worldDefinition.objectReferenceValue = AssetDatabase.LoadAssetAtPath<WorldDefinition>(DefaultWorldDefinitionPath);
+            worldDefinition.objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<WorldDefinition>(names.WorldDefinitionPath) ??
+                AssetDatabase.LoadAssetAtPath<WorldDefinition>(DefaultWorldDefinitionPath);
         }
 
         if (placeableInventorySet.objectReferenceValue == null)
@@ -360,39 +365,59 @@ public static class LevelSceneBootstrapper
 
     private readonly struct LevelAssetNames
     {
-        public readonly string AssetName;
+        public readonly string LevelDefinitionAssetName;
+        public readonly string InventorySetAssetName;
         public readonly string LevelId;
         public readonly string DisplayName;
+        public readonly string WorldDefinitionPath;
 
-        private LevelAssetNames(string assetName, string levelId, string displayName)
+        private LevelAssetNames(
+            string levelDefinitionAssetName,
+            string inventorySetAssetName,
+            string levelId,
+            string displayName,
+            string worldDefinitionPath)
         {
-            AssetName = assetName;
+            LevelDefinitionAssetName = levelDefinitionAssetName;
+            InventorySetAssetName = inventorySetAssetName;
             LevelId = levelId;
             DisplayName = displayName;
+            WorldDefinitionPath = worldDefinitionPath;
         }
 
         public static LevelAssetNames FromSceneName(string sceneName)
         {
-            Match match = Regex.Match(sceneName, @"^Scene_\d+_(\d+)$");
+            Match match = Regex.Match(sceneName, @"^Scene_(\d{2})_(\d{2})$");
 
             if (match.Success)
             {
-                string number = match.Groups[1].Value;
-                return new LevelAssetNames($"Level_{number}", $"level_{number}", $"Level {int.Parse(number)}");
+                string worldNumber = match.Groups[1].Value;
+                string levelNumber = match.Groups[2].Value;
+                return new LevelAssetNames(
+                    $"LevelDefinition_{worldNumber}_{levelNumber}",
+                    $"InventorySet_{worldNumber}_{levelNumber}",
+                    $"Level_{worldNumber}_{levelNumber}",
+                    $"Level {int.Parse(worldNumber)}-{int.Parse(levelNumber)}",
+                    $"{WorldDefinitionsFolder}/World_{worldNumber}.asset");
             }
 
-            string assetName = string.IsNullOrWhiteSpace(sceneName)
-                ? "LevelDefinition"
+            string assetSuffix = string.IsNullOrWhiteSpace(sceneName)
+                ? "Custom"
                 : Regex.Replace(sceneName.Trim(), @"[^\w]+", "_");
 
-            assetName = Regex.Replace(assetName, @"_+", "_").Trim('_');
+            assetSuffix = Regex.Replace(assetSuffix, @"_+", "_").Trim('_');
 
-            if (string.IsNullOrWhiteSpace(assetName))
+            if (string.IsNullOrWhiteSpace(assetSuffix))
             {
-                assetName = "LevelDefinition";
+                assetSuffix = "Custom";
             }
 
-            return new LevelAssetNames(assetName, assetName.ToLowerInvariant(), assetName.Replace("_", " "));
+            return new LevelAssetNames(
+                $"LevelDefinition_{assetSuffix}",
+                $"InventorySet_{assetSuffix}",
+                $"Level_{assetSuffix}",
+                assetSuffix.Replace("_", " "),
+                DefaultWorldDefinitionPath);
         }
     }
 }

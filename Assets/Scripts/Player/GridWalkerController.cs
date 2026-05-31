@@ -28,6 +28,7 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
     private Rigidbody2D body;
     private int horizontalDirection;
     private bool canMove;
+    private SpriteRenderer spriteRenderer;
 
     public float WalkSpeed
     {
@@ -37,6 +38,7 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
 
     protected int HorizontalDirection => horizontalDirection;
     protected Rigidbody2D Body => body;
+    public int FacingDirection => horizontalDirection == 0 ? NormalizeDirection(initialDirection) : horizontalDirection;
 
     protected virtual void Awake()
     {
@@ -44,7 +46,8 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
         body.freezeRotation = true;
-        horizontalDirection = initialDirection >= 0 ? 1 : -1;
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        SetFacingDirection(initialDirection);
         canMove = false;
 
         if (groundTilemaps == null || groundTilemaps.Length == 0)
@@ -81,7 +84,7 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
 
         if (groundProbe.HasGround && HasObstacleAhead())
         {
-            horizontalDirection *= -1;
+            SetFacingDirection(-horizontalDirection);
             velocity = DuckMovementRules.ResolveVelocity(
                 groundProbe.HasGround,
                 groundProbe.Normal,
@@ -92,6 +95,19 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
         }
 
         body.linearVelocity = velocity;
+    }
+
+    public void SetFacingDirection(int direction)
+    {
+        int normalizedDirection = NormalizeDirection(direction);
+        initialDirection = normalizedDirection;
+        horizontalDirection = normalizedDirection;
+        SyncSpriteFacing();
+    }
+
+    public void ToggleFacingDirection()
+    {
+        SetFacingDirection(-FacingDirection);
     }
 
     public virtual void OnLevelPhaseChanged(LevelPhase phase)
@@ -325,9 +341,27 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
         return new Vector2(Mathf.Abs(obstacleCheckOffset.x) * horizontalDirection, obstacleCheckOffset.y);
     }
 
+    private void SyncSpriteFacing()
+    {
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = FacingDirection < 0;
+        }
+    }
+
+    private static int NormalizeDirection(int direction)
+    {
+        return direction >= 0 ? 1 : -1;
+    }
+
     private void OnDrawGizmosSelected()
     {
-        int direction = Application.isPlaying ? horizontalDirection : (initialDirection >= 0 ? 1 : -1);
+        int direction = Application.isPlaying ? FacingDirection : NormalizeDirection(initialDirection);
         Vector2 offset = new Vector2(Mathf.Abs(groundCheckOffset.x) * -direction, groundCheckOffset.y);
         Vector2 origin = (Vector2)transform.position + offset;
 

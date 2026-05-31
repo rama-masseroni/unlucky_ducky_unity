@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class PlacedPlaceableInstance : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class PlacedPlaceableInstance : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [SerializeField] private PlaceableDefinition definition;
 
@@ -54,5 +54,23 @@ public class PlacedPlaceableInstance : MonoBehaviour, IBeginDragHandler, IDragHa
 
         isDragging = false;
         placementController.EndMove(eventData.position);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (isDragging
+            || placementController == null
+            || !placementController.CanUseBuildMode()
+            || (eventData != null && eventData.button != PointerEventData.InputButton.Left))
+        {
+            return;
+        }
+
+        GridWalkerController walker = GetComponentInChildren<GridWalkerController>();
+
+        if (walker != null)
+        {
+            walker.ToggleFacingDirection();
+        }
     }
 }

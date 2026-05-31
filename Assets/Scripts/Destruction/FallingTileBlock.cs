@@ -17,6 +17,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
     private Rigidbody2D body;
     private BoxCollider2D boxCollider;
     private readonly List<Collider2D> ignoredWalkerColliders = new();
+    private float lockedX;
     private bool hasPreviousBottomY;
     private float previousBottomY;
 
@@ -37,6 +38,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         Vector2 colliderSize = GetColliderSize(sprite, cellSize);
         boxCollider.size = colliderSize;
         boxCollider.offset = Vector2.zero;
+        boxCollider.isTrigger = true;
 
         transform.localScale = GetScale(sprite, cellSize);
 
@@ -48,8 +50,16 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         body.angularVelocity = 0f;
         body.simulated = true;
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        body.constraints = RigidbodyConstraints2D.FreezePositionX;
+
+        if (freezeRotation)
+        {
+            body.constraints |= RigidbodyConstraints2D.FreezeRotation;
+        }
+
         body.WakeUp();
 
+        lockedX = transform.position.x;
         this.supportTilemaps = supportTilemaps;
         this.supportObjectMask = supportObjectMask;
         IgnoreWalkerCollisions();
@@ -69,15 +79,19 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
             return;
         }
 
-        TryCrushPlayers();
+        TryCrushActors();
 
         if (TryGetLandingY(out float landingY))
         {
             Bounds bounds = boxCollider.bounds;
-            transform.position += Vector3.up * (landingY + bounds.extents.y - bounds.center.y);
+            Vector3 position = transform.position;
+            position.x = lockedX;
+            position.y += landingY + bounds.extents.y - bounds.center.y;
+            transform.position = position;
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
             body.bodyType = RigidbodyType2D.Static;
+            boxCollider.isTrigger = false;
             RestoreWalkerCollisions();
             RememberBottomY();
             return;
@@ -142,14 +156,16 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         };
         landingY = float.NegativeInfinity;
 
+        Vector2 centerSamplePosition = new Vector2(bounds.center.x, currentBottomY);
+
+        if (TryGetTileLandingY(centerSamplePosition, sweepStartY, currentBottomY, out float tileLandingY))
+        {
+            landingY = Mathf.Max(landingY, tileLandingY);
+        }
+
         for (int i = 0; i < sampleXs.Length; i++)
         {
             Vector2 samplePosition = new Vector2(sampleXs[i], currentBottomY);
-
-            if (TryGetTileSupportTop(samplePosition, sweepStartY, currentBottomY, out float tileSupportTop))
-            {
-                landingY = Mathf.Max(landingY, tileSupportTop);
-            }
 
             if (TryGetObjectSupportTop(samplePosition, sweepStartY, currentBottomY, out float objectSupportTop))
             {
@@ -166,7 +182,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
             && landingY >= currentBottomY - supportProbeDistance;
     }
 
-    private bool TryGetTileSupportTop(Vector2 worldPosition, float sweepStartY, float currentBottomY, out float supportTop)
+    private bool TryGetTileLandingY(Vector2 worldPosition, float sweepStartY, float currentBottomY, out float supportTop)
     {
         supportTop = float.NegativeInfinity;
 
@@ -202,7 +218,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
                         continue;
                     }
 
-                    float candidateTop = GetCellTopWorldY(supportTilemap, supportCell);
+                    float candidateTop = GetCellLandingWorldY(supportTilemap, supportCell);
 
                     if (candidateTop <= sweepStartY + supportSnapTolerance
                         && candidateTop >= currentBottomY - supportProbeDistance)
@@ -251,7 +267,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         return supportTop > float.NegativeInfinity;
     }
 
-    private void TryCrushPlayers()
+    private void TryCrushActors()
     {
         if (boxCollider == null || playerCrushMask.value == 0)
         {
@@ -265,6 +281,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         Vector2 crushCenter = new Vector2(bounds.center.x, currentBottomY + sweepHeight * 0.5f);
         Vector2 crushSize = new Vector2(Mathf.Max(0.01f, bounds.size.x), sweepHeight);
         Collider2D[] hits = Physics2D.OverlapBoxAll(crushCenter, crushSize, 0f, playerCrushMask);
+        HashSet<IBreakable> crushedBreakableWalkers = new();
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -273,8 +290,28 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
             if (hit != null && !hit.transform.IsChildOf(transform))
             {
                 PlayerKillRules.TryKillPlayer(hit);
+                TryBreakCrushedWalker(hit, crushedBreakableWalkers);
             }
         }
+    }
+
+    private void TryBreakCrushedWalker(Collider2D hit, HashSet<IBreakable> crushedBreakableWalkers)
+    {
+        GridWalkerController walker = hit.GetComponentInParent<GridWalkerController>();
+
+        if (walker == null || walker.transform.IsChildOf(transform))
+        {
+            return;
+        }
+
+        IBreakable breakable = hit.GetComponentInParent<IBreakable>();
+
+        if (breakable == null || ReferenceEquals(breakable, this) || !crushedBreakableWalkers.Add(breakable))
+        {
+            return;
+        }
+
+        breakable.Break();
     }
 
     private void RememberBottomY()
@@ -344,7 +381,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         ignoredWalkerColliders.Clear();
     }
 
-    private static float GetCellTopWorldY(Tilemap tilemap, Vector3Int cell)
+    private static float GetCellLandingWorldY(Tilemap tilemap, Vector3Int cell)
     {
         Vector3 center = tilemap.GetCellCenterWorld(cell);
         Grid grid = tilemap.layoutGrid;

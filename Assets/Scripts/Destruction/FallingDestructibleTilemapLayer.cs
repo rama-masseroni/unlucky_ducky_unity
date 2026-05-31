@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -122,13 +123,23 @@ public class FallingDestructibleTilemapLayer : MonoBehaviour, ILevelPhaseListene
         {
             Tilemap supportTilemap = supportTilemaps[i];
 
-            if (supportTilemap != null && supportTilemap.HasTile(supportTilemap.WorldToCell(supportWorldPosition)))
+            if (!IsInitialSupportTilemap(supportTilemap))
+            {
+                continue;
+            }
+
+            if (supportTilemap.HasTile(supportTilemap.WorldToCell(supportWorldPosition)))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static bool IsInitialSupportTilemap(Tilemap supportTilemap)
+    {
+        return supportTilemap != null && supportTilemap.GetComponent<HazardTilemapLayer>() == null;
     }
 
     private bool HasSupportObjectAtWorldPosition(Vector3 supportWorldPosition)
@@ -155,7 +166,14 @@ public class FallingDestructibleTilemapLayer : MonoBehaviour, ILevelPhaseListene
             ? Instantiate(fallingBlockPrefab, position, Quaternion.identity, parent)
             : CreateDefaultFallingBlock(position, parent);
 
-        fallingBlock.Initialize(sprite, color, cellSize, gravityScale, freezeRotation, supportTilemaps, supportObjectMask);
+        fallingBlock.Initialize(
+            sprite,
+            color,
+            cellSize,
+            gravityScale,
+            freezeRotation,
+            GetFallingBlockSupportTilemaps(),
+            supportObjectMask);
     }
 
     private FallingTileBlock CreateDefaultFallingBlock(Vector3 position, Transform parent)
@@ -209,6 +227,40 @@ public class FallingDestructibleTilemapLayer : MonoBehaviour, ILevelPhaseListene
         if (supportTilemaps == null || supportTilemaps.Length == 0)
         {
             supportTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        }
+    }
+
+    private Tilemap[] GetFallingBlockSupportTilemaps()
+    {
+        ResolveSupportTilemaps();
+
+        HashSet<Tilemap> uniqueTilemaps = new HashSet<Tilemap>();
+        List<Tilemap> resolvedTilemaps = new List<Tilemap>();
+
+        if (supportTilemaps != null)
+        {
+            for (int i = 0; i < supportTilemaps.Length; i++)
+            {
+                AddUniqueTilemap(supportTilemaps[i], uniqueTilemaps, resolvedTilemaps);
+            }
+        }
+
+        HazardTilemapLayer[] hazardLayers = FindObjectsByType<HazardTilemapLayer>(FindObjectsSortMode.None);
+
+        for (int i = 0; i < hazardLayers.Length; i++)
+        {
+            Tilemap hazardTilemap = hazardLayers[i] != null ? hazardLayers[i].Tilemap : null;
+            AddUniqueTilemap(hazardTilemap, uniqueTilemaps, resolvedTilemaps);
+        }
+
+        return resolvedTilemaps.ToArray();
+    }
+
+    private static void AddUniqueTilemap(Tilemap tilemap, HashSet<Tilemap> uniqueTilemaps, List<Tilemap> resolvedTilemaps)
+    {
+        if (tilemap != null && uniqueTilemaps.Add(tilemap))
+        {
+            resolvedTilemaps.Add(tilemap);
         }
     }
 }

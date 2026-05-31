@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Placeable_Open_Door
   m_EditorClassIdentifier: 
   id: sensor_door
-  displayName: Puerta Sensor
-  prefab: {fileID: 1000000000000000001, guid: 16bfb52b90924d6eb3a0bd61eb4031f8, type: 3}
+  displayName: Puerta Abierta
+  prefab: {fileID: 1000000000000000001, guid: 6b1e753cb5ca98041840923bf8e79d3d, type: 3}
   icon: {fileID: -3011696200367987486, guid: 3ab17030b1989c5458b4eff1e29f4dbc, type: 3}
   useMode: 0

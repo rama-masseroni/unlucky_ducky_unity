@@ -136,6 +136,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
     private void BreakObjectsInCells(IReadOnlyList<Vector3Int> affectedCells)
     {
         HashSet<GameObject> brokenObjects = new HashSet<GameObject>();
+        HashSet<Vector3Int> affectedCellSet = new HashSet<Vector3Int>(affectedCells);
 
         for (int i = 0; i < affectedCells.Count; i++)
         {
@@ -161,7 +162,8 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
                 Component breakableComponent = breakable as Component;
                 GameObject breakableObject = breakableComponent != null ? breakableComponent.gameObject : hit.gameObject;
 
-                if (brokenObjects.Contains(breakableObject))
+                if (brokenObjects.Contains(breakableObject)
+                    || !IsBreakableInAffectedCell(breakableComponent, hit, affectedCellSet))
                 {
                     continue;
                 }
@@ -170,6 +172,18 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
                 breakable.Break();
             }
         }
+    }
+
+    private bool IsBreakableInAffectedCell(
+        Component breakableComponent,
+        Collider2D hit,
+        HashSet<Vector3Int> affectedCellSet)
+    {
+        Vector3 samplePosition = breakableComponent != null
+            ? breakableComponent.transform.position
+            : hit.transform.position;
+        Vector3Int objectCell = referenceTilemap.WorldToCell(samplePosition);
+        return affectedCellSet.Contains(objectCell);
     }
 
     private void KillPlayersInCells(IReadOnlyList<Vector3Int> affectedCells)

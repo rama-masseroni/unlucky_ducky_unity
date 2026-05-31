@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -878171517557776929, guid: 8cb23497167a8894f862b917e57f0e1f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 26da13f48c16491989780be34de8b3e6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -179,17 +179,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cce4d0c63cf84c8aa560459891132678, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnluckyDucky.Player::PlayerDuckController
-  walkSpeed: 3
+  walkSpeed: 2
   fallSpeed: 6
   slopeSpeedMultiplier: 0.5
   initialDirection: 1
   groundCheckDistance: 0.075
   groundCheckOffset: {x: 0.21, y: -0.28}
   groundTilemaps: []
+  groundObjectMask:
+    serializedVersion: 2
+    m_Bits: 0
+  groundObjectProbeRadius: 0.04
   obstacleCheckDistance: 0.08
   obstacleCheckOffset: {x: 0.24, y: -0.05}
   obstacleCheckHeight: 0.24
   obstacleTilemaps: []
+  obstacleObjectMask:
+    serializedVersion: 2
+    m_Bits: 0
+  obstacleObjectProbeRadius: 0.04
   resetLevelOnDeath: 1
   deathResetDelaySeconds: 0.5
   gameStateManager: {fileID: 0}

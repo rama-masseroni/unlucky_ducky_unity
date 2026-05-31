@@ -68,6 +68,69 @@ public class DuckMovementRulesTests
     }
 
     [Test]
+    public void GridWalkerController_ToggleFacingDirection_InvertsDirection()
+    {
+        GameObject gameObject = new GameObject("GridWalker", typeof(Rigidbody2D));
+        GridWalkerController controller = gameObject.AddComponent<GridWalkerController>();
+
+        Assert.AreEqual(1, controller.FacingDirection);
+
+        controller.ToggleFacingDirection();
+
+        Assert.AreEqual(-1, controller.FacingDirection);
+
+        Object.DestroyImmediate(gameObject);
+    }
+
+    [Test]
+    public void GridWalkerController_WhenToggledBeforeExecution_MovesLeft()
+    {
+        GameObject walkerObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(GridWalkerController));
+        Rigidbody2D body = walkerObject.GetComponent<Rigidbody2D>();
+        GridWalkerController controller = walkerObject.GetComponent<GridWalkerController>();
+        GameObject groundObject = new GameObject("GroundObject", typeof(BoxCollider2D));
+        groundObject.transform.position = new Vector2(0.24f, -0.36f);
+        groundObject.GetComponent<BoxCollider2D>().size = new Vector2(1f, 0.1f);
+
+        SetPrivateField(controller, "groundTilemaps", new Tilemap[0]);
+        SetPrivateField(controller, "obstacleTilemaps", new Tilemap[0]);
+        SetPrivateField(controller, "groundObjectMask", new LayerMask { value = 1 << 0 });
+        controller.ToggleFacingDirection();
+        Physics2D.SyncTransforms();
+
+        controller.OnLevelPhaseChanged(LevelPhase.Execution);
+        typeof(GridWalkerController)
+            .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(controller, null);
+
+        Assert.AreEqual(-1f, body.linearVelocity.x, 0.001f);
+        Assert.AreEqual(0f, body.linearVelocity.y, 0.001f);
+
+        Object.DestroyImmediate(groundObject);
+        Object.DestroyImmediate(walkerObject);
+    }
+
+    [Test]
+    public void GridWalkerController_SetFacingDirection_SyncsSpriteFlip()
+    {
+        GameObject gameObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(SpriteRenderer));
+        SpriteRenderer renderer = gameObject.GetComponent<SpriteRenderer>();
+        GridWalkerController controller = gameObject.AddComponent<GridWalkerController>();
+
+        Assert.IsFalse(renderer.flipX);
+
+        controller.SetFacingDirection(-1);
+
+        Assert.IsTrue(renderer.flipX);
+
+        controller.SetFacingDirection(1);
+
+        Assert.IsFalse(renderer.flipX);
+
+        Object.DestroyImmediate(gameObject);
+    }
+
+    [Test]
     public void GridWalkerController_WhenGroundObjectProbeHitsCollider_MovesHorizontally()
     {
         GameObject walkerObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(GridWalkerController));
@@ -135,6 +198,33 @@ public class DuckMovementRulesTests
         GameObject solidObject = new GameObject("SolidObject", typeof(BoxCollider2D), typeof(GridWalkerSolidTestMarker));
         solidObject.transform.position = new Vector2(-0.24f, -0.36f);
         solidObject.GetComponent<BoxCollider2D>().size = new Vector2(1f, 0.1f);
+
+        SetPrivateField(controller, "groundTilemaps", new Tilemap[0]);
+        SetPrivateField(controller, "obstacleTilemaps", new Tilemap[0]);
+        SetPrivateField(controller, "groundObjectMask", new LayerMask { value = 0 });
+        Physics2D.SyncTransforms();
+
+        controller.OnLevelPhaseChanged(LevelPhase.Execution);
+        typeof(GridWalkerController)
+            .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(controller, null);
+
+        Assert.AreEqual(1f, body.linearVelocity.x, 0.001f);
+        Assert.AreEqual(0f, body.linearVelocity.y, 0.001f);
+
+        Object.DestroyImmediate(solidObject);
+        Object.DestroyImmediate(walkerObject);
+    }
+
+    [Test]
+    public void GridWalkerController_WhenStandingOnFullCellGridWalkerSolid_MovesHorizontallyWithoutMask()
+    {
+        GameObject walkerObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(GridWalkerController));
+        walkerObject.transform.position = Vector2.up * 0.78f;
+        Rigidbody2D body = walkerObject.GetComponent<Rigidbody2D>();
+        GridWalkerController controller = walkerObject.GetComponent<GridWalkerController>();
+        GameObject solidObject = new GameObject("SolidObject", typeof(BoxCollider2D), typeof(GridWalkerSolidTestMarker));
+        solidObject.GetComponent<BoxCollider2D>().size = Vector2.one;
 
         SetPrivateField(controller, "groundTilemaps", new Tilemap[0]);
         SetPrivateField(controller, "obstacleTilemaps", new Tilemap[0]);
@@ -270,6 +360,29 @@ public class DuckMovementRulesTests
         Assert.IsTrue(duck.IsDead);
 
         Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenHazardProbeIsCoveredByGridWalkerSolid_DoesNotDie()
+    {
+        GameObject gridObject = CreateHazardTilemapWithTile(out Tilemap tilemap, out Vector3Int cell);
+        GameObject coverObject = new GameObject("Hazard Cover", typeof(BoxCollider2D), typeof(GridWalkerSolidTestMarker));
+        coverObject.transform.position = tilemap.GetCellCenterWorld(cell);
+        coverObject.GetComponent<BoxCollider2D>().size = Vector2.one;
+        GameObject duckObject = CreateDuckOnCell(tilemap, cell);
+        duckObject.transform.position = tilemap.GetCellCenterWorld(cell) + Vector3.up * 0.78f;
+        PlayerDuckController duck = duckObject.GetComponent<PlayerDuckController>();
+
+        Physics2D.SyncTransforms();
+        duck.OnLevelPhaseChanged(LevelPhase.Execution);
+        bool killed = duck.TryKillIfTouchingHazard();
+
+        Assert.IsFalse(killed);
+        Assert.IsFalse(duck.IsDead);
+
+        Object.DestroyImmediate(duckObject);
+        Object.DestroyImmediate(coverObject);
         Object.DestroyImmediate(gridObject);
     }
 
