@@ -138,7 +138,7 @@ public class DefeatScreenManager : MonoBehaviour
         TextMeshProUGUI title = CreateText(card.transform, "Derrota", 54f, FontStyles.Bold, InkColor);
         Place(title.rectTransform, new Vector2(0f, 100f), new Vector2(460f, 68f));
 
-        TextMeshProUGUI subtitle = CreateText(card.transform, "\u00a1El pato muri\u00f3!", 30f, FontStyles.Bold, InkColor);
+        TextMeshProUGUI subtitle = CreateText(card.transform, "\u00a1El pato se pinch\u00f3!", 30f, FontStyles.Bold, InkColor);
         Place(subtitle.rectTransform, new Vector2(0f, 38f), new Vector2(460f, 44f));
 
         Button retryButton = CreateButton(card.transform, "Reintentar", RetryButton, AccentColor);
