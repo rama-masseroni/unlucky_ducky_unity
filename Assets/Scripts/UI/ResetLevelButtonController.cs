@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,15 +6,17 @@ using UnityEngine.UI;
 public class ResetLevelButtonController : MonoBehaviour
 {
     [SerializeField] private GameStateManager gameStateManager;
-    [SerializeField] private string labelText = "R";
+    [SerializeField] private string labelText = "\u21bb";
 
     private Button button;
-    private Text label;
+    private Text legacyLabel;
+    private TextMeshProUGUI label;
 
     private void Awake()
     {
         button = GetComponent<Button>();
-        label = GetComponentInChildren<Text>();
+        legacyLabel = GetComponentInChildren<Text>();
+        label = GetComponentInChildren<TextMeshProUGUI>();
 
         if (gameStateManager == null)
         {
@@ -52,7 +55,12 @@ public class ResetLevelButtonController : MonoBehaviour
 
         if (label == null)
         {
-            label = GetComponentInChildren<Text>();
+            label = GetComponentInChildren<TextMeshProUGUI>();
+        }
+
+        if (legacyLabel == null)
+        {
+            legacyLabel = GetComponentInChildren<Text>();
         }
 
         if (button != null)
@@ -63,6 +71,11 @@ public class ResetLevelButtonController : MonoBehaviour
         if (label != null)
         {
             label.text = labelText;
+        }
+
+        if (legacyLabel != null)
+        {
+            legacyLabel.text = labelText;
         }
     }
 }
