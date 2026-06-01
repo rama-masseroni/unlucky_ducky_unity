@@ -78,6 +78,8 @@ public class LevelPhaseSystemTests
     private readonly Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
     private readonly Type levelDefinitionType = Type.GetType("LevelDefinition, UnluckyDucky.Core");
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
+    private readonly Type victoryScreenManagerType = Type.GetType("VictoryScreenManager, Assembly-CSharp");
+    private readonly Type defeatScreenManagerType = Type.GetType("DefeatScreenManager, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
     private readonly Type buildModePlacementControllerType = Type.GetType("BuildModePlacementController, Assembly-CSharp");
@@ -118,6 +120,12 @@ public class LevelPhaseSystemTests
             UnityEngine.Object.DestroyImmediate(resetButtonObject);
         }
 
+        DestroyObjectNamed("VictoryScreenCanvas");
+        DestroyObjectNamed("VictoryScreenManager");
+        DestroyObjectNamed("DefeatScreenCanvas");
+        DestroyObjectNamed("DefeatScreenManager");
+        Time.timeScale = 1f;
+
         if (gridObject != null)
         {
             UnityEngine.Object.DestroyImmediate(gridObject);
@@ -125,6 +133,7 @@ public class LevelPhaseSystemTests
 
         goalPointControllerType?.GetProperty("SceneLoadOverride").SetValue(null, null);
         gameStateManagerType?.GetProperty("SceneReloadOverride").SetValue(null, null);
+        playerDuckControllerType?.GetProperty("DeathScreenHandler").SetValue(null, null);
     }
 
     [Test]
@@ -260,6 +269,7 @@ public class LevelPhaseSystemTests
     {
         Assert.IsNotNull(levelDefinitionType);
         Assert.IsNotNull(goalPointControllerType);
+        Assert.IsNotNull(victoryScreenManagerType);
         Assert.IsNotNull(playerDuckControllerType);
 
         object manager = CreateGameStateManager();
@@ -289,7 +299,50 @@ public class LevelPhaseSystemTests
             .Invoke(goal, new object[] { duck });
 
         Assert.IsTrue(completedInExecution);
+        Assert.IsNull(requestedScene);
+
+        GameObject victoryObject = GameObject.Find("VictoryScreenManager");
+        Assert.IsNotNull(victoryObject);
+        Component victoryScreen = victoryObject.GetComponent(victoryScreenManagerType);
+        Assert.IsNotNull(victoryScreen);
+        Assert.IsTrue((bool)GetProperty(victoryScreen, "IsVisible"));
+        Assert.AreEqual("Level_02_TestEmpty", GetProperty(victoryScreen, "NextSceneName"));
+
+        victoryScreenManagerType.GetMethod("ContinueButton").Invoke(victoryScreen, null);
+
         Assert.AreEqual("Level_02_TestEmpty", requestedScene);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenKilled_ShowsDefeatScreenAndRetryResetsLevel()
+    {
+        Assert.IsNotNull(gameStateManagerType);
+        Assert.IsNotNull(playerDuckControllerType);
+        Assert.IsNotNull(defeatScreenManagerType);
+
+        CreateGameStateManager();
+        int reloadRequests = 0;
+        gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(null, new Action<int, string>((_, _) => reloadRequests++));
+        RegisterDefeatScreenHandler();
+
+        duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        Component duck = duckObject.AddComponent(playerDuckControllerType);
+
+        playerDuckControllerType.GetMethod("Kill").Invoke(duck, null);
+
+        Assert.IsTrue((bool)GetProperty(duck, "IsDead"));
+
+        GameObject defeatObject = GameObject.Find("DefeatScreenManager");
+        Assert.IsNotNull(defeatObject);
+        Component defeatScreen = defeatObject.GetComponent(defeatScreenManagerType);
+        Assert.IsNotNull(defeatScreen);
+        Assert.IsTrue((bool)GetProperty(defeatScreen, "IsVisible"));
+        Assert.AreEqual(0f, Time.timeScale);
+
+        defeatScreenManagerType.GetMethod("RetryButton").Invoke(defeatScreen, null);
+
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.AreEqual(1, reloadRequests);
     }
 
     [Test]
@@ -1196,6 +1249,20 @@ public class LevelPhaseSystemTests
         return (bool)playerDuckControllerType.GetProperty("IsDead").GetValue(duck);
     }
 
+    private void RegisterDefeatScreenHandler()
+    {
+        MethodInfo handlerMethod = defeatScreenManagerType.GetMethod(
+            "ShowForPlayerDeath",
+            BindingFlags.Public | BindingFlags.Static);
+        Assert.IsNotNull(handlerMethod);
+
+        PropertyInfo handlerProperty = playerDuckControllerType.GetProperty("DeathScreenHandler");
+        Assert.IsNotNull(handlerProperty);
+
+        Delegate handler = Delegate.CreateDelegate(handlerProperty.PropertyType, handlerMethod);
+        handlerProperty.SetValue(null, handler);
+    }
+
     private static void DestroyFallingBlocksRoot()
     {
         GameObject root = GameObject.Find("FallingBlocksRoot");
@@ -1211,5 +1278,22 @@ public class LevelPhaseSystemTests
         target.GetType()
             .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)
             .SetValue(target, value);
+    }
+
+    private static object GetProperty(object target, string propertyName)
+    {
+        return target.GetType()
+            .GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance)
+            .GetValue(target);
+    }
+
+    private static void DestroyObjectNamed(string objectName)
+    {
+        GameObject gameObject = GameObject.Find(objectName);
+
+        if (gameObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(gameObject);
+        }
     }
 }

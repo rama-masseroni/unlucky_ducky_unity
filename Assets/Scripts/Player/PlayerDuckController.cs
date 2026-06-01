@@ -1,7 +1,8 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using System.Collections;
 
 public class PlayerDuckController : GridWalkerController
 {
@@ -21,6 +22,7 @@ public class PlayerDuckController : GridWalkerController
     private float movementLogBlockSize = 1f;
 
     public bool IsDead => isDead;
+    public static Func<PlayerDuckController, bool> DeathScreenHandler { get; set; }
 
     protected override void Awake()
     {
@@ -39,14 +41,19 @@ public class PlayerDuckController : GridWalkerController
         isDead = true;
         SetVisible(false);
 
-        if (resetLevelOnDeath && deathResetCoroutine == null)
-        {
-            deathResetCoroutine = StartCoroutine(ResetLevelAfterDeath());
-        }
-
         if (Body != null)
         {
             Body.linearVelocity = Vector2.zero;
+        }
+
+        if (resetLevelOnDeath && deathResetCoroutine == null)
+        {
+            if (DeathScreenHandler != null && DeathScreenHandler.Invoke(this))
+            {
+                return;
+            }
+
+            deathResetCoroutine = StartCoroutine(ResetLevelAfterDeath());
         }
     }
 

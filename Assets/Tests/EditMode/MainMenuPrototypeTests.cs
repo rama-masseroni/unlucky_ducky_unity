@@ -75,6 +75,35 @@ public class MainMenuPrototypeTests
     }
 
     [Test]
+    public void LevelSelectController_Rebuild_KeepsWorldsOnSeparatePages()
+    {
+        Assert.IsNotNull(levelCatalogType);
+        Assert.IsNotNull(levelSelectControllerType);
+
+        ScriptableObject catalog = CreateCatalog(
+            ("Scene_01_01", "Mundo 1", 1),
+            ("Scene_01_02", "Mundo 1", 2),
+            ("Scene_01_03", "Mundo 1", 3),
+            ("Scene_01_04", "Mundo 1", 4),
+            ("Scene_02_01", "Mundo 2", 5),
+            ("Scene_02_02", "Mundo 2", 6));
+        GameObject contentObject = CreateGameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup));
+        GameObject controllerObject = CreateGameObject("LevelSelectController");
+        Component controller = controllerObject.AddComponent(levelSelectControllerType);
+
+        Invoke(controller, "Configure", catalog, contentObject.transform);
+
+        Assert.AreEqual(4, ((IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons")).Count);
+        Assert.AreEqual(5, contentObject.transform.childCount);
+        Assert.AreEqual(2, (int)GetProperty(controller, "TotalPages"));
+
+        Invoke(controller, "ShowNextPage");
+
+        Assert.AreEqual(2, ((IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons")).Count);
+        Assert.AreEqual(5, contentObject.transform.childCount);
+    }
+
+    [Test]
     public void MainMenuNavigationController_ShowPanel_ActivatesOnlySelectedPanel()
     {
         Assert.IsNotNull(mainMenuNavigationControllerType);

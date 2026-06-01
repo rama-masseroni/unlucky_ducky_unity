@@ -17,6 +17,7 @@ public class LevelSelectController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI pageLabel;
 
     private readonly List<Button> createdLevelButtons = new List<Button>();
+    private readonly List<LevelCatalogPage> pages = new List<LevelCatalogPage>();
     private int currentPageIndex;
     private int totalPages = 1;
 
@@ -61,16 +62,17 @@ public class LevelSelectController : MonoBehaviour
             return;
         }
 
-        List<LevelCatalogEntry> entries = catalog.GetOrderedEntries();
-        totalPages = Mathf.Max(1, Mathf.CeilToInt(entries.Count / (float)ItemsPerPage));
+        BuildPages(catalog.GetOrderedEntries());
+        totalPages = Mathf.Max(1, pages.Count);
         currentPageIndex = Mathf.Clamp(currentPageIndex, 0, totalPages - 1);
-        int startIndex = currentPageIndex * ItemsPerPage;
+        IReadOnlyList<LevelCatalogEntry> entries = pages.Count > 0
+            ? pages[currentPageIndex].Entries
+            : Array.Empty<LevelCatalogEntry>();
 
         for (int i = 0; i < ItemsPerPage; i++)
         {
-            int entryIndex = startIndex + i;
-            LevelCatalogEntry entry = entryIndex < entries.Count ? entries[entryIndex] : null;
-            CreateLevelButton(entry, entryIndex + 1);
+            LevelCatalogEntry entry = i < entries.Count ? entries[i] : null;
+            CreateLevelButton(entry, i + 1);
         }
 
         UpdatePaginationControls();
@@ -135,6 +137,30 @@ public class LevelSelectController : MonoBehaviour
             {
                 DestroyImmediate(child);
             }
+        }
+    }
+
+    private void BuildPages(List<LevelCatalogEntry> entries)
+    {
+        pages.Clear();
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            LevelCatalogEntry entry = entries[i];
+
+            if (entry == null)
+            {
+                continue;
+            }
+
+            string worldLabel = entry.WorldLabel;
+
+            if (pages.Count == 0 || !string.Equals(pages[pages.Count - 1].WorldLabel, worldLabel, StringComparison.Ordinal))
+            {
+                pages.Add(new LevelCatalogPage(worldLabel));
+            }
+
+            pages[pages.Count - 1].Entries.Add(entry);
         }
     }
 
@@ -205,7 +231,8 @@ public class LevelSelectController : MonoBehaviour
 
         if (pageLabel != null)
         {
-            pageLabel.text = $"Mundo {currentPageIndex + 1} / {totalPages}";
+            string label = pages.Count > currentPageIndex ? pages[currentPageIndex].WorldLabel : $"Mundo {currentPageIndex + 1}";
+            pageLabel.text = $"{label} / {totalPages}";
         }
     }
 
@@ -232,5 +259,16 @@ public class LevelSelectController : MonoBehaviour
         }
 
         return slotNumber.ToString();
+    }
+
+    private sealed class LevelCatalogPage
+    {
+        public LevelCatalogPage(string worldLabel)
+        {
+            WorldLabel = worldLabel;
+        }
+
+        public string WorldLabel { get; }
+        public List<LevelCatalogEntry> Entries { get; } = new List<LevelCatalogEntry>();
     }
 }

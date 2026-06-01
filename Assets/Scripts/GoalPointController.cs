@@ -6,6 +6,7 @@ using System;
 public class GoalPointController : MonoBehaviour
 {
     [SerializeField] private GameStateManager gameStateManager;
+    [SerializeField] private VictoryScreenManager victoryScreenManager;
 
     private bool hasCompletedLevel;
 
@@ -50,8 +51,24 @@ public class GoalPointController : MonoBehaviour
         }
 
         hasCompletedLevel = true;
-        LoadScene(levelDefinition.NextSceneName);
+        ShowVictoryScreen(levelDefinition.NextSceneName);
         return true;
+    }
+
+    protected virtual void ShowVictoryScreen(string nextSceneName)
+    {
+        if (victoryScreenManager == null)
+        {
+            victoryScreenManager = VictoryScreenManager.FindOrCreate();
+        }
+
+        if (victoryScreenManager != null)
+        {
+            victoryScreenManager.Show(nextSceneName, LoadScene);
+            return;
+        }
+
+        LoadScene(nextSceneName);
     }
 
     protected virtual void LoadScene(string sceneName)
