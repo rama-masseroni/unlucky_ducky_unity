@@ -93,7 +93,13 @@ public static class LevelActorGridSnapper
     private static bool IsSnappedActor(Transform transform)
     {
         return transform.GetComponent<PlayerDuckController>() != null
-            || transform.GetComponent<GoalPointController>() != null;
+            || transform.GetComponent<GoalPointController>() != null
+            || transform.GetComponent<EnemyRatController>() != null
+            || transform.GetComponent<BombController>() != null
+            || transform.GetComponent<SensorController>() != null
+            || transform.GetComponent<SensorDoorController>() != null
+            || transform.GetComponent<DestructibleBlock>() != null
+            || transform.GetComponent<PlacedPlaceableInstance>() != null;
     }
 
     private static Tilemap FindReferenceTilemap(Scene scene)

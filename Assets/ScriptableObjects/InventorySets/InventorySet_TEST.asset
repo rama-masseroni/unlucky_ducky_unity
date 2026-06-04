@@ -19,9 +19,3 @@ MonoBehaviour:
     amount: 1
   - definition: {fileID: 11400000, guid: d0728b15cdbd4b20996301c375bcd5fb, type: 2}
     amount: 1
-  - definition: {fileID: 11400000, guid: ab9618b2bc3e4b28946d30870f2fb2c1, type: 2}
-    amount: 2
-  - definition: {fileID: 11400000, guid: 02f59306579d48f2aad9af02feb2dd01, type: 2}
-    amount: 2
-  - definition: {fileID: 11400000, guid: 574e25c4d5ec3204e932b9a2f09a4e89, type: 2}
-    amount: 2
