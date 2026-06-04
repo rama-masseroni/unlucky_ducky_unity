@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: World_04
   worldName: Cargo Docks
-  enableTileDestructionTool: 0

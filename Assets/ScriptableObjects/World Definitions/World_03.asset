@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: World_03
   worldName: Logistics bay
-  enableTileDestructionTool: 0

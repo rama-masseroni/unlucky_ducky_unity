@@ -821,7 +821,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
   levelDefinition: {fileID: 11400000, guid: d3a2f7a48b51ca74b8036f4cc723ad12, type: 2}
   fallbackInventorySet: {fileID: 11400000, guid: 7a3d6d667896496c900d7f0fb907f45a, type: 2}
-  enableTileDestructionToolWhenNoLevelDefinition: 1
   phaseListeners: []
   autoDiscoverPhaseListeners: 1
 --- !u!224 &940000000000000002 stripped

@@ -80,6 +80,7 @@ public class LevelPhaseSystemTests
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
     private readonly Type victoryScreenManagerType = Type.GetType("VictoryScreenManager, Assembly-CSharp");
     private readonly Type defeatScreenManagerType = Type.GetType("DefeatScreenManager, Assembly-CSharp");
+    private readonly Type levelHudPanelType = Type.GetType("LevelHudPanel, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
     private readonly Type buildModePlacementControllerType = Type.GetType("BuildModePlacementController, Assembly-CSharp");
@@ -133,6 +134,7 @@ public class LevelPhaseSystemTests
 
         goalPointControllerType?.GetProperty("SceneLoadOverride").SetValue(null, null);
         gameStateManagerType?.GetProperty("SceneReloadOverride").SetValue(null, null);
+        gameStateManagerType?.GetProperty("PlanningTimeoutHandler").SetValue(null, null);
         playerDuckControllerType?.GetProperty("DeathScreenHandler").SetValue(null, null);
     }
 
@@ -200,6 +202,100 @@ public class LevelPhaseSystemTests
 
         Assert.IsTrue((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
         Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+    }
+
+    [Test]
+    public void GameStateManager_PlanningTimer_CountsDownOnlyInPlanning()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(10f);
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+
+        InvokePlanningTimerTick(manager, 3f);
+
+        Assert.AreEqual(7f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+
+        InvokePlanningTimerTick(manager, 3f);
+
+        Assert.AreEqual(7f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+    }
+
+    [Test]
+    public void GameStateManager_PlanningTimer_ZeroLimitDoesNotTimeout()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(0f);
+        bool timedOut = false;
+        RegisterPlanningTimeoutHandler(_ =>
+        {
+            timedOut = true;
+            return true;
+        });
+
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+        InvokePlanningTimerTick(manager, 30f);
+
+        Assert.IsFalse((bool)gameStateManagerType.GetProperty("HasPlanningTimeLimit").GetValue(manager));
+        Assert.AreEqual(0f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.IsFalse(timedOut);
+        Assert.IsTrue((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
+    }
+
+    [Test]
+    public void GameStateManager_PlanningTimer_TimeoutShowsDefeatAndBlocksExecution()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(1f);
+        string timeoutMessage = null;
+        RegisterPlanningTimeoutHandler(message =>
+        {
+            timeoutMessage = message;
+            return true;
+        });
+
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+        InvokePlanningTimerTick(manager, 1.1f);
+
+        Assert.AreEqual(0f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.AreEqual("Se acab\u00f3 el tiempo de planeaci\u00f3n", timeoutMessage);
+        Assert.IsFalse((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
+        Assert.IsFalse((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+        Assert.AreEqual("Planning", gameStateManagerType.GetProperty("CurrentPhase").GetValue(manager).ToString());
+    }
+
+    [Test]
+    public void LevelHudPanel_PlanningTimer_ShowsFormattedTimeAndHidesWithoutLimit()
+    {
+        Assert.IsNotNull(levelHudPanelType);
+
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(65.2f);
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+
+        GameObject hudObject = new GameObject("HUD", typeof(RectTransform));
+        Component hud = hudObject.AddComponent(levelHudPanelType);
+
+        try
+        {
+            levelHudPanelType.GetMethod("RefreshPlanningTimer").Invoke(hud, null);
+            Type textMeshProType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            Assert.IsNotNull(textMeshProType);
+            Component timerText = (Component)hudObject.transform.Find("PlanningTimerText").GetComponent(textMeshProType);
+            Assert.IsNotNull(timerText);
+
+            Assert.IsTrue(timerText.gameObject.activeSelf);
+            Assert.AreEqual("01:06", textMeshProType.GetProperty("text").GetValue(timerText));
+
+            gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { CreateLevelDefinitionWithPlanningTime(0f) });
+            levelHudPanelType.GetMethod("RefreshPlanningTimer").Invoke(hud, null);
+
+            Assert.IsFalse(timerText.gameObject.activeSelf);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(hudObject);
+        }
     }
 
     [Test]
@@ -1099,6 +1195,30 @@ public class LevelPhaseSystemTests
             .GetValue(inventorySet);
         entries.Add(authoredEntry);
         return inventorySet;
+    }
+
+    private ScriptableObject CreateLevelDefinitionWithPlanningTime(float planningTimeLimitSeconds)
+    {
+        Assert.IsNotNull(levelDefinitionType);
+        ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
+        SetPrivateField(levelDefinition, "planningTimeLimitSeconds", planningTimeLimitSeconds);
+        return levelDefinition;
+    }
+
+    private void InvokePlanningTimerTick(object manager, float deltaSeconds)
+    {
+        gameStateManagerType
+            .GetMethod("TickPlanningTimer", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(manager, new object[] { deltaSeconds });
+    }
+
+    private void RegisterPlanningTimeoutHandler(Func<string, bool> handler)
+    {
+        PropertyInfo handlerProperty = gameStateManagerType.GetProperty("PlanningTimeoutHandler");
+        Assert.IsNotNull(handlerProperty);
+
+        Delegate handlerDelegate = Delegate.CreateDelegate(handlerProperty.PropertyType, handler.Target, handler.Method);
+        handlerProperty.SetValue(null, handlerDelegate);
     }
 
     private object CreateLevelManagerWithPickaxe(

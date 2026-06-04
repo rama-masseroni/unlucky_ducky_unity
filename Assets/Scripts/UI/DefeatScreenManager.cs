@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class DefeatScreenManager : MonoBehaviour
 {
     private const string MainMenuSceneName = "MainMenuScene";
+    private const string DefaultSubtitle = "\u00a1El pato se pinch\u00f3!";
+    private const string PlanningTimeoutSubtitle = "Se acab\u00f3 el tiempo de planeaci\u00f3n";
 
     private static readonly Color OverlayColor = new Color(0f, 0f, 0f, 0.68f);
     private static readonly Color CardColor = new Color(1f, 0.97f, 0.89f, 0.96f);
@@ -14,6 +16,7 @@ public class DefeatScreenManager : MonoBehaviour
     private static readonly Color RedColor = new Color(0.9f, 0.45f, 0.36f, 1f);
 
     [SerializeField] private GameObject container;
+    [SerializeField] private TextMeshProUGUI subtitleText;
 
     public bool IsVisible => container != null && container.activeSelf;
 
@@ -21,6 +24,7 @@ public class DefeatScreenManager : MonoBehaviour
     private static void RegisterDeathHandler()
     {
         PlayerDuckController.DeathScreenHandler = ShowForPlayerDeath;
+        GameStateManager.PlanningTimeoutHandler = ShowForPlanningTimeout;
     }
 
     public static bool ShowForPlayerDeath(PlayerDuckController _)
@@ -32,7 +36,20 @@ public class DefeatScreenManager : MonoBehaviour
             return false;
         }
 
-        manager.Show();
+        manager.Show(DefaultSubtitle);
+        return true;
+    }
+
+    public static bool ShowForPlanningTimeout(string message)
+    {
+        DefeatScreenManager manager = FindOrCreate();
+
+        if (manager == null)
+        {
+            return false;
+        }
+
+        manager.Show(string.IsNullOrWhiteSpace(message) ? PlanningTimeoutSubtitle : message);
         return true;
     }
 
@@ -75,7 +92,17 @@ public class DefeatScreenManager : MonoBehaviour
 
     public void Show()
     {
+        Show(DefaultSubtitle);
+    }
+
+    public void Show(string subtitle)
+    {
         EnsureLayout();
+        if (subtitleText != null)
+        {
+            subtitleText.text = string.IsNullOrWhiteSpace(subtitle) ? DefaultSubtitle : subtitle;
+        }
+
         container.SetActive(true);
         container.transform.SetAsLastSibling();
         Time.timeScale = 0f;
@@ -138,8 +165,8 @@ public class DefeatScreenManager : MonoBehaviour
         TextMeshProUGUI title = CreateText(card.transform, "Derrota", 54f, FontStyles.Bold, InkColor);
         Place(title.rectTransform, new Vector2(0f, 100f), new Vector2(460f, 68f));
 
-        TextMeshProUGUI subtitle = CreateText(card.transform, "\u00a1El pato se pinch\u00f3!", 30f, FontStyles.Bold, InkColor);
-        Place(subtitle.rectTransform, new Vector2(0f, 38f), new Vector2(460f, 44f));
+        subtitleText = CreateText(card.transform, DefaultSubtitle, 30f, FontStyles.Bold, InkColor);
+        Place(subtitleText.rectTransform, new Vector2(0f, 38f), new Vector2(460f, 44f));
 
         Button retryButton = CreateButton(card.transform, "Reintentar", RetryButton, AccentColor);
         Place(retryButton.GetComponent<RectTransform>(), new Vector2(0f, -42f), new Vector2(400f, 62f));
