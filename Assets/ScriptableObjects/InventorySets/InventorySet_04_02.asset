@@ -13,9 +13,5 @@ MonoBehaviour:
   m_Name: InventorySet_04_02
   m_EditorClassIdentifier: 
   entries:
-  - definition: {fileID: 11400000, guid: ab9618b2bc3e4b28946d30870f2fb2c1, type: 2}
-    amount: 1
-  - definition: {fileID: 11400000, guid: 574e25c4d5ec3204e932b9a2f09a4e89, type: 2}
-    amount: 1
   - definition: {fileID: 11400000, guid: 9940634d1fb015e4b8d62542628ce243, type: 2}
     amount: 1

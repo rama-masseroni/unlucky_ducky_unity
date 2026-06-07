@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: world_02
   worldName: Construction Zone
-  enableTileDestructionTool: 0

@@ -1,45 +1,35 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 public class GameStateManager : MonoBehaviour
 {
+    private const string PlanningTimeoutMessage = "Se acab\u00f3 el tiempo de planeaci\u00f3n";
+
     [SerializeField] private LevelDefinition levelDefinition;
     [SerializeField] private PlaceableInventorySet fallbackInventorySet;
-    [FormerlySerializedAs("enablePlanningTileDestructionWhenNoLevelDefinition")]
-    [SerializeField] private bool enableTileDestructionToolWhenNoLevelDefinition = true;
     [SerializeField] private MonoBehaviour[] phaseListeners;
     [SerializeField] private bool autoDiscoverPhaseListeners = true;
 
     private PlaceableInventoryRuntime inventory;
+    private float remainingPlanningSeconds;
+    private bool planningTimerExpired;
 
     public static GameStateManager Instance { get; private set; }
 
     public event Action<LevelPhase> PhaseChanged;
     public event Action InventoryChanged;
+    public event Action<float> PlanningTimerChanged;
 
     public static Action<int, string> SceneReloadOverride { get; set; }
+    public static Func<string, bool> PlanningTimeoutHandler { get; set; }
 
     public LevelPhase CurrentPhase { get; private set; } = LevelPhase.Planning;
     public LevelDefinition CurrentLevelDefinition => levelDefinition;
     public PlaceableInventoryRuntime Inventory => inventory;
-    public bool CanStartExecution => inventory == null || inventory.AllRequiredPlanningItemsUsed;
-
-    public bool IsTileDestructionToolEnabled
-    {
-        get
-        {
-            WorldDefinition worldDefinition = levelDefinition != null ? levelDefinition.WorldDefinition : null;
-
-            if (worldDefinition != null)
-            {
-                return worldDefinition.EnableTileDestructionTool;
-            }
-
-            return enableTileDestructionToolWhenNoLevelDefinition;
-        }
-    }
+    public float RemainingPlanningSeconds => remainingPlanningSeconds;
+    public bool HasPlanningTimeLimit => GetPlanningTimeLimitSeconds() > 0f;
+    public bool CanStartExecution => !planningTimerExpired && (inventory == null || inventory.AllRequiredPlanningItemsUsed);
 
     public static GameStateManager FindOrCreate()
     {
@@ -69,8 +59,14 @@ public class GameStateManager : MonoBehaviour
 
         Instance = this;
         CurrentPhase = LevelPhase.Planning;
+        InitializePlanningTimer();
         inventory = new PlaceableInventoryRuntime(GetInventorySet());
         inventory.Changed += HandleInventoryChanged;
+    }
+
+    private void Update()
+    {
+        TickPlanningTimer(Time.deltaTime);
     }
 
     private void Start()
@@ -95,6 +91,7 @@ public class GameStateManager : MonoBehaviour
     public void SetLevelDefinition(LevelDefinition definition)
     {
         levelDefinition = definition;
+        InitializePlanningTimer();
         RebuildInventory();
     }
 
@@ -145,6 +142,28 @@ public class GameStateManager : MonoBehaviour
         return true;
     }
 
+    private void TickPlanningTimer(float deltaSeconds)
+    {
+        if (CurrentPhase != LevelPhase.Planning
+            || !HasPlanningTimeLimit
+            || planningTimerExpired
+            || deltaSeconds <= 0f)
+        {
+            return;
+        }
+
+        remainingPlanningSeconds = Mathf.Max(0f, remainingPlanningSeconds - deltaSeconds);
+        PlanningTimerChanged?.Invoke(remainingPlanningSeconds);
+
+        if (remainingPlanningSeconds > 0f)
+        {
+            return;
+        }
+
+        planningTimerExpired = true;
+        PlanningTimeoutHandler?.Invoke(PlanningTimeoutMessage);
+    }
+
     public void ResetCurrentLevel()
     {
         Scene activeScene = SceneManager.GetActiveScene();
@@ -175,6 +194,18 @@ public class GameStateManager : MonoBehaviour
         }
 
         return fallbackInventorySet;
+    }
+
+    private void InitializePlanningTimer()
+    {
+        remainingPlanningSeconds = GetPlanningTimeLimitSeconds();
+        planningTimerExpired = false;
+        PlanningTimerChanged?.Invoke(remainingPlanningSeconds);
+    }
+
+    private float GetPlanningTimeLimitSeconds()
+    {
+        return levelDefinition != null ? levelDefinition.PlanningTimeLimitSeconds : 0f;
     }
 
     private void HandleInventoryChanged()

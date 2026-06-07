@@ -13,10 +13,12 @@ public class LevelHudPanel : MonoBehaviour
     private const string ResetButtonName = "ResetLevelButton";
     private const string TooltipName = "HudTooltip";
     private const string ButtonIconName = "Icon";
+    private const string PlanningTimerName = "PlanningTimerText";
 
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private PauseMenuManager pauseMenuManager;
     [SerializeField] private TextMeshProUGUI levelTitleText;
+    [SerializeField] private TextMeshProUGUI planningTimerText;
     [SerializeField] private TextMeshProUGUI tooltipText;
     [SerializeField] private Button pauseButton;
     [SerializeField] private ResetLevelButtonController resetLevelButton;
@@ -44,6 +46,7 @@ public class LevelHudPanel : MonoBehaviour
 
         EnsureLayout();
         ResolveLevelTitleText();
+        EnsurePlanningTimerText();
         EnsureTooltip();
 
         pauseButton = ResolveButton(pauseButton, PauseButtonName);
@@ -63,11 +66,34 @@ public class LevelHudPanel : MonoBehaviour
         ConfigureHudButton(resetLevelButton != null ? resetLevelButton.GetComponent<Button>() : null, HudIconKind.Reset, ResetTooltip);
         resetLevelButton.SetGameStateManager(gameStateManager);
         RefreshLevelTitle();
+        RefreshPlanningTimer();
     }
 
     private void Start()
     {
         RefreshLevelTitle();
+        RefreshPlanningTimer();
+    }
+
+    private void OnEnable()
+    {
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.FindOrCreate();
+        }
+
+        if (gameStateManager != null)
+        {
+            gameStateManager.PlanningTimerChanged += HandlePlanningTimerChanged;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (gameStateManager != null)
+        {
+            gameStateManager.PlanningTimerChanged -= HandlePlanningTimerChanged;
+        }
     }
 
     public void RefreshLevelTitle()
@@ -135,6 +161,28 @@ public class LevelHudPanel : MonoBehaviour
         }
     }
 
+    private void HandlePlanningTimerChanged(float _)
+    {
+        RefreshPlanningTimer();
+    }
+
+    public void RefreshPlanningTimer()
+    {
+        if (planningTimerText == null)
+        {
+            return;
+        }
+
+        if (gameStateManager == null || !gameStateManager.HasPlanningTimeLimit)
+        {
+            planningTimerText.gameObject.SetActive(false);
+            return;
+        }
+
+        planningTimerText.gameObject.SetActive(true);
+        planningTimerText.text = FormatPlanningTime(gameStateManager.RemainingPlanningSeconds);
+    }
+
     private void EnsureLayout()
     {
         RectTransform rectTransform = GetComponent<RectTransform>();
@@ -172,6 +220,45 @@ public class LevelHudPanel : MonoBehaviour
         {
             levelTitleText = texts[0];
         }
+    }
+
+    private void EnsurePlanningTimerText()
+    {
+        if (planningTimerText != null)
+        {
+            return;
+        }
+
+        Transform existing = transform.Find(PlanningTimerName);
+        if (existing != null)
+        {
+            planningTimerText = existing.GetComponent<TextMeshProUGUI>();
+            if (planningTimerText != null)
+            {
+                return;
+            }
+        }
+
+        GameObject timerObject = new GameObject(PlanningTimerName, typeof(RectTransform), typeof(TextMeshProUGUI));
+        timerObject.transform.SetParent(transform, false);
+
+        RectTransform timerTransform = timerObject.GetComponent<RectTransform>();
+        timerTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        timerTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        timerTransform.pivot = new Vector2(0.5f, 0.5f);
+        timerTransform.anchoredPosition = new Vector2(0f, 0f);
+        timerTransform.sizeDelta = new Vector2(160f, 44f);
+
+        planningTimerText = timerObject.GetComponent<TextMeshProUGUI>();
+        planningTimerText.text = string.Empty;
+        planningTimerText.fontSize = 34f;
+        planningTimerText.fontStyle = FontStyles.Bold;
+        planningTimerText.color = Color.white;
+        planningTimerText.alignment = TextAlignmentOptions.Center;
+        planningTimerText.raycastTarget = false;
+        planningTimerText.textWrappingMode = TextWrappingModes.NoWrap;
+        planningTimerText.overflowMode = TextOverflowModes.Ellipsis;
+        timerObject.SetActive(false);
     }
 
     private void EnsureTooltip()
@@ -251,6 +338,14 @@ public class LevelHudPanel : MonoBehaviour
 
         return int.TryParse(parts[1], out worldNumber) &&
             int.TryParse(parts[2], out levelNumber);
+    }
+
+    private static string FormatPlanningTime(float seconds)
+    {
+        int totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, seconds));
+        int minutes = totalSeconds / 60;
+        int remainingSeconds = totalSeconds % 60;
+        return $"{minutes:00}:{remainingSeconds:00}";
     }
 
     private Button CreatePauseButton(Transform parent)

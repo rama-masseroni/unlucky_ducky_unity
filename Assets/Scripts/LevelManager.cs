@@ -39,8 +39,7 @@ public class LevelManager : MonoBehaviour
     private bool CanUseTileDestructionTool()
     {
         return gameStateManager != null
-            && gameStateManager.CurrentPhase == LevelPhase.Execution
-            && gameStateManager.IsTileDestructionToolEnabled;
+            && gameStateManager.CurrentPhase == LevelPhase.Execution;
     }
 
     public bool TryUseTileDestructionTool(Vector3 worldPosition)

@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: world_01
   worldName: Waterways
-  enableTileDestructionTool: 1
