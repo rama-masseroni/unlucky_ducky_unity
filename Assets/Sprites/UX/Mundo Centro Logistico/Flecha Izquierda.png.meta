@@ -116,10 +116,10 @@ TextureImporter:
       name: Flecha Izquierda_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 122
-        height: 241
+        x: 16
+        y: 35
+        width: 98
+        height: 170
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

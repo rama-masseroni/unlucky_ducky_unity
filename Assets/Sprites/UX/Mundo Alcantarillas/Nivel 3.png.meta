@@ -116,10 +116,10 @@ TextureImporter:
       name: Nivel 3_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 193
-        height: 218
+        x: 5
+        y: 14
+        width: 183
+        height: 195
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

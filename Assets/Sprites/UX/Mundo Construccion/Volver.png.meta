@@ -116,10 +116,10 @@ TextureImporter:
       name: Volver_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 789
-        height: 148
+        x: 45
+        y: 11
+        width: 721
+        height: 118
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
