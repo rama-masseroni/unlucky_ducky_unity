@@ -4,6 +4,17 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-07
+
+### Sin commit - Camara dinamica de planificacion
+
+- Se agrego un flag `useDynamicPlanningCamera` por `LevelDefinition`.
+- Los niveles dinamicos arrancan centrados en el pato con zoom reducido durante `Planning`.
+- Se agrego desplazamiento por bordes de pantalla y `WASD`/flechas, bloqueado mientras se arrastran piezas.
+- Al ejecutar, la camara anima de vuelta a la vista completa configurada en la escena.
+- El inventario se corre hacia adentro solo durante `Planning` en niveles dinamicos.
+- Se activo la feature en niveles existentes con camara full `orthographic size >= 7`.
+
 ## 2026-06-04
 
 ### `5c88751` - Changed sensors and doors to become part of level

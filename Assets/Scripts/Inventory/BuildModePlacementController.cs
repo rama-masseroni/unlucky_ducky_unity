@@ -26,6 +26,8 @@ public class BuildModePlacementController : MonoBehaviour
     private bool hasCurrentCell;
     private bool currentCellIsValid;
 
+    public bool HasActivePlacementInteraction => activeDefinition != null || activeMoveInstance != null;
+
     private void Awake()
     {
         ResolveSceneReferences();

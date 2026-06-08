@@ -13,6 +13,21 @@ Cada nivel tiene dos fases:
 
 El jugador gana cuando el pato llega a `Goal_Point`. Pierde si el pato muere por peligro/enemigo/bomba, o si se agota la cuenta regresiva de planificacion cuando el nivel tiene limite.
 
+## Camara dinamica de planificacion
+
+Los niveles grandes pueden ocultar parte del mapa durante `Planning` para que el jugador no vea la ruta completa desde el inicio. Activa `useDynamicPlanningCamera` en el `LevelDefinition` del nivel.
+
+Cuando esta activo:
+
+- La camara guarda la posicion y el `orthographic size` configurados en la escena como vista completa.
+- El nivel arranca con zoom al 60% de esa vista, centrado en `Player_Duck`.
+- El jugador mueve la camara llevando el mouse a los bordes de pantalla o usando `WASD`/flechas.
+- Durante un drag o movimiento de piezas, la camara no se desplaza.
+- El inventario se mueve 64 px hacia adentro solo durante `Planning`, para no quedar sobre la franja de scroll.
+- Al presionar `PROBAR NIVEL`, el inventario vuelve a su posicion normal y la camara hace zoom out a la vista completa.
+
+Usa este flag solo en niveles donde la vista completa revela demasiada informacion. Los niveles chicos deberian conservar la camara fija.
+
 ## Escenas y datos por nivel
 
 Las escenas siguen la convencion:
@@ -38,6 +53,7 @@ Campos importantes de `LevelDefinition`:
 - `worldDefinition`: mundo al que pertenece.
 - `placeableInventorySet`: inventario del nivel.
 - `planningTimeLimitSeconds`: cuenta regresiva de planificacion. `0` significa sin limite.
+- `useDynamicPlanningCamera`: activa la camara dinamica durante `Planning` para niveles grandes.
 
 Campos importantes de `InventorySet`:
 

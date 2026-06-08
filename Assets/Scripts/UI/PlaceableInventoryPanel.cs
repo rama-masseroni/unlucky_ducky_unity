@@ -24,6 +24,8 @@ public class PlaceableInventoryPanel : MonoBehaviour
     private PlaceableInventorySlotView selectedSlot;
     private PlaceableInventoryRuntime runtimeInventory;
     private RectTransform panelRectTransform;
+    private Vector2 defaultAnchoredPosition;
+    private bool hasDefaultAnchoredPosition;
 
     public PlaceableDefinition SelectedDefinition => selectedSlot != null ? selectedSlot.Definition : null;
 
@@ -157,6 +159,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
         rectTransform.pivot = new Vector2(1f, 0.5f);
         rectTransform.sizeDelta = ResolvePanelSize();
         rectTransform.anchoredPosition = panelOffset;
+        RememberDefaultAnchoredPosition();
 
         Image panelImage = GetComponent<Image>();
 
@@ -371,6 +374,22 @@ public class PlaceableInventoryPanel : MonoBehaviour
         return rectTransform != null && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPosition);
     }
 
+    public void SetDynamicPlanningCameraInset(bool active, float insetPixels)
+    {
+        RectTransform rectTransform = panelRectTransform != null ? panelRectTransform : GetComponent<RectTransform>();
+
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        panelRectTransform = rectTransform;
+        RememberDefaultAnchoredPosition();
+        rectTransform.anchoredPosition = active
+            ? defaultAnchoredPosition + Vector2.left * Mathf.Max(0f, insetPixels)
+            : defaultAnchoredPosition;
+    }
+
     public bool TryReturnOne(PlaceableDefinition definition)
     {
         return runtimeInventory != null && runtimeInventory.TryReturnOne(definition);
@@ -390,6 +409,17 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
             slotViews[i].SetInteractionAllowed(allowInteraction);
         }
+    }
+
+    private void RememberDefaultAnchoredPosition()
+    {
+        if (hasDefaultAnchoredPosition || panelRectTransform == null)
+        {
+            return;
+        }
+
+        defaultAnchoredPosition = panelRectTransform.anchoredPosition;
+        hasDefaultAnchoredPosition = true;
     }
 
     private void HandleInventoryChanged()

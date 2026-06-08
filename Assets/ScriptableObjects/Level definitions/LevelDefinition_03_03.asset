@@ -17,3 +17,4 @@ MonoBehaviour:
   nextSceneName: Scene_03_04
   worldDefinition: {fileID: 11400000, guid: 64c86156e80a6ed438dc940a60c340f0, type: 2}
   placeableInventorySet: {fileID: 11400000, guid: 1d510e038f73e6c409e39f5c53a45301, type: 2}
+  useDynamicPlanningCamera: 1
