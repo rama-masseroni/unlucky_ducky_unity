@@ -5,8 +5,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 [InitializeOnLoad]
 public static class LevelSceneBootstrapper
@@ -16,8 +18,7 @@ public static class LevelSceneBootstrapper
     private const string InventorySetsFolder = "Assets/ScriptableObjects/InventorySets";
     private const string WorldDefinitionsFolder = "Assets/ScriptableObjects/World Definitions";
     private const string DefaultWorldDefinitionPath = WorldDefinitionsFolder + "/World_01.asset";
-    private const string GameplayCanvasPrefabPath = "Assets/Prefabs/UI/UI_GameplayCanvas.prefab";
-    private const string EventSystemPrefabPath = "Assets/Prefabs/UI/UI_EventSystem.prefab";
+    private const string LevelUiRootPrefabPath = "Assets/Prefabs/UI/UI_LevelRoot.prefab";
     private static readonly HashSet<int> AutoBootstrappedSceneHandles = new HashSet<int>();
 
     static LevelSceneBootstrapper()
@@ -127,33 +128,47 @@ public static class LevelSceneBootstrapper
             CreateRoot(scene, "PlacedObjectsRoot");
         }
 
-        EnsureGameplayUi(scene);
+        EnsureLevelUi(scene);
     }
 
-    private static void EnsureGameplayUi(Scene scene)
+    private static void EnsureLevelUi(Scene scene)
     {
-        if (FindObjectInScene(scene, "UI_GameplayCanvas") == null)
+        Canvas canvas = FindComponentInScene<Canvas>(scene);
+
+        if (canvas == null)
         {
-            InstantiatePrefabInScene(scene, GameplayCanvasPrefabPath);
+            GameObject uiRoot = FindObjectInScene(scene, "UIRoot") ?? CreateRoot(scene, "UIRoot");
+            GameObject canvasObject = CreateChild(uiRoot.transform, "Canvas");
+            canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasObject.AddComponent<GraphicRaycaster>();
+        }
+
+        if (FindComponentInScene<LevelUiRoot>(scene) == null)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LevelUiRootPrefabPath);
+
+            if (prefab != null)
+            {
+                PrefabUtility.InstantiatePrefab(prefab, canvas.transform);
+            }
+            else
+            {
+                Debug.LogWarning($"Could not load required level UI prefab at {LevelUiRootPrefabPath}.");
+            }
         }
 
         if (FindComponentInScene<EventSystem>(scene) == null)
         {
-            InstantiatePrefabInScene(scene, EventSystemPrefabPath);
+            GameObject eventSystemObject = CreateRoot(scene, "EventSystem");
+            eventSystemObject.AddComponent<EventSystem>();
+            eventSystemObject.AddComponent<InputSystemUIInputModule>();
         }
-    }
-
-    private static void InstantiatePrefabInScene(Scene scene, string path)
-    {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-
-        if (prefab == null)
-        {
-            Debug.LogWarning($"Could not load required scene prefab at {path}.");
-            return;
-        }
-
-        PrefabUtility.InstantiatePrefab(prefab, scene);
     }
 
     private static Tilemap EnsureTilemap(

@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class PauseMenuManager : MonoBehaviour
 {
+    [Header("Runtime")]
+    [SerializeField] private GameStateManager gameStateManager;
+
     [Header("Authored view")]
     [SerializeField] private GameObject container;
     [SerializeField] private GameObject pauseActions;
@@ -14,6 +17,11 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button optionsBackButton;
+
+    public void Configure(GameStateManager manager)
+    {
+        gameStateManager = manager;
+    }
 
     private void Awake()
     {
@@ -77,7 +85,7 @@ public class PauseMenuManager : MonoBehaviour
     public void ResetLevelButton()
     {
         Time.timeScale = 1f;
-        GameStateManager.FindOrCreate()?.ResetCurrentLevel();
+        gameStateManager?.ResetCurrentLevel();
     }
 
     public void OptionsButton()

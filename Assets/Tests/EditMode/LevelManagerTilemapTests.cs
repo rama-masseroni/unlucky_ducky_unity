@@ -98,7 +98,7 @@ public class LevelPhaseSystemTests
     private GameObject resetButtonObject;
     private GameObject gridObject;
     private GameObject tilemapObject;
-    private GameObject uiPrefabObject;
+    private GameObject levelUiObject;
 
     [TearDown]
     public void TearDown()
@@ -123,15 +123,11 @@ public class LevelPhaseSystemTests
             UnityEngine.Object.DestroyImmediate(resetButtonObject);
         }
 
-        if (uiPrefabObject != null)
+        if (levelUiObject != null)
         {
-            UnityEngine.Object.DestroyImmediate(uiPrefabObject);
+            UnityEngine.Object.DestroyImmediate(levelUiObject);
         }
 
-        DestroyObjectNamed("VictoryScreenCanvas");
-        DestroyObjectNamed("VictoryScreenManager");
-        DestroyObjectNamed("DefeatScreenCanvas");
-        DestroyObjectNamed("DefeatScreenManager");
         Time.timeScale = 1f;
 
         if (gridObject != null)
@@ -377,6 +373,7 @@ public class LevelPhaseSystemTests
         Assert.IsNotNull(playerDuckControllerType);
 
         object manager = CreateGameStateManager();
+        Component victoryScreen = InstantiateLevelUi(victoryScreenManagerType);
         ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
         SetPrivateField(levelDefinition, "nextSceneName", "Level_02_TestEmpty");
         gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
@@ -406,7 +403,6 @@ public class LevelPhaseSystemTests
         Assert.IsTrue(completedInExecution);
         Assert.IsNull(requestedScene);
 
-        Component victoryScreen = uiPrefabObject.GetComponent(victoryScreenManagerType);
         Assert.IsNotNull(victoryScreen);
         Assert.IsTrue((bool)GetProperty(victoryScreen, "IsVisible"));
         Assert.AreEqual("Level_02_TestEmpty", GetProperty(victoryScreen, "NextSceneName"));
@@ -424,7 +420,7 @@ public class LevelPhaseSystemTests
         Assert.IsNotNull(defeatScreenManagerType);
 
         CreateGameStateManager();
-        InstantiateUiPrefab("Assets/Prefabs/UI/UI_DefeatScreen.prefab");
+        Component defeatScreen = InstantiateLevelUi(defeatScreenManagerType);
         int reloadRequests = 0;
         gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(null, new Action<int, string>((_, _) => reloadRequests++));
         RegisterDefeatScreenHandler();
@@ -436,7 +432,6 @@ public class LevelPhaseSystemTests
 
         Assert.IsTrue((bool)GetProperty(duck, "IsDead"));
 
-        Component defeatScreen = uiPrefabObject.GetComponent(defeatScreenManagerType);
         Assert.IsNotNull(defeatScreen);
         Assert.IsTrue((bool)GetProperty(defeatScreen, "IsVisible"));
         Assert.AreEqual(0f, Time.timeScale);
@@ -1392,12 +1387,14 @@ public class LevelPhaseSystemTests
         handlerProperty.SetValue(null, handler);
     }
 
-    private GameObject InstantiateUiPrefab(string path)
+    private Component InstantiateLevelUi(Type componentType)
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-        Assert.IsNotNull(prefab, $"Missing UI prefab at {path}.");
-        uiPrefabObject = UnityEngine.Object.Instantiate(prefab);
-        return uiPrefabObject;
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/UI_LevelRoot.prefab");
+        Assert.IsNotNull(prefab);
+        levelUiObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        Component component = levelUiObject.GetComponentInChildren(componentType, true);
+        Assert.IsNotNull(component);
+        return component;
     }
 
     private static void DestroyFallingBlocksRoot()

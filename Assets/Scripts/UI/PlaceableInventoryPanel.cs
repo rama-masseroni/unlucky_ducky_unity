@@ -31,11 +31,20 @@ public class PlaceableInventoryPanel : MonoBehaviour
 
     public PlaceableDefinition SelectedDefinition => selectedSlot != null ? selectedSlot.Definition : null;
 
+    public void Configure(GameStateManager manager, BuildModePlacementController controller)
+    {
+        gameStateManager = manager;
+        placementController = controller;
+        startExecutionButton?.SetGameStateManager(gameStateManager);
+    }
+
     private void Awake()
     {
         if (gameStateManager == null)
         {
-            gameStateManager = GameStateManager.FindOrCreate();
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
         }
 
         if (gameStateManager != null && inventorySet != null)
@@ -77,7 +86,9 @@ public class PlaceableInventoryPanel : MonoBehaviour
     {
         if (gameStateManager == null)
         {
-            gameStateManager = GameStateManager.FindOrCreate();
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
         }
 
         if (gameStateManager != null)

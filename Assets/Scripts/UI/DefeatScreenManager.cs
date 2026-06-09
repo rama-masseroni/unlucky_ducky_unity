@@ -13,6 +13,7 @@ public class DefeatScreenManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI subtitleText;
     [SerializeField] private Button retryButton;
     [SerializeField] private Button mainMenuButton;
+    [SerializeField] private GameStateManager gameStateManager;
 
     public bool IsVisible => container != null && container.activeSelf;
 
@@ -25,7 +26,7 @@ public class DefeatScreenManager : MonoBehaviour
 
     public static bool ShowForPlayerDeath(PlayerDuckController _)
     {
-        DefeatScreenManager manager = FindOrCreate();
+        DefeatScreenManager manager = FindExisting();
 
         if (manager == null)
         {
@@ -38,7 +39,7 @@ public class DefeatScreenManager : MonoBehaviour
 
     public static bool ShowForPlanningTimeout(string message)
     {
-        DefeatScreenManager manager = FindOrCreate();
+        DefeatScreenManager manager = FindExisting();
 
         if (manager == null)
         {
@@ -49,16 +50,21 @@ public class DefeatScreenManager : MonoBehaviour
         return true;
     }
 
-    public static DefeatScreenManager FindOrCreate()
+    public static DefeatScreenManager FindExisting()
     {
         DefeatScreenManager manager = FindFirstObjectByType<DefeatScreenManager>(FindObjectsInactive.Include);
 
         if (manager == null)
         {
-            Debug.LogError("DefeatScreenManager is missing. Add UI_GameplayCanvas to the level scene.");
+            Debug.LogError("DefeatScreenManager is missing. Add UI_LevelRoot to the level Canvas.");
         }
 
         return manager;
+    }
+
+    public void Configure(GameStateManager manager)
+    {
+        gameStateManager = manager;
     }
 
     private void Awake()
@@ -95,7 +101,7 @@ public class DefeatScreenManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         Hide();
-        GameStateManager.FindOrCreate()?.ResetCurrentLevel();
+        gameStateManager?.ResetCurrentLevel();
     }
 
     public void ReturnToMainMenuButton()

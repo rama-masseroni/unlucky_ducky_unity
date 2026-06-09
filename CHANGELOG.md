@@ -4,6 +4,17 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-09
+
+### Sin commit - UI de niveles basada en prefabs
+
+- Se creo `UI_LevelRoot` con HUD, inventario, pausa, victoria y derrota como subprefabs.
+- Se elimino la construccion visual runtime de los managers y paneles de UI de nivel.
+- Se migraron `Test_Scene` y los 18 niveles para usar una unica composicion bajo su Canvas.
+- Se agrego inyeccion centralizada de `GameStateManager` y `BuildModePlacementController`.
+- Se incorporaron prefabs para slots de inventario, overlays e iconos de HUD.
+- Se actualizo el bootstrapper, la herramienta de migracion y la cobertura de tests de assets y escenas.
+
 ## 2026-06-07
 
 ### Sin commit - Camara dinamica de planificacion

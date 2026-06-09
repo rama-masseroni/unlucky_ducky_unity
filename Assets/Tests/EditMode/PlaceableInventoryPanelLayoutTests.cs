@@ -49,7 +49,7 @@ public class PlaceableInventoryPanelLayoutTests
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/UI/UI_PlaceableInventoryPanel.prefab");
         Assert.IsNotNull(prefab);
-        panelObject = UnityEngine.Object.Instantiate(prefab);
+        panelObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         panelObject.SetActive(false);
         Component panel = panelObject.GetComponent(inventoryPanelType);
         SetPrivateField(panel, "inventorySet", inventorySet);

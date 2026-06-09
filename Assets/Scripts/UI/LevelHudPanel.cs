@@ -18,11 +18,20 @@ public class LevelHudPanel : MonoBehaviour
     [SerializeField] private Button pauseButton;
     [SerializeField] private ResetLevelButtonController resetLevelButton;
 
+    public void Configure(GameStateManager manager, PauseMenuManager pauseManager)
+    {
+        gameStateManager = manager;
+        pauseMenuManager = pauseManager;
+        resetLevelButton?.SetGameStateManager(gameStateManager);
+    }
+
     private void Awake()
     {
         if (gameStateManager == null)
         {
-            gameStateManager = GameStateManager.FindOrCreate();
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
         }
 
         if (pauseMenuManager == null)
@@ -51,7 +60,9 @@ public class LevelHudPanel : MonoBehaviour
     {
         if (gameStateManager == null)
         {
-            gameStateManager = GameStateManager.FindOrCreate();
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
         }
 
         if (gameStateManager != null)

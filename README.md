@@ -472,6 +472,27 @@ Solo se puede colocar/mover objetos en `Planning`. Al entrar en `Execution`, el 
 
 `PlaceableInventoryPanel` muestra los objetos disponibles del `InventorySet`.
 
+La UI de cada nivel se edita desde prefabs:
+
+```text
+Assets/Prefabs/UI/UI_LevelRoot.prefab
+```
+
+`UI_LevelRoot` se coloca como hijo del `Canvas` y contiene HUD, inventario, pausa,
+victoria y derrota como subprefabs. `LevelUiRoot` resuelve los managers de la
+escena e inyecta sus referencias al iniciar; los scripts de UI no construyen su
+jerarquia visual durante Play Mode.
+
+Para crear o reparar la composicion en escenas de gameplay:
+
+```text
+Unlucky Ducky/UI/Generate Level UI and Migrate Scenes
+```
+
+El bootstrapper de niveles agrega automaticamente `UI_LevelRoot` y `EventSystem`
+cuando faltan. Los slots de inventario siguen instanciandose en runtime porque
+su cantidad y contenido dependen del `PlaceableInventorySet`.
+
 ## Validacion rapida
 
 Comandos utiles:

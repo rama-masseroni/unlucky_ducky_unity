@@ -11,6 +11,7 @@ public class VictoryScreenManager : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private Button retryButton;
     [SerializeField] private Button mainMenuButton;
+    [SerializeField] private GameStateManager gameStateManager;
 
     private string nextSceneName;
     private Action<string> continueAction;
@@ -18,16 +19,21 @@ public class VictoryScreenManager : MonoBehaviour
     public bool IsVisible => container != null && container.activeSelf;
     public string NextSceneName => nextSceneName;
 
-    public static VictoryScreenManager FindOrCreate()
+    public static VictoryScreenManager FindExisting()
     {
         VictoryScreenManager manager = FindFirstObjectByType<VictoryScreenManager>(FindObjectsInactive.Include);
 
         if (manager == null)
         {
-            Debug.LogError("VictoryScreenManager is missing. Add UI_GameplayCanvas to the level scene.");
+            Debug.LogError("VictoryScreenManager is missing. Add UI_LevelRoot to the level Canvas.");
         }
 
         return manager;
+    }
+
+    public void Configure(GameStateManager manager)
+    {
+        gameStateManager = manager;
     }
 
     private void Awake()
@@ -77,7 +83,7 @@ public class VictoryScreenManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         Hide();
-        GameStateManager.FindOrCreate()?.ResetCurrentLevel();
+        gameStateManager?.ResetCurrentLevel();
     }
 
     public void ReturnToMainMenuButton()
