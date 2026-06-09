@@ -394,7 +394,6 @@ public class LevelPhaseSystemTests
         Assert.IsNull(requestedScene);
 
         Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
-        InstantiateUiPrefab("Assets/Prefabs/UI/UI_VictoryScreen.prefab");
 
         bool completedInExecution = (bool)goalPointControllerType
             .GetMethod("TryCompleteLevel")
@@ -1395,6 +1394,13 @@ public class LevelPhaseSystemTests
         Component component = levelUiObject.GetComponentInChildren(componentType, true);
         Assert.IsNotNull(component);
         return component;
+    }
+
+    private static GameObject InstantiateUiPrefab(string path)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        Assert.IsNotNull(prefab, path);
+        return (GameObject)PrefabUtility.InstantiatePrefab(prefab);
     }
 
     private static void DestroyFallingBlocksRoot()
