@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public enum MainMenuPanelKind
 {
@@ -17,6 +18,14 @@ public class MainMenuNavigationController : MonoBehaviour
     [SerializeField] private GameObject levelSelectPanel;
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private GameObject creditsPanel;
+    [Header("Authored actions")]
+    [SerializeField] private Button playButton;
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private Button creditsButton;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private Button levelSelectBackButton;
+    [SerializeField] private Button optionsBackButton;
+    [SerializeField] private Button creditsBackButton;
     [SerializeField] private bool showSplashOnStart = true;
     [SerializeField] private float splashAutoAdvanceSeconds = 1.5f;
 
@@ -24,6 +33,17 @@ public class MainMenuNavigationController : MonoBehaviour
     private float splashStartedAt;
 
     public MainMenuPanelKind CurrentPanel => currentPanel;
+
+    private void Awake()
+    {
+        Bind(playButton, ShowLevelSelect);
+        Bind(optionsButton, ShowOptions);
+        Bind(creditsButton, ShowCredits);
+        Bind(exitButton, ExitGame);
+        Bind(levelSelectBackButton, ShowMainMenu);
+        Bind(optionsBackButton, ShowMainMenu);
+        Bind(creditsBackButton, ShowMainMenu);
+    }
 
     public void ConfigurePanels(
         GameObject splash,
@@ -122,5 +142,16 @@ public class MainMenuNavigationController : MonoBehaviour
     {
         return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame
             || Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
+    }
+
+    private static void Bind(Button button, UnityEngine.Events.UnityAction action)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.onClick.RemoveListener(action);
+        button.onClick.AddListener(action);
     }
 }

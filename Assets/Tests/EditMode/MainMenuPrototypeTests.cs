@@ -11,6 +11,7 @@ public class MainMenuPrototypeTests
     private readonly Type levelCatalogType = Type.GetType("LevelCatalog, Assembly-CSharp");
     private readonly Type levelCatalogEntryType = Type.GetType("LevelCatalogEntry, Assembly-CSharp");
     private readonly Type levelSelectControllerType = Type.GetType("LevelSelectController, Assembly-CSharp");
+    private readonly Type levelSelectSlotViewType = Type.GetType("LevelSelectSlotView, Assembly-CSharp");
     private readonly Type mainMenuNavigationControllerType = Type.GetType("MainMenuNavigationController, Assembly-CSharp");
     private readonly Type mainMenuPanelKindType = Type.GetType("MainMenuPanelKind, Assembly-CSharp");
 
@@ -56,21 +57,21 @@ public class MainMenuPrototypeTests
             ("Scene_01_05", "Mundo 1", 5),
             ("Scene_02_01", "Mundo 2", 6),
             ("Scene_02_02", "Mundo 2", 7));
-        GameObject contentObject = CreateGameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup));
         GameObject controllerObject = CreateGameObject("LevelSelectController");
         Component controller = controllerObject.AddComponent(levelSelectControllerType);
+        Array slots = CreateLevelSlots();
 
-        Invoke(controller, "Configure", catalog, contentObject.transform);
+        Invoke(controller, "Configure", catalog, slots, null, null, null);
 
         IReadOnlyList<Button> createdButtons = (IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons");
         Assert.AreEqual(5, createdButtons.Count);
-        Assert.AreEqual(5, contentObject.transform.childCount);
+        Assert.AreEqual(5, slots.Length);
         Assert.AreEqual(2, (int)GetProperty(controller, "TotalPages"));
 
         Invoke(controller, "ShowNextPage");
 
         Assert.AreEqual(2, ((IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons")).Count);
-        Assert.AreEqual(5, contentObject.transform.childCount);
+        Assert.AreEqual(5, slots.Length);
         Assert.AreEqual(1, (int)GetProperty(controller, "CurrentPageIndex"));
     }
 
@@ -87,20 +88,20 @@ public class MainMenuPrototypeTests
             ("Scene_01_04", "Mundo 1", 4),
             ("Scene_02_01", "Mundo 2", 5),
             ("Scene_02_02", "Mundo 2", 6));
-        GameObject contentObject = CreateGameObject("Content", typeof(RectTransform), typeof(GridLayoutGroup));
         GameObject controllerObject = CreateGameObject("LevelSelectController");
         Component controller = controllerObject.AddComponent(levelSelectControllerType);
+        Array slots = CreateLevelSlots();
 
-        Invoke(controller, "Configure", catalog, contentObject.transform);
+        Invoke(controller, "Configure", catalog, slots, null, null, null);
 
         Assert.AreEqual(4, ((IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons")).Count);
-        Assert.AreEqual(5, contentObject.transform.childCount);
+        Assert.AreEqual(5, slots.Length);
         Assert.AreEqual(2, (int)GetProperty(controller, "TotalPages"));
 
         Invoke(controller, "ShowNextPage");
 
         Assert.AreEqual(2, ((IReadOnlyList<Button>)GetProperty(controller, "CreatedLevelButtons")).Count);
-        Assert.AreEqual(5, contentObject.transform.childCount);
+        Assert.AreEqual(5, slots.Length);
     }
 
     [Test]
@@ -148,6 +149,27 @@ public class MainMenuPrototypeTests
         }
 
         return catalog;
+    }
+
+    private Array CreateLevelSlots()
+    {
+        Assert.IsNotNull(levelSelectSlotViewType);
+        Array slots = Array.CreateInstance(levelSelectSlotViewType, 5);
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            GameObject slotObject = CreateGameObject(
+                $"LevelSlot{i + 1}",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button));
+            Component slot = slotObject.AddComponent(levelSelectSlotViewType);
+            SetPrivateField(slot, "background", slotObject.GetComponent<Image>());
+            SetPrivateField(slot, "button", slotObject.GetComponent<Button>());
+            slots.SetValue(slot, i);
+        }
+
+        return slots;
     }
 
     private GameObject CreateGameObject(string name, params Type[] components)

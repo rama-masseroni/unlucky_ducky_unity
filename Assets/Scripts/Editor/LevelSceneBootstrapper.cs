@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
@@ -15,10 +16,17 @@ public static class LevelSceneBootstrapper
     private const string InventorySetsFolder = "Assets/ScriptableObjects/InventorySets";
     private const string WorldDefinitionsFolder = "Assets/ScriptableObjects/World Definitions";
     private const string DefaultWorldDefinitionPath = WorldDefinitionsFolder + "/World_01.asset";
+    private const string GameplayCanvasPrefabPath = "Assets/Prefabs/UI/UI_GameplayCanvas.prefab";
+    private const string EventSystemPrefabPath = "Assets/Prefabs/UI/UI_EventSystem.prefab";
     private static readonly HashSet<int> AutoBootstrappedSceneHandles = new HashSet<int>();
 
     static LevelSceneBootstrapper()
     {
+        if (Application.isBatchMode)
+        {
+            return;
+        }
+
         EditorSceneManager.newSceneCreated += HandleNewSceneCreated;
         EditorSceneManager.sceneSaving += HandleSceneSaving;
     }
@@ -118,6 +126,34 @@ public static class LevelSceneBootstrapper
         {
             CreateRoot(scene, "PlacedObjectsRoot");
         }
+
+        EnsureGameplayUi(scene);
+    }
+
+    private static void EnsureGameplayUi(Scene scene)
+    {
+        if (FindObjectInScene(scene, "UI_GameplayCanvas") == null)
+        {
+            InstantiatePrefabInScene(scene, GameplayCanvasPrefabPath);
+        }
+
+        if (FindComponentInScene<EventSystem>(scene) == null)
+        {
+            InstantiatePrefabInScene(scene, EventSystemPrefabPath);
+        }
+    }
+
+    private static void InstantiatePrefabInScene(Scene scene, string path)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+        if (prefab == null)
+        {
+            Debug.LogWarning($"Could not load required scene prefab at {path}.");
+            return;
+        }
+
+        PrefabUtility.InstantiatePrefab(prefab, scene);
     }
 
     private static Tilemap EnsureTilemap(
