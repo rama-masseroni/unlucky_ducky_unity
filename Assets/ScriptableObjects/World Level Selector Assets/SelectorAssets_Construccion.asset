@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b7c4fd6d6f14f68a88fb62d3d8781c1, type: 3}
+  m_Name: SelectorAssets_Construccion
+  m_EditorClassIdentifier: 
+  background: {fileID: 2537272643725697141, guid: 04341ab6df1b2e44f8b2a31c1967b95b, type: 3}
+  previousPage: {fileID: -7242157039420222268, guid: a450df280f3fee44a8a1ef380bd78090, type: 3}
+  nextPage: {fileID: 7996433775404041658, guid: 16b0c7a08c6a0ae44bc79b916a271967, type: 3}
+  backButton: {fileID: 2118856551448195418, guid: 755331580c6dcc14789a0dd6217eb17a, type: 3}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedFallbackTint: {r: 0.42, g: 0.42, b: 0.42, a: 1}
+  levelSprites:
+  - displayOrder: 6
+    normal: {fileID: -2124050677331970005, guid: 921eccd54c303c14490a9d39f2f3aa77, type: 3}
+    locked: {fileID: 0}
+  - displayOrder: 7
+    normal: {fileID: 5787200872800670841, guid: 99669af61fa725c4b89d51254acf4ebc, type: 3}
+    locked: {fileID: 0}
+  - displayOrder: 8
+    normal: {fileID: 4435862811613060841, guid: 532aeb50a22c350449a4c159445aff5e, type: 3}
+    locked: {fileID: 0}
+  - displayOrder: 9
+    normal: {fileID: -5866880199248856196, guid: 6b3f0faeb12ae6a4585a0c465751f7e5, type: 3}
+    locked: {fileID: 0}
+  - displayOrder: 10
+    normal: {fileID: 8762886588838236210, guid: 40050d4a2e75a184b86ae3851e849863, type: 3}
+    locked: {fileID: 0}

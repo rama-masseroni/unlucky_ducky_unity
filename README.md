@@ -55,6 +55,30 @@ Campos importantes de `LevelDefinition`:
 - `planningTimeLimitSeconds`: cuenta regresiva de planificacion. `0` significa sin limite.
 - `useDynamicPlanningCamera`: activa la camara dinamica durante `Planning` para niveles grandes.
 
+## Arte del selector por mundo
+
+Cada `WorldDefinition` puede asignar un `WorldLevelSelectorAssets` mediante el campo
+`levelSelectorAssets`. Estos paquetes viven en:
+
+```text
+Assets/ScriptableObjects/World Level Selector Assets/
+```
+
+El paquete define el fondo completo del selector, flechas de paginacion, boton
+`Volver` y los sprites normal/bloqueado de cada nivel. Los sprites de nivel se
+buscan por el `displayOrder` de la entrada en `MainLevelCatalog`.
+
+Para agregar o cambiar el arte de un mundo:
+
+1. Importar los PNG como `Sprite (2D and UI)`.
+2. Editar o crear un `WorldLevelSelectorAssets`.
+3. Asignar cada sprite con su numero global de nivel.
+4. Asignar el paquete al `WorldDefinition` correspondiente.
+
+Si falta la variante bloqueada, el selector usa el sprite normal con
+`lockedFallbackTint`. Si falta el paquete o un sprite normal, conserva la
+presentacion numerica base del prefab.
+
 Campos importantes de `InventorySet`:
 
 - `entries`: lista de objetos disponibles.

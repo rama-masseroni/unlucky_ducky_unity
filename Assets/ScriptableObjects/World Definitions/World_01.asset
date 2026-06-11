@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldId: world_01
   worldName: Waterways
+  levelSelectorAssets: {fileID: 11400000, guid: a111111111114f11a111111111111111, type: 2}

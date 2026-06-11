@@ -15,11 +15,18 @@ public class LevelSelectController : MonoBehaviour
     [SerializeField] private Button previousPageButton;
     [SerializeField] private Button nextPageButton;
     [SerializeField] private TextMeshProUGUI pageLabel;
+    [Header("World selector visuals")]
+    [SerializeField] private Image selectorBackground;
+    [SerializeField] private Image previousPageImage;
+    [SerializeField] private Image nextPageImage;
+    [SerializeField] private Image backButtonImage;
+    [SerializeField] private TextMeshProUGUI titleLabel;
 
     private readonly List<Button> createdLevelButtons = new List<Button>();
     private readonly List<LevelCatalogPage> pages = new List<LevelCatalogPage>();
     private int currentPageIndex;
     private int totalPages = 1;
+    private SelectorVisualDefaults visualDefaults;
 
     public static Action<string> SceneLoadOverride { get; set; }
     public IReadOnlyList<Button> CreatedLevelButtons => createdLevelButtons;
@@ -28,6 +35,7 @@ public class LevelSelectController : MonoBehaviour
 
     private void Awake()
     {
+        CaptureVisualDefaults();
         BindPaginationButtons();
     }
 
@@ -67,11 +75,16 @@ public class LevelSelectController : MonoBehaviour
         IReadOnlyList<LevelCatalogEntry> entries = pages.Count > 0
             ? pages[currentPageIndex].Entries
             : Array.Empty<LevelCatalogEntry>();
+        WorldLevelSelectorAssets selectorAssets = pages.Count > 0
+            ? pages[currentPageIndex].WorldDefinition?.LevelSelectorAssets
+            : null;
+
+        ApplyWorldVisuals(selectorAssets);
 
         for (int i = 0; i < ItemsPerPage; i++)
         {
             LevelCatalogEntry entry = i < entries.Count ? entries[i] : null;
-            BindSlot(i, entry);
+            BindSlot(i, entry, selectorAssets);
         }
 
         UpdatePaginationControls();
@@ -111,7 +124,7 @@ public class LevelSelectController : MonoBehaviour
         SceneManager.LoadScene(entry.SceneName);
     }
 
-    private void BindSlot(int index, LevelCatalogEntry entry)
+    private void BindSlot(int index, LevelCatalogEntry entry, WorldLevelSelectorAssets selectorAssets)
     {
         if (slots == null || index >= slots.Length || slots[index] == null)
         {
@@ -119,7 +132,7 @@ public class LevelSelectController : MonoBehaviour
         }
 
         UnityAction action = entry != null ? () => LoadLevel(entry) : null;
-        slots[index].Bind(entry, index + 1, action);
+        slots[index].Bind(entry, index + 1, selectorAssets, action);
 
         if (entry != null && slots[index].Button != null)
         {
@@ -138,10 +151,11 @@ public class LevelSelectController : MonoBehaviour
                 continue;
             }
 
-            if (pages.Count == 0
-                || !string.Equals(pages[pages.Count - 1].WorldLabel, entry.WorldLabel, StringComparison.Ordinal))
+            WorldDefinition worldDefinition = entry.WorldDefinition;
+
+            if (pages.Count == 0 || !pages[pages.Count - 1].Matches(worldDefinition, entry.WorldLabel))
             {
-                pages.Add(new LevelCatalogPage(entry.WorldLabel));
+                pages.Add(new LevelCatalogPage(worldDefinition, entry.WorldLabel));
             }
 
             pages[pages.Count - 1].Entries.Add(entry);
@@ -178,20 +192,118 @@ public class LevelSelectController : MonoBehaviour
         if (pageLabel != null)
         {
             string label = pages.Count > currentPageIndex
-                ? pages[currentPageIndex].WorldLabel
+                ? pages[currentPageIndex].DisplayName
                 : $"Mundo {currentPageIndex + 1}";
             pageLabel.text = $"{label} / {totalPages}";
         }
     }
 
+    private void CaptureVisualDefaults()
+    {
+        if (visualDefaults != null)
+        {
+            return;
+        }
+
+        visualDefaults = new SelectorVisualDefaults(
+            selectorBackground,
+            previousPageImage,
+            nextPageImage,
+            backButtonImage,
+            titleLabel,
+            pageLabel);
+    }
+
+    private void ApplyWorldVisuals(WorldLevelSelectorAssets selectorAssets)
+    {
+        CaptureVisualDefaults();
+
+        ApplySprite(selectorBackground, selectorAssets?.Background, visualDefaults.Background);
+        ApplySprite(previousPageImage, selectorAssets?.PreviousPage, visualDefaults.PreviousPage);
+        ApplySprite(nextPageImage, selectorAssets?.NextPage, visualDefaults.NextPage);
+        ApplySprite(backButtonImage, selectorAssets?.BackButton, visualDefaults.BackButton);
+
+        if (titleLabel != null)
+        {
+            titleLabel.color = selectorAssets != null ? selectorAssets.TextColor : visualDefaults.TitleColor;
+        }
+
+        if (pageLabel != null)
+        {
+            pageLabel.color = selectorAssets != null ? selectorAssets.TextColor : visualDefaults.PageColor;
+        }
+    }
+
+    private static void ApplySprite(Image image, Sprite themedSprite, ImageDefaults defaults)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = themedSprite != null ? themedSprite : defaults.Sprite;
+        image.color = themedSprite != null ? Color.white : defaults.Color;
+    }
+
     private sealed class LevelCatalogPage
     {
-        public LevelCatalogPage(string worldLabel)
+        public LevelCatalogPage(WorldDefinition worldDefinition, string worldLabel)
         {
+            WorldDefinition = worldDefinition;
             WorldLabel = worldLabel;
         }
 
+        public WorldDefinition WorldDefinition { get; }
         public string WorldLabel { get; }
+        public string DisplayName => WorldDefinition != null ? WorldDefinition.WorldName : WorldLabel;
         public List<LevelCatalogEntry> Entries { get; } = new List<LevelCatalogEntry>();
+
+        public bool Matches(WorldDefinition worldDefinition, string worldLabel)
+        {
+            if (WorldDefinition != null || worldDefinition != null)
+            {
+                return WorldDefinition == worldDefinition;
+            }
+
+            return string.Equals(WorldLabel, worldLabel, StringComparison.Ordinal);
+        }
+    }
+
+    private sealed class SelectorVisualDefaults
+    {
+        public SelectorVisualDefaults(
+            Image background,
+            Image previousPage,
+            Image nextPage,
+            Image backButton,
+            TextMeshProUGUI title,
+            TextMeshProUGUI page)
+        {
+            Background = new ImageDefaults(background);
+            PreviousPage = new ImageDefaults(previousPage);
+            NextPage = new ImageDefaults(nextPage);
+            BackButton = new ImageDefaults(backButton);
+            TitleColor = title != null ? title.color : Color.white;
+            PageColor = page != null ? page.color : Color.white;
+        }
+
+        public ImageDefaults Background { get; }
+        public ImageDefaults PreviousPage { get; }
+        public ImageDefaults NextPage { get; }
+        public ImageDefaults BackButton { get; }
+        public Color TitleColor { get; }
+        public Color PageColor { get; }
+    }
+
+    private readonly struct ImageDefaults
+    {
+        public ImageDefaults(Image image)
+        {
+            Sprite = image != null ? image.sprite : null;
+            Color = image != null ? image.color : Color.white;
+        }
+
+        public Sprite Sprite { get; }
+        public Color Color { get; }
     }
 }

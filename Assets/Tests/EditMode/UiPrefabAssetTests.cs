@@ -57,6 +57,62 @@ public class UiPrefabAssetTests
     }
 
     [Test]
+    public void WorldDefinitions_HaveLevelSelectorAssetPackages()
+    {
+        string[] worldPaths =
+        {
+            "Assets/ScriptableObjects/World Definitions/World_01.asset",
+            "Assets/ScriptableObjects/World Definitions/World_02.asset",
+            "Assets/ScriptableObjects/World Definitions/World_03.asset",
+            "Assets/ScriptableObjects/World Definitions/World_04.asset"
+        };
+
+        for (int i = 0; i < worldPaths.Length; i++)
+        {
+            ScriptableObject world = AssetDatabase.LoadAssetAtPath<ScriptableObject>(worldPaths[i]);
+            Assert.IsNotNull(world, worldPaths[i]);
+
+            SerializedProperty selectorAssets = new SerializedObject(world).FindProperty("levelSelectorAssets");
+            Assert.IsNotNull(selectorAssets, worldPaths[i]);
+            Assert.IsNotNull(selectorAssets.objectReferenceValue, worldPaths[i]);
+        }
+    }
+
+    [Test]
+    public void Menus_UseAuthoredButtonSprites()
+    {
+        GameObject pauseMenu = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/UI/PausedMenu.prefab");
+        Component pauseManager = FindComponent(pauseMenu, "PauseMenuManager");
+        GameObject mainMenu = AssetDatabase.LoadAssetAtPath<GameObject>(MainMenuCanvasPath);
+        Component navigation = FindComponent(mainMenu, "MainMenuNavigationController");
+
+        Assert.IsNotNull(pauseMenu);
+        Assert.IsNotNull(pauseManager);
+        Assert.IsNotNull(mainMenu);
+        Assert.IsNotNull(navigation);
+
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(pauseManager, "resumeButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Continuar.png");
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(pauseManager, "resetButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Reiniciar nivel.png");
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(pauseManager, "optionsButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Opciones.png");
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(pauseManager, "mainMenuButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Volver al Menu.png");
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(navigation, "optionsButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Opciones.png");
+        AssertButtonUsesSprite(
+            GetPrivateField<Button>(navigation, "creditsButton"),
+            "Assets/Sprites/UX/Botones del Menu de pausa/Creditos.png");
+    }
+
+    [Test]
     public void AuthoredUi_HasRequiredSerializedReferences()
     {
         GameObject gameplay = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayCanvasPath);
@@ -120,7 +176,12 @@ public class UiPrefabAssetTests
             "slots",
             "previousPageButton",
             "nextPageButton",
-            "pageLabel");
+            "pageLabel",
+            "selectorBackground",
+            "previousPageImage",
+            "nextPageImage",
+            "backButtonImage",
+            "titleLabel");
         AssertAssigned(
             inventorySlot,
             "PlaceableInventorySlotView",
@@ -174,6 +235,16 @@ public class UiPrefabAssetTests
         }
 
         Assert.AreEqual(20, checkedScenes.Count);
+    }
+
+    private static void AssertButtonUsesSprite(Button button, string expectedPath)
+    {
+        Assert.IsNotNull(button);
+        Assert.IsNotNull(button.image);
+        Assert.IsNotNull(button.image.sprite);
+        Assert.AreEqual(expectedPath, AssetDatabase.GetAssetPath(button.image.sprite));
+        Assert.Greater(button.transform.childCount, 0);
+        Assert.IsFalse(button.transform.GetChild(0).gameObject.activeSelf);
     }
 
     private static int CountComponentsInScene<T>(Scene scene) where T : Component
@@ -247,5 +318,14 @@ public class UiPrefabAssetTests
                 }
             }
         }
+    }
+
+    private static T GetPrivateField<T>(Component component, string fieldName) where T : class
+    {
+        System.Reflection.FieldInfo field = component.GetType().GetField(
+            fieldName,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Assert.IsNotNull(field, $"{component.GetType().Name}.{fieldName} does not exist.");
+        return field.GetValue(component) as T;
     }
 }

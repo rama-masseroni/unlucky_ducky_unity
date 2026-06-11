@@ -1081,6 +1081,11 @@ MonoBehaviour:
   previousPageButton: {fileID: 3818767317913401302}
   nextPageButton: {fileID: 8032082750434664682}
   pageLabel: {fileID: 8941214851766449750}
+  selectorBackground: {fileID: 1252194511116750803}
+  previousPageImage: {fileID: 8844130270549404536}
+  nextPageImage: {fileID: 1447492069943659337}
+  backButtonImage: {fileID: 516437807940652171}
+  titleLabel: {fileID: 6236080011501280337}
 --- !u!1 &7519539509114293637
 GameObject:
   m_ObjectHideFlags: 0
@@ -1607,10 +1612,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -161090209111912838, guid: 52c0022a65316a944a66219c20b3e11d, type: 3}
-    - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
       propertyPath: m_Color.b
       value: 1
       objectReference: {fileID: 0}
@@ -1748,10 +1749,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 1259557336998787535, guid: bb3a2bdcce5557f4c829ba5036e20b42, type: 3}
-    - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
       propertyPath: m_Color.b
       value: 1
       objectReference: {fileID: 0}
@@ -1888,10 +1885,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -8901830037030675177, guid: 11a626369f7f79847bc413776e5908d6, type: 3}
     - target: {fileID: 5989340463004780740, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
       propertyPath: m_text
       value: 
@@ -2021,10 +2014,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -4979194531951646162, guid: 1463ab6e36970314db664e3129541fdb, type: 3}
     - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -2162,10 +2151,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 6388441549395249015, guid: 46a87f56c7c86ac4eb4e1a9556ef15f5, type: 3}
     - target: {fileID: 1097150222745240839, guid: 728f2296948a93345b38bae1c99409d3, type: 3}
       propertyPath: m_Color.b
       value: 1

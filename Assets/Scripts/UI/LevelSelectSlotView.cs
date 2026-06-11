@@ -14,24 +14,44 @@ public class LevelSelectSlotView : MonoBehaviour
 
     private LevelCatalogEntry entry;
     private UnityAction clickAction;
+    private Sprite defaultSprite;
+    private Color defaultColor;
+    private bool defaultsCaptured;
 
     public Button Button => button;
     public LevelCatalogEntry Entry => entry;
 
     public void Bind(LevelCatalogEntry newEntry, int slotNumber, UnityAction onClick)
     {
+        Bind(newEntry, slotNumber, null, onClick);
+    }
+
+    public void Bind(
+        LevelCatalogEntry newEntry,
+        int slotNumber,
+        WorldLevelSelectorAssets selectorAssets,
+        UnityAction onClick)
+    {
+        CaptureDefaults();
         entry = newEntry;
         gameObject.name = entry != null ? entry.DisplayName : $"Nivel {slotNumber}";
+        gameObject.SetActive(entry != null);
         bool isPlayable = entry != null && entry.IsPlayable;
+        Sprite levelSprite = entry != null
+            ? selectorAssets?.GetLevelSprite(entry.DisplayOrder, !isPlayable)
+            : null;
 
         if (background != null)
         {
-            background.color = isPlayable ? PlayableColor : LockedColor;
+            background.sprite = levelSprite != null ? levelSprite : defaultSprite;
+            background.preserveAspect = levelSprite != null;
+            background.color = GetBackgroundColor(entry, isPlayable, selectorAssets, levelSprite);
         }
 
         if (label != null)
         {
-            label.text = entry != null ? slotNumber.ToString() : "-";
+            label.gameObject.SetActive(entry != null && levelSprite == null);
+            label.text = entry != null ? entry.DisplayOrder.ToString() : "-";
         }
 
         if (button == null)
@@ -51,5 +71,39 @@ public class LevelSelectSlotView : MonoBehaviour
         {
             button.onClick.AddListener(clickAction);
         }
+    }
+
+    private void CaptureDefaults()
+    {
+        if (defaultsCaptured || background == null)
+        {
+            return;
+        }
+
+        defaultSprite = background.sprite;
+        defaultColor = background.color;
+        defaultsCaptured = true;
+    }
+
+    private Color GetBackgroundColor(
+        LevelCatalogEntry currentEntry,
+        bool isPlayable,
+        WorldLevelSelectorAssets selectorAssets,
+        Sprite levelSprite)
+    {
+        if (currentEntry == null)
+        {
+            return defaultColor;
+        }
+
+        if (levelSprite == null)
+        {
+            return isPlayable ? PlayableColor : LockedColor;
+        }
+
+        bool usesTintedFallback = !isPlayable
+            && selectorAssets != null
+            && !selectorAssets.HasLockedLevelSprite(currentEntry.DisplayOrder);
+        return usesTintedFallback ? selectorAssets.LockedFallbackTint : Color.white;
     }
 }
