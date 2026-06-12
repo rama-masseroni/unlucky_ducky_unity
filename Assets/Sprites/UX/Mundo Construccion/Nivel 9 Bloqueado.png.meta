@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 40050d4a2e75a184b86ae3851e849863
+guid: d49c3b6f51704c15d3f694ae2c538d39
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8762886588838236210
-    second: Nivel 10_0
+      213: 6406788867260273651
+    second: Nivel 9 Bloqueado_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Nivel 10_0
+      name: Nivel 9 Bloqueado_0
       rect:
         serializedVersion: 2
-        x: 20
-        y: 25
-        width: 193
-        height: 187
+        x: 31
+        y: 23
+        width: 439
+        height: 452
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 230dcbebce60c9970800000000000000
-      internalID: 8762886588838236210
+      spriteID: 3f3d9f7b78c79e850800000000000000
+      internalID: 6406788867260273651
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Nivel 10_0: 8762886588838236210
+      Nivel 9 Bloqueado_0: 6406788867260273651
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

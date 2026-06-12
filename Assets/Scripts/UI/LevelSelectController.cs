@@ -24,6 +24,7 @@ public class LevelSelectController : MonoBehaviour
 
     private readonly List<Button> createdLevelButtons = new List<Button>();
     private readonly List<LevelCatalogPage> pages = new List<LevelCatalogPage>();
+    private readonly List<LevelCatalogEntry> orderedEntries = new List<LevelCatalogEntry>();
     private int currentPageIndex;
     private int totalPages = 1;
     private SelectorVisualDefaults visualDefaults;
@@ -64,10 +65,12 @@ public class LevelSelectController : MonoBehaviour
     {
         createdLevelButtons.Clear();
         pages.Clear();
+        orderedEntries.Clear();
 
         if (catalog != null)
         {
-            BuildPages(catalog.GetOrderedEntries());
+            orderedEntries.AddRange(catalog.GetOrderedEntries());
+            BuildPages(orderedEntries);
         }
 
         totalPages = Mathf.Max(1, pages.Count);
@@ -110,7 +113,7 @@ public class LevelSelectController : MonoBehaviour
 
     public void LoadLevel(LevelCatalogEntry entry)
     {
-        if (entry == null || !entry.HasSceneName)
+        if (!LevelProgressService.IsUnlocked(entry, orderedEntries))
         {
             return;
         }
@@ -132,7 +135,8 @@ public class LevelSelectController : MonoBehaviour
         }
 
         UnityAction action = entry != null ? () => LoadLevel(entry) : null;
-        slots[index].Bind(entry, index + 1, selectorAssets, action);
+        bool isUnlocked = LevelProgressService.IsUnlocked(entry, orderedEntries);
+        slots[index].Bind(entry, index + 1, selectorAssets, isUnlocked, action);
 
         if (entry != null && slots[index].Button != null)
         {

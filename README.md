@@ -13,6 +13,32 @@ Cada nivel tiene dos fases:
 
 El jugador gana cuando el pato llega a `Goal_Point`. Pierde si el pato muere por peligro/enemigo/bomba, o si se agota la cuenta regresiva de planificacion cuando el nivel tiene limite.
 
+## Progresion de niveles
+
+Los niveles se desbloquean de forma lineal segun el orden de
+`MainLevelCatalog.asset`. En una partida nueva solo esta disponible la entrada
+marcada con `unlockedByDefault`; completar un nivel desbloquea la entrada
+siguiente, incluso cuando pertenece a otro mundo.
+
+La victoria se guarda al tocar `Goal_Point`, antes de elegir entre continuar,
+reintentar o volver al menu. El progreso persiste localmente mediante
+`PlayerPrefs` y usa `LevelDefinition.levelId` como identificador estable.
+
+Los niveles bloqueados siguen visibles en el selector, usan su sprite bloqueado
+o el tinte de fallback, y no pueden cargar su escena. Para borrar el progreso
+durante desarrollo usa:
+
+```text
+Unlucky Ducky > Progress > Reset Local Progress
+```
+
+Al agregar o reordenar niveles:
+
+1. Asignar un `levelId` unico y estable en su `LevelDefinition`.
+2. Agregar la escena y definicion a `MainLevelCatalog.asset`.
+3. Usar `displayOrder` para ubicarlo en la cadena global.
+4. Mantener `unlockedByDefault` solo en el primer nivel de una partida nueva.
+
 ## Camara dinamica de planificacion
 
 Los niveles grandes pueden ocultar parte del mapa durante `Planning` para que el jugador no vea la ruta completa desde el inicio. Activa `useDynamicPlanningCamera` en el `LevelDefinition` del nivel.

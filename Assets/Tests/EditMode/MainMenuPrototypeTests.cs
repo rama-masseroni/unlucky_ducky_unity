@@ -12,6 +12,9 @@ public class MainMenuPrototypeTests
     private readonly Type levelCatalogEntryType = Type.GetType("LevelCatalogEntry, Assembly-CSharp");
     private readonly Type levelSelectControllerType = Type.GetType("LevelSelectController, Assembly-CSharp");
     private readonly Type levelSelectSlotViewType = Type.GetType("LevelSelectSlotView, Assembly-CSharp");
+    private readonly Type levelProgressServiceType = Type.GetType("LevelProgressService, Assembly-CSharp");
+    private readonly Type inMemoryLevelProgressStoreType = Type.GetType("InMemoryLevelProgressStore, Assembly-CSharp");
+    private readonly Type levelDefinitionType = Type.GetType("LevelDefinition, UnluckyDucky.Core");
     private readonly Type worldLevelSelectorAssetsType = Type.GetType("WorldLevelSelectorAssets, UnluckyDucky.Core");
     private readonly Type levelSelectorSpriteSetType = Type.GetType("LevelSelectorSpriteSet, UnluckyDucky.Core");
     private readonly Type mainMenuNavigationControllerType = Type.GetType("MainMenuNavigationController, Assembly-CSharp");
@@ -19,9 +22,19 @@ public class MainMenuPrototypeTests
 
     private readonly List<UnityEngine.Object> createdObjects = new List<UnityEngine.Object>();
 
+    [SetUp]
+    public void SetUp()
+    {
+        Assert.IsNotNull(inMemoryLevelProgressStoreType);
+        object store = Activator.CreateInstance(inMemoryLevelProgressStoreType);
+        InvokeStatic(levelProgressServiceType, "SetStoreForTests", store);
+    }
+
     [TearDown]
     public void TearDown()
     {
+        InvokeStatic(levelProgressServiceType, "RestoreDefaultStore");
+
         for (int i = 0; i < createdObjects.Count; i++)
         {
             if (createdObjects[i] != null)
@@ -107,6 +120,121 @@ public class MainMenuPrototypeTests
     }
 
     [Test]
+    public void LevelProgressService_NewGame_OnlyUnlocksDefaultEntry()
+    {
+        ScriptableObject catalog = CreateProgressionCatalog(
+            ("Level_01_01", "Scene_01_01", 1),
+            ("Level_01_02", "Scene_01_02", 2));
+        IList orderedEntries = (IList)InvokeWithResult(catalog, "GetOrderedEntries");
+
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[0],
+            orderedEntries));
+        Assert.IsFalse((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[1],
+            orderedEntries));
+    }
+
+    [Test]
+    public void LevelProgressService_CompletionUnlocksOnlyNextCatalogEntry()
+    {
+        ScriptableObject catalog = CreateProgressionCatalog(
+            ("Level_01_01", "Scene_01_01", 1),
+            ("Level_01_02", "Scene_01_02", 2),
+            ("Level_02_01", "Scene_02_01", 6));
+        IList orderedEntries = (IList)InvokeWithResult(catalog, "GetOrderedEntries");
+
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "MarkCompleted",
+            "Level_01_01"));
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[1],
+            orderedEntries));
+        Assert.IsFalse((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[2],
+            orderedEntries));
+
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "MarkCompleted",
+            "Level_01_02"));
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[2],
+            orderedEntries));
+        Assert.IsFalse((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "MarkCompleted",
+            "Level_01_02"));
+    }
+
+    [Test]
+    public void LevelProgressService_CorruptSaveFallsBackToNewGame()
+    {
+        object store = Activator.CreateInstance(inMemoryLevelProgressStoreType);
+        Invoke(store, "SetString", "UnluckyDucky.LevelProgress", "{not-valid-json");
+        InvokeStatic(levelProgressServiceType, "SetStoreForTests", store);
+        ScriptableObject catalog = CreateProgressionCatalog(
+            ("Level_01_01", "Scene_01_01", 1),
+            ("Level_01_02", "Scene_01_02", 2));
+        IList orderedEntries = (IList)InvokeWithResult(catalog, "GetOrderedEntries");
+
+        Assert.IsTrue((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[0],
+            orderedEntries));
+        Assert.IsFalse((bool)InvokeStaticWithResult(
+            levelProgressServiceType,
+            "IsUnlocked",
+            orderedEntries[1],
+            orderedEntries));
+    }
+
+    [Test]
+    public void LevelSelectController_LoadLevel_RejectsLockedEntry()
+    {
+        ScriptableObject catalog = CreateProgressionCatalog(
+            ("Level_01_01", "Scene_01_01", 1),
+            ("Level_01_02", "Scene_01_02", 2));
+        GameObject controllerObject = CreateGameObject("LevelSelectController");
+        Component controller = controllerObject.AddComponent(levelSelectControllerType);
+        Array slots = CreateLevelSlots();
+        string requestedScene = null;
+        levelSelectControllerType
+            .GetProperty("SceneLoadOverride")
+            .SetValue(null, new Action<string>(sceneName => requestedScene = sceneName));
+
+        try
+        {
+            Invoke(controller, "Configure", catalog, slots, null, null, null);
+            IList orderedEntries = (IList)InvokeWithResult(catalog, "GetOrderedEntries");
+            Invoke(controller, "LoadLevel", orderedEntries[1]);
+
+            Assert.IsNull(requestedScene);
+
+            InvokeStatic(levelProgressServiceType, "MarkCompleted", "Level_01_01");
+            Invoke(controller, "LoadLevel", orderedEntries[1]);
+
+            Assert.AreEqual("Scene_01_02", requestedScene);
+        }
+        finally
+        {
+            levelSelectControllerType.GetProperty("SceneLoadOverride").SetValue(null, null);
+        }
+    }
+
+    [Test]
     public void WorldLevelSelectorAssets_ReturnsNormalAndLockedSpritesByDisplayOrder()
     {
         Assert.IsNotNull(worldLevelSelectorAssetsType);
@@ -165,6 +293,7 @@ public class MainMenuPrototypeTests
 
         Assert.AreSame(normal, slotObject.GetComponent<Image>().sprite);
         Assert.AreEqual(GetProperty(selectorAssets, "LockedFallbackTint"), slotObject.GetComponent<Image>().color);
+        Assert.AreEqual(Selectable.Transition.None, slotObject.GetComponent<Button>().transition);
         Assert.IsFalse(slotObject.GetComponent<Button>().interactable);
     }
 
@@ -209,6 +338,34 @@ public class MainMenuPrototypeTests
             SetPrivateField(entry, "worldLabel", entries[i].worldLabel);
             SetPrivateField(entry, "displayOrder", entries[i].displayOrder);
             SetPrivateField(entry, "unlockedByDefault", true);
+            catalogEntries.Add(entry);
+        }
+
+        return catalog;
+    }
+
+    private ScriptableObject CreateProgressionCatalog(
+        params (string levelId, string sceneName, int displayOrder)[] entries)
+    {
+        Assert.IsNotNull(levelDefinitionType);
+        ScriptableObject catalog = ScriptableObject.CreateInstance(levelCatalogType);
+        createdObjects.Add(catalog);
+        IList catalogEntries = (IList)levelCatalogType
+            .GetField("entries", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(catalog);
+
+        for (int i = 0; i < entries.Length; i++)
+        {
+            ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
+            createdObjects.Add(levelDefinition);
+            SetPrivateField(levelDefinition, "levelId", entries[i].levelId);
+
+            object entry = Activator.CreateInstance(levelCatalogEntryType);
+            SetPrivateField(entry, "levelDefinition", levelDefinition);
+            SetPrivateField(entry, "sceneName", entries[i].sceneName);
+            SetPrivateField(entry, "worldLabel", i < 2 ? "Mundo 1" : "Mundo 2");
+            SetPrivateField(entry, "displayOrder", entries[i].displayOrder);
+            SetPrivateField(entry, "unlockedByDefault", i == 0);
             catalogEntries.Add(entry);
         }
 
@@ -266,9 +423,66 @@ public class MainMenuPrototypeTests
         return method.Invoke(target, parameters);
     }
 
+    private static void InvokeStatic(Type targetType, string methodName, params object[] parameters)
+    {
+        MethodInfo method = FindStaticMethod(targetType, methodName, parameters);
+        Assert.IsNotNull(method, $"Could not find static method {methodName} on {targetType?.Name}.");
+        method.Invoke(null, parameters);
+    }
+
+    private static object InvokeStaticWithResult(Type targetType, string methodName, params object[] parameters)
+    {
+        MethodInfo method = FindStaticMethod(targetType, methodName, parameters);
+        Assert.IsNotNull(method, $"Could not find static method {methodName} on {targetType?.Name}.");
+        return method.Invoke(null, parameters);
+    }
+
     private static MethodInfo FindMethod(Type targetType, string methodName, object[] parameters)
     {
         MethodInfo[] methods = targetType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        for (int i = 0; i < methods.Length; i++)
+        {
+            if (methods[i].Name != methodName)
+            {
+                continue;
+            }
+
+            ParameterInfo[] methodParameters = methods[i].GetParameters();
+
+            if (methodParameters.Length != parameters.Length)
+            {
+                continue;
+            }
+
+            bool matches = true;
+
+            for (int j = 0; j < methodParameters.Length; j++)
+            {
+                if (parameters[j] != null && !methodParameters[j].ParameterType.IsInstanceOfType(parameters[j]))
+                {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches)
+            {
+                return methods[i];
+            }
+        }
+
+        return null;
+    }
+
+    private static MethodInfo FindStaticMethod(Type targetType, string methodName, object[] parameters)
+    {
+        if (targetType == null)
+        {
+            return null;
+        }
+
+        MethodInfo[] methods = targetType.GetMethods(BindingFlags.Public | BindingFlags.Static);
 
         for (int i = 0; i < methods.Length; i++)
         {

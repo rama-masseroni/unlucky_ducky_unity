@@ -6,6 +6,18 @@ del commit para poder rastrear el cambio original.
 
 ## 2026-06-11
 
+### Sin commit - Progresion persistente de niveles
+
+- Se agrego guardado local de niveles completados mediante `PlayerPrefs`.
+- Solo el primer nivel del catalogo queda desbloqueado en una partida nueva.
+- Completar un nivel al tocar la meta desbloquea la siguiente entrada del catalogo, incluso entre mundos.
+- El selector mantiene visibles los niveles bloqueados con arte bloqueado y botones desactivados.
+- Los sprites tematicos del selector conservan sus colores originales al bloquearse, sin el tinte deshabilitado del `Button`.
+- Los niveles 6 a 10 del Mundo 2 ahora comparten la placa amarilla de Construccion y tienen variantes bloqueadas grises.
+- Se agrego `Unlucky Ducky/Progress/Reset Local Progress` para pruebas desde el Editor.
+- El ultimo nivel catalogado ahora vuelve al menu principal al continuar.
+- Se agregaron tests EditMode para desbloqueo lineal, cargas bloqueadas, persistencia idempotente y datos corruptos.
+
 ### Sin commit - Paquetes de arte del selector por mundo
 
 - Se agrego `WorldLevelSelectorAssets` para asociar fondos, navegacion y botones de nivel a cada mundo.

@@ -23,7 +23,7 @@ public class LevelSelectSlotView : MonoBehaviour
 
     public void Bind(LevelCatalogEntry newEntry, int slotNumber, UnityAction onClick)
     {
-        Bind(newEntry, slotNumber, null, onClick);
+        Bind(newEntry, slotNumber, null, newEntry != null && newEntry.IsPlayable, onClick);
     }
 
     public void Bind(
@@ -32,11 +32,26 @@ public class LevelSelectSlotView : MonoBehaviour
         WorldLevelSelectorAssets selectorAssets,
         UnityAction onClick)
     {
+        Bind(
+            newEntry,
+            slotNumber,
+            selectorAssets,
+            newEntry != null && newEntry.IsPlayable,
+            onClick);
+    }
+
+    public void Bind(
+        LevelCatalogEntry newEntry,
+        int slotNumber,
+        WorldLevelSelectorAssets selectorAssets,
+        bool isUnlocked,
+        UnityAction onClick)
+    {
         CaptureDefaults();
         entry = newEntry;
         gameObject.name = entry != null ? entry.DisplayName : $"Nivel {slotNumber}";
         gameObject.SetActive(entry != null);
-        bool isPlayable = entry != null && entry.IsPlayable;
+        bool isPlayable = entry != null && entry.HasSceneName && isUnlocked;
         Sprite levelSprite = entry != null
             ? selectorAssets?.GetLevelSprite(entry.DisplayOrder, !isPlayable)
             : null;
@@ -65,6 +80,9 @@ public class LevelSelectSlotView : MonoBehaviour
         }
 
         clickAction = onClick;
+        button.transition = levelSprite != null
+            ? Selectable.Transition.None
+            : Selectable.Transition.ColorTint;
         button.interactable = isPlayable;
 
         if (clickAction != null)
