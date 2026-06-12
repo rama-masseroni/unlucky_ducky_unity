@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: world_02
   worldName: Construction Zone
+  levelSelectorAssets: {fileID: 11400000, guid: a222222222224f22a222222222222222, type: 2}

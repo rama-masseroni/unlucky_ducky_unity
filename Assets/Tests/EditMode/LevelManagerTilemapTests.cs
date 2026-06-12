@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.TestTools;
@@ -97,6 +98,7 @@ public class LevelPhaseSystemTests
     private GameObject resetButtonObject;
     private GameObject gridObject;
     private GameObject tilemapObject;
+    private GameObject levelUiObject;
 
     [TearDown]
     public void TearDown()
@@ -121,10 +123,11 @@ public class LevelPhaseSystemTests
             UnityEngine.Object.DestroyImmediate(resetButtonObject);
         }
 
-        DestroyObjectNamed("VictoryScreenCanvas");
-        DestroyObjectNamed("VictoryScreenManager");
-        DestroyObjectNamed("DefeatScreenCanvas");
-        DestroyObjectNamed("DefeatScreenManager");
+        if (levelUiObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(levelUiObject);
+        }
+
         Time.timeScale = 1f;
 
         if (gridObject != null)
@@ -273,8 +276,9 @@ public class LevelPhaseSystemTests
         ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(65.2f);
         gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
 
-        GameObject hudObject = new GameObject("HUD", typeof(RectTransform));
-        Component hud = hudObject.AddComponent(levelHudPanelType);
+        GameObject hudObject = InstantiateUiPrefab("Assets/Prefabs/UI/UI_LevelHudPanel.prefab");
+        Component hud = hudObject.GetComponent(levelHudPanelType);
+        SetPrivateField(hud, "gameStateManager", manager);
 
         try
         {
@@ -369,6 +373,7 @@ public class LevelPhaseSystemTests
         Assert.IsNotNull(playerDuckControllerType);
 
         object manager = CreateGameStateManager();
+        Component victoryScreen = InstantiateLevelUi(victoryScreenManagerType);
         ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
         SetPrivateField(levelDefinition, "nextSceneName", "Level_02_TestEmpty");
         gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
@@ -397,9 +402,6 @@ public class LevelPhaseSystemTests
         Assert.IsTrue(completedInExecution);
         Assert.IsNull(requestedScene);
 
-        GameObject victoryObject = GameObject.Find("VictoryScreenManager");
-        Assert.IsNotNull(victoryObject);
-        Component victoryScreen = victoryObject.GetComponent(victoryScreenManagerType);
         Assert.IsNotNull(victoryScreen);
         Assert.IsTrue((bool)GetProperty(victoryScreen, "IsVisible"));
         Assert.AreEqual("Level_02_TestEmpty", GetProperty(victoryScreen, "NextSceneName"));
@@ -417,6 +419,7 @@ public class LevelPhaseSystemTests
         Assert.IsNotNull(defeatScreenManagerType);
 
         CreateGameStateManager();
+        Component defeatScreen = InstantiateLevelUi(defeatScreenManagerType);
         int reloadRequests = 0;
         gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(null, new Action<int, string>((_, _) => reloadRequests++));
         RegisterDefeatScreenHandler();
@@ -428,9 +431,6 @@ public class LevelPhaseSystemTests
 
         Assert.IsTrue((bool)GetProperty(duck, "IsDead"));
 
-        GameObject defeatObject = GameObject.Find("DefeatScreenManager");
-        Assert.IsNotNull(defeatObject);
-        Component defeatScreen = defeatObject.GetComponent(defeatScreenManagerType);
         Assert.IsNotNull(defeatScreen);
         Assert.IsTrue((bool)GetProperty(defeatScreen, "IsVisible"));
         Assert.AreEqual(0f, Time.timeScale);
@@ -472,6 +472,9 @@ public class LevelPhaseSystemTests
         resetButtonObject = new GameObject("ResetLevelButton", typeof(RectTransform), typeof(Button));
         Button button = resetButtonObject.GetComponent<Button>();
         Component resetButtonController = resetButtonObject.AddComponent(resetLevelButtonControllerType);
+        resetLevelButtonControllerType
+            .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(resetButtonController, null);
         resetLevelButtonControllerType.GetMethod("SetGameStateManager").Invoke(resetButtonController, new object[] { manager });
 
         Assert.IsFalse((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
@@ -1381,6 +1384,23 @@ public class LevelPhaseSystemTests
 
         Delegate handler = Delegate.CreateDelegate(handlerProperty.PropertyType, handlerMethod);
         handlerProperty.SetValue(null, handler);
+    }
+
+    private Component InstantiateLevelUi(Type componentType)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/UI_LevelRoot.prefab");
+        Assert.IsNotNull(prefab);
+        levelUiObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        Component component = levelUiObject.GetComponentInChildren(componentType, true);
+        Assert.IsNotNull(component);
+        return component;
+    }
+
+    private static GameObject InstantiateUiPrefab(string path)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        Assert.IsNotNull(prefab, path);
+        return (GameObject)PrefabUtility.InstantiatePrefab(prefab);
     }
 
     private static void DestroyFallingBlocksRoot()

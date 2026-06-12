@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,11 +46,13 @@ public class PlaceableInventoryPanelLayoutTests
     {
         Assert.IsNotNull(inventoryPanelType);
         ScriptableObject inventorySet = CreateInventorySet(6);
-        panelObject = new GameObject("InventoryPanel", typeof(RectTransform));
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/UI/UI_PlaceableInventoryPanel.prefab");
+        Assert.IsNotNull(prefab);
+        panelObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         panelObject.SetActive(false);
-        Component panel = panelObject.AddComponent(inventoryPanelType);
+        Component panel = panelObject.GetComponent(inventoryPanelType);
         SetPrivateField(panel, "inventorySet", inventorySet);
-        SetPrivateField(panel, "panelSize", new Vector2(180f, 360f));
 
         Invoke(panel, "Awake");
         Invoke(panel, "Start");
@@ -60,8 +63,8 @@ public class PlaceableInventoryPanelLayoutTests
         float availableHeight = panelRect.sizeDelta.y - 20f - 24f - 40f - 16f;
 
         Assert.AreEqual(6, slotsRoot.childCount);
-        Assert.GreaterOrEqual(panelRect.sizeDelta.x, 220f);
-        Assert.GreaterOrEqual(panelRect.sizeDelta.y, 640f);
+        Assert.AreEqual(220f, panelRect.sizeDelta.x);
+        Assert.AreEqual(640f, panelRect.sizeDelta.y);
         Assert.IsTrue(slotsLayout.childControlHeight);
         Assert.Less(slotsLayout.spacing, 8f);
 

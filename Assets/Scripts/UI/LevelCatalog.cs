@@ -48,6 +48,7 @@ public class LevelCatalogEntry
     [SerializeField] private bool unlockedByDefault = true;
 
     public LevelDefinition LevelDefinition => levelDefinition;
+    public WorldDefinition WorldDefinition => levelDefinition != null ? levelDefinition.WorldDefinition : null;
     public string SceneName => sceneName;
     public string WorldLabel => string.IsNullOrWhiteSpace(worldLabel) ? "Mundo" : worldLabel;
     public int DisplayOrder => displayOrder;

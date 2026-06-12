@@ -4,6 +4,33 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-11
+
+### Sin commit - Paquetes de arte del selector por mundo
+
+- Se agrego `WorldLevelSelectorAssets` para asociar fondos, navegacion y botones de nivel a cada mundo.
+- Se configuraron paquetes para Alcantarillas, Construccion, Centro Logistico y Barco/Muelle con el arte existente en `Assets/Sprites/UX`.
+- El selector ahora obtiene el paquete desde `LevelDefinition.WorldDefinition` y usa `worldLabel` solo como fallback.
+- Los niveles sin variante bloqueada reutilizan su sprite normal con un tinte configurable.
+- Se mantuvo la presentacion numerica del prefab como fallback cuando falta arte.
+- El menu de pausa ahora usa los sprites disponibles para `Continuar` y `Volver al menu`, sin texto duplicado.
+- Se regeneraron los botones del menu de pausa con texto negro opaco y se agregaron variantes para `Opciones`, `Reiniciar nivel` y `Creditos`.
+- El boton `Volver al menu` ahora replica el estilo rojo, texto blanco y dimensiones del boton `Salir` del menu principal.
+- Los nuevos sprites se asignaron a `Opciones` y `Creditos` del menu principal, y a todos los botones de accion del menu de pausa.
+- Los PNG de botones se recortaron al limite exacto del arte visible para evitar que aparezcan aplastados por margenes transparentes.
+- Se reparo el `Canvas` corrupto de `Scene_01_03`, restaurando su `GameObject` y las referencias de sus componentes UI.
+
+## 2026-06-09
+
+### Sin commit - UI de niveles basada en prefabs
+
+- Se creo `UI_LevelRoot` con HUD, inventario, pausa, victoria y derrota como subprefabs.
+- Se elimino la construccion visual runtime de los managers y paneles de UI de nivel.
+- Se migraron `Test_Scene` y los 18 niveles para usar una unica composicion bajo su Canvas.
+- Se agrego inyeccion centralizada de `GameStateManager` y `BuildModePlacementController`.
+- Se incorporaron prefabs para slots de inventario, overlays e iconos de HUD.
+- Se actualizo el bootstrapper, la herramienta de migracion y la cobertura de tests de assets y escenas.
+
 ## 2026-06-07
 
 ### Sin commit - Camara dinamica de planificacion

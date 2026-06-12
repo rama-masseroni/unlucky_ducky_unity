@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: World_03
   worldName: Logistics bay
+  levelSelectorAssets: {fileID: 11400000, guid: a333333333334f33a333333333333333, type: 2}

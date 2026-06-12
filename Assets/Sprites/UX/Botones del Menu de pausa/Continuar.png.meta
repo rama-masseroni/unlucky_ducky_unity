@@ -116,10 +116,10 @@ TextureImporter:
       name: Continuar_0
       rect:
         serializedVersion: 2
-        x: 14
-        y: 110
-        width: 640
-        height: 161
+        x: 0
+        y: 0
+        width: 643
+        height: 165
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

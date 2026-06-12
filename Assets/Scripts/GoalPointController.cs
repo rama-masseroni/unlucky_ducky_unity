@@ -59,7 +59,7 @@ public class GoalPointController : MonoBehaviour
     {
         if (victoryScreenManager == null)
         {
-            victoryScreenManager = VictoryScreenManager.FindOrCreate();
+            victoryScreenManager = VictoryScreenManager.FindExisting();
         }
 
         if (victoryScreenManager != null)
