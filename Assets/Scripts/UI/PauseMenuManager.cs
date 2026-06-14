@@ -18,6 +18,8 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button optionsBackButton;
 
+    private bool resetRequested;
+
     public void Configure(GameStateManager manager)
     {
         gameStateManager = manager;
@@ -84,8 +86,33 @@ public class PauseMenuManager : MonoBehaviour
 
     public void ResetLevelButton()
     {
+        if (resetRequested)
+        {
+            return;
+        }
+
+        GameStateManager manager = ResolveGameStateManager();
+
+        if (manager == null)
+        {
+            Debug.LogError("Pause menu cannot restart the level because GameStateManager is missing.", this);
+            return;
+        }
+
+        resetRequested = true;
+
+        if (resetButton != null)
+        {
+            resetButton.interactable = false;
+        }
+
+        if (container != null)
+        {
+            container.SetActive(false);
+        }
+
         Time.timeScale = 1f;
-        gameStateManager?.ResetCurrentLevel();
+        manager.ResetCurrentLevel();
     }
 
     public void OptionsButton()
@@ -117,6 +144,18 @@ public class PauseMenuManager : MonoBehaviour
         {
             optionsPanel.SetActive(false);
         }
+    }
+
+    private GameStateManager ResolveGameStateManager()
+    {
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
+        }
+
+        return gameStateManager;
     }
 
     private static void Bind(Button button, UnityEngine.Events.UnityAction action)

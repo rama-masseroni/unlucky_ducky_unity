@@ -15,3 +15,5 @@ MonoBehaviour:
   worldId: world_01
   worldName: Waterways
   levelSelectorAssets: {fileID: 11400000, guid: a111111111114f11a111111111111111, type: 2}
+  inventoryUiAssets:
+    panelBackground: {fileID: 21300000, guid: a101c7d5e6f7482b9c0d1e2f3a4b5c61, type: 3}

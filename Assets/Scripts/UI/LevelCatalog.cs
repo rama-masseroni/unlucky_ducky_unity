@@ -54,7 +54,8 @@ public class LevelCatalogEntry
     public int DisplayOrder => displayOrder;
     public bool UnlockedByDefault => unlockedByDefault;
     public bool HasSceneName => !string.IsNullOrWhiteSpace(sceneName);
-    public bool IsPlayable => unlockedByDefault && HasSceneName;
+    public string ProgressId => levelDefinition != null ? levelDefinition.LevelId : string.Empty;
+    public bool IsPlayable => HasSceneName && unlockedByDefault;
 
     public string DisplayName
     {

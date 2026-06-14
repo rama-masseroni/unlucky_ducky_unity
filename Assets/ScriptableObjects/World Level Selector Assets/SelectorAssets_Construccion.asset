@@ -21,16 +21,16 @@ MonoBehaviour:
   levelSprites:
   - displayOrder: 6
     normal: {fileID: -2124050677331970005, guid: 921eccd54c303c14490a9d39f2f3aa77, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: a16f083c2e4d4fe2a0c3617b99205a06, type: 3}
   - displayOrder: 7
     normal: {fileID: 5787200872800670841, guid: 99669af61fa725c4b89d51254acf4ebc, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: b27a194d3f5e4af3b1d4728c0a316b17, type: 3}
   - displayOrder: 8
     normal: {fileID: 4435862811613060841, guid: 532aeb50a22c350449a4c159445aff5e, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: c38b2a5e406f4b04c2e5839d1b427c28, type: 3}
   - displayOrder: 9
     normal: {fileID: -5866880199248856196, guid: 6b3f0faeb12ae6a4585a0c465751f7e5, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: d49c3b6f51704c15d3f694ae2c538d39, type: 3}
   - displayOrder: 10
     normal: {fileID: 8762886588838236210, guid: 40050d4a2e75a184b86ae3851e849863, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: e5ad4c7062814d26e407a5bf3d649e4a, type: 3}

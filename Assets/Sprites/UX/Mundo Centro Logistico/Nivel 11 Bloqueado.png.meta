@@ -116,10 +116,10 @@ TextureImporter:
       name: Nivel 11 Bloqueado_0
       rect:
         serializedVersion: 2
-        x: 53
-        y: 53
-        width: 370
-        height: 419
+        x: 31
+        y: 23
+        width: 439
+        height: 452
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

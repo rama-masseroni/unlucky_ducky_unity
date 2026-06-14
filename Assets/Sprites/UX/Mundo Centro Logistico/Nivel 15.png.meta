@@ -116,9 +116,9 @@ TextureImporter:
       name: Nivel 15_0
       rect:
         serializedVersion: 2
-        x: 20
-        y: 32
-        width: 194
+        x: 15
+        y: 27
+        width: 196
         height: 218
       alignment: 0
       pivot: {x: 0, y: 0}

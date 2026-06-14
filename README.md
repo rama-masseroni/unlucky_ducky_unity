@@ -13,6 +13,32 @@ Cada nivel tiene dos fases:
 
 El jugador gana cuando el pato llega a `Goal_Point`. Pierde si el pato muere por peligro/enemigo/bomba, o si se agota la cuenta regresiva de planificacion cuando el nivel tiene limite.
 
+## Progresion de niveles
+
+Los niveles se desbloquean de forma lineal segun el orden de
+`MainLevelCatalog.asset`. En una partida nueva solo esta disponible la entrada
+marcada con `unlockedByDefault`; completar un nivel desbloquea la entrada
+siguiente, incluso cuando pertenece a otro mundo.
+
+La victoria se guarda al tocar `Goal_Point`, antes de elegir entre continuar,
+reintentar o volver al menu. El progreso persiste localmente mediante
+`PlayerPrefs` y usa `LevelDefinition.levelId` como identificador estable.
+
+Los niveles bloqueados siguen visibles en el selector, usan su sprite bloqueado
+o el tinte de fallback, y no pueden cargar su escena. Para borrar el progreso
+durante desarrollo usa:
+
+```text
+Unlucky Ducky > Progress > Reset Local Progress
+```
+
+Al agregar o reordenar niveles:
+
+1. Asignar un `levelId` unico y estable en su `LevelDefinition`.
+2. Agregar la escena y definicion a `MainLevelCatalog.asset`.
+3. Usar `displayOrder` para ubicarlo en la cadena global.
+4. Mantener `unlockedByDefault` solo en el primer nivel de una partida nueva.
+
 ## Camara dinamica de planificacion
 
 Los niveles grandes pueden ocultar parte del mapa durante `Planning` para que el jugador no vea la ruta completa desde el inicio. Activa `useDynamicPlanningCamera` en el `LevelDefinition` del nivel.
@@ -516,6 +542,23 @@ Unlucky Ducky/UI/Generate Level UI and Migrate Scenes
 El bootstrapper de niveles agrega automaticamente `UI_LevelRoot` y `EventSystem`
 cuando faltan. Los slots de inventario siguen instanciandose en runtime porque
 su cantidad y contenido dependen del `PlaceableInventorySet`.
+
+El Mundo 1 usa una variante visual modular, compuesta por prefabs editables:
+
+```text
+Assets/Prefabs/UI/World Inventories/World 01/UI_InventoryPanel_World01.prefab
+Assets/Prefabs/UI/World Inventories/World 01/UI_InventoryItem_World01.prefab
+Assets/Prefabs/UI/World Inventories/World 01/UI_ExecuteButton_World01.prefab
+```
+
+El panel contiene el titulo y referencia el prefab reutilizable de item. El
+boton de ejecucion es un prefab independiente anidado dentro del panel. Las
+escenas del Mundo 1 usan `UI_GameplayCanvas_World01.prefab`, que incorpora esa
+composicion sin generar objetos visuales desde scripts.
+
+Cada `WorldDefinition` contiene una configuracion `inventoryUiAssets`. El panel
+consulta el mundo del `LevelDefinition` activo y aplica automaticamente el
+`panelBackground` configurado.
 
 ## Validacion rapida
 

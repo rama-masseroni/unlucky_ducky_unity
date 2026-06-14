@@ -21,13 +21,13 @@ MonoBehaviour:
   levelSprites:
   - displayOrder: 1
     normal: {fileID: -8901830037030675177, guid: 11a626369f7f79847bc413776e5908d6, type: 3}
-    locked: {fileID: 0}
+    locked: {fileID: 6406788867260273651, guid: f61e5d8173924e37a518b6c04e75af51, type: 3}
+  - displayOrder: 3
+    normal: {fileID: -161090209111912838, guid: 52c0022a65316a944a66219c20b3e11d, type: 3}
+    locked: {fileID: 8154547188913610251, guid: 66c5b7bc7f2564b4b890bf9442adc4fc, type: 3}
   - displayOrder: 2
     normal: {fileID: -161090209111912838, guid: 52c0022a65316a944a66219c20b3e11d, type: 3}
     locked: {fileID: 6406788867260273651, guid: 36bc3c1822400ba40a98e37da1cfa222, type: 3}
-  - displayOrder: 3
-    normal: {fileID: 1259557336998787535, guid: bb3a2bdcce5557f4c829ba5036e20b42, type: 3}
-    locked: {fileID: 8154547188913610251, guid: 66c5b7bc7f2564b4b890bf9442adc4fc, type: 3}
   - displayOrder: 4
     normal: {fileID: 6388441549395249015, guid: 46a87f56c7c86ac4eb4e1a9556ef15f5, type: 3}
     locked: {fileID: -5429374305488141825, guid: 86ff1e0d391c0eb41a9ead5a99d7b4a5, type: 3}

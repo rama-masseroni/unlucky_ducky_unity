@@ -51,6 +51,7 @@ public class GoalPointController : MonoBehaviour
         }
 
         hasCompletedLevel = true;
+        LevelProgressService.MarkCompleted(levelDefinition.LevelId);
         ShowVictoryScreen(levelDefinition.NextSceneName);
         return true;
     }
