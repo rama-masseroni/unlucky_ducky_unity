@@ -14,6 +14,10 @@ del commit para poder rastrear el cambio original.
 - El selector mantiene visibles los niveles bloqueados con arte bloqueado y botones desactivados.
 - Los sprites tematicos del selector conservan sus colores originales al bloquearse, sin el tinte deshabilitado del `Button`.
 - Los niveles 6 a 10 del Mundo 2 ahora comparten la placa amarilla de Construccion y tienen variantes bloqueadas grises.
+- Se agrego la variante bloqueada del nivel 1 del Mundo 1.
+- Los niveles 11, 13, 14 y 15 del Mundo 3 ahora comparten el diseño desbloqueado del nivel 12.
+- Los niveles 11 a 15 del Mundo 3 tienen variantes bloqueadas azules menos saturadas.
+- Se normalizaron las proporciones de los bloqueados del Mundo 3 para que ocupen el mismo ancho visual que los otros mundos.
 - Se agrego `Unlucky Ducky/Progress/Reset Local Progress` para pruebas desde el Editor.
 - El ultimo nivel catalogado ahora vuelve al menu principal al continuar.
 - Se agregaron tests EditMode para desbloqueo lineal, cargas bloqueadas, persistencia idempotente y datos corruptos.
