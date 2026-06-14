@@ -36,6 +36,7 @@ public class LevelSelectController : MonoBehaviour
 
     private void Awake()
     {
+        ConfigureSelectorBackground();
         CaptureVisualDefaults();
         BindPaginationButtons();
     }
@@ -223,6 +224,7 @@ public class LevelSelectController : MonoBehaviour
         CaptureVisualDefaults();
 
         ApplySprite(selectorBackground, selectorAssets?.Background, visualDefaults.Background);
+        UpdateSelectorBackgroundAspect();
         ApplySprite(previousPageImage, selectorAssets?.PreviousPage, visualDefaults.PreviousPage);
         ApplySprite(nextPageImage, selectorAssets?.NextPage, visualDefaults.NextPage);
         ApplySprite(backButtonImage, selectorAssets?.BackButton, visualDefaults.BackButton);
@@ -247,6 +249,52 @@ public class LevelSelectController : MonoBehaviour
 
         image.sprite = themedSprite != null ? themedSprite : defaults.Sprite;
         image.color = themedSprite != null ? Color.white : defaults.Color;
+    }
+
+    private void ConfigureSelectorBackground()
+    {
+        if (selectorBackground == null)
+        {
+            return;
+        }
+
+        RectTransform rect = selectorBackground.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localScale = Vector3.one;
+        rect.SetAsFirstSibling();
+
+        selectorBackground.preserveAspect = false;
+        selectorBackground.raycastTarget = false;
+
+        AspectRatioFitter fitter = selectorBackground.GetComponent<AspectRatioFitter>();
+
+        if (fitter == null)
+        {
+            fitter = selectorBackground.gameObject.AddComponent<AspectRatioFitter>();
+        }
+
+        fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+    }
+
+    private void UpdateSelectorBackgroundAspect()
+    {
+        if (selectorBackground == null || selectorBackground.sprite == null)
+        {
+            return;
+        }
+
+        Rect spriteRect = selectorBackground.sprite.rect;
+
+        if (spriteRect.height <= 0f)
+        {
+            return;
+        }
+
+        ConfigureSelectorBackground();
+        selectorBackground.GetComponent<AspectRatioFitter>().aspectRatio = spriteRect.width / spriteRect.height;
     }
 
     private sealed class LevelCatalogPage

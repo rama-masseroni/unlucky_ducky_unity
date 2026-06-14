@@ -81,6 +81,7 @@ public class LevelPhaseSystemTests
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
     private readonly Type victoryScreenManagerType = Type.GetType("VictoryScreenManager, Assembly-CSharp");
     private readonly Type defeatScreenManagerType = Type.GetType("DefeatScreenManager, Assembly-CSharp");
+    private readonly Type pauseMenuManagerType = Type.GetType("PauseMenuManager, Assembly-CSharp");
     private readonly Type levelHudPanelType = Type.GetType("LevelHudPanel, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
@@ -436,6 +437,30 @@ public class LevelPhaseSystemTests
         Assert.AreEqual(0f, Time.timeScale);
 
         defeatScreenManagerType.GetMethod("RetryButton").Invoke(defeatScreen, null);
+        defeatScreenManagerType.GetMethod("RetryButton").Invoke(defeatScreen, null);
+
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.AreEqual(1, reloadRequests);
+    }
+
+    [Test]
+    public void PauseMenu_ResetLevelButton_ResumesTimeAndRequestsOneReload()
+    {
+        Assert.IsNotNull(gameStateManagerType);
+        Assert.IsNotNull(pauseMenuManagerType);
+
+        CreateGameStateManager();
+        Component pauseMenu = InstantiateLevelUi(pauseMenuManagerType);
+        int reloadRequests = 0;
+        gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(
+            null,
+            new Action<int, string>((_, _) => reloadRequests++));
+
+        pauseMenuManagerType.GetMethod("PauseButton").Invoke(pauseMenu, null);
+        Assert.AreEqual(0f, Time.timeScale);
+
+        pauseMenuManagerType.GetMethod("ResetLevelButton").Invoke(pauseMenu, null);
+        pauseMenuManagerType.GetMethod("ResetLevelButton").Invoke(pauseMenu, null);
 
         Assert.AreEqual(1f, Time.timeScale);
         Assert.AreEqual(1, reloadRequests);

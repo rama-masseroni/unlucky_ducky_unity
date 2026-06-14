@@ -18,6 +18,13 @@ del commit para poder rastrear el cambio original.
 - Los niveles 11, 13, 14 y 15 del Mundo 3 ahora comparten el diseño desbloqueado del nivel 12.
 - Los niveles 11 a 15 del Mundo 3 tienen variantes bloqueadas azules menos saturadas.
 - Se normalizaron las proporciones de los bloqueados del Mundo 3 para que ocupen el mismo ancho visual que los otros mundos.
+- Los fondos tematicos del selector ahora cubren toda la pantalla sin mostrar el escenario turquesa y verde, conservando su proporcion.
+- Los botones del menu principal redujeron su ancho para evitar que el texto integrado en los sprites se vea estirado.
+- El Mundo 1 incorpora un inventario modular de Alcantarillas con prefabs separados para contenedor, item reutilizable y boton de ejecucion.
+- El fondo del panel de inventario ahora se obtiene del tema configurado en el `WorldDefinition` del nivel activo.
+- El Mundo 2 incorpora un fondo de inventario industrial propio para verificar el intercambio visual automatico entre mundos.
+- Las pruebas de prefabs UI ya no dependen directamente de tipos runtime ausentes en su assembly de EditMode.
+- Reiniciar desde pausa y reintentar tras una derrota resuelven el manager antes de cerrar el overlay y bloquean solicitudes de recarga duplicadas.
 - Se agrego `Unlucky Ducky/Progress/Reset Local Progress` para pruebas desde el Editor.
 - El ultimo nivel catalogado ahora vuelve al menu principal al continuar.
 - Se agregaron tests EditMode para desbloqueo lineal, cargas bloqueadas, persistencia idempotente y datos corruptos.

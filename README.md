@@ -543,6 +543,23 @@ El bootstrapper de niveles agrega automaticamente `UI_LevelRoot` y `EventSystem`
 cuando faltan. Los slots de inventario siguen instanciandose en runtime porque
 su cantidad y contenido dependen del `PlaceableInventorySet`.
 
+El Mundo 1 usa una variante visual modular, compuesta por prefabs editables:
+
+```text
+Assets/Prefabs/UI/World Inventories/World 01/UI_InventoryPanel_World01.prefab
+Assets/Prefabs/UI/World Inventories/World 01/UI_InventoryItem_World01.prefab
+Assets/Prefabs/UI/World Inventories/World 01/UI_ExecuteButton_World01.prefab
+```
+
+El panel contiene el titulo y referencia el prefab reutilizable de item. El
+boton de ejecucion es un prefab independiente anidado dentro del panel. Las
+escenas del Mundo 1 usan `UI_GameplayCanvas_World01.prefab`, que incorpora esa
+composicion sin generar objetos visuales desde scripts.
+
+Cada `WorldDefinition` contiene una configuracion `inventoryUiAssets`. El panel
+consulta el mundo del `LevelDefinition` activo y aplica automaticamente el
+`panelBackground` configurado.
+
 ## Validacion rapida
 
 Comandos utiles:

@@ -22,6 +22,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
     [SerializeField] private StartExecutionButtonController startExecutionButton;
     [SerializeField] private RectTransform panelRectTransform;
     [SerializeField] private VerticalLayoutGroup panelLayout;
+    [SerializeField] private Image panelBackground;
 
     private readonly List<PlaceableInventorySlotView> slotViews = new List<PlaceableInventorySlotView>();
     private PlaceableInventorySlotView selectedSlot;
@@ -35,6 +36,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
     {
         gameStateManager = manager;
         placementController = controller;
+        ApplyWorldVisuals();
         startExecutionButton?.SetGameStateManager(gameStateManager);
     }
 
@@ -67,11 +69,17 @@ public class PlaceableInventoryPanel : MonoBehaviour
             panelLayout = GetComponent<VerticalLayoutGroup>();
         }
 
+        if (panelBackground == null)
+        {
+            panelBackground = GetComponent<Image>();
+        }
+
         if (slotsLayout == null && slotsRoot != null)
         {
             slotsLayout = slotsRoot.GetComponent<VerticalLayoutGroup>();
         }
 
+        ApplyWorldVisuals();
         RememberDefaultAnchoredPosition();
         startExecutionButton?.SetGameStateManager(gameStateManager);
     }
@@ -301,6 +309,24 @@ public class PlaceableInventoryPanel : MonoBehaviour
         for (int i = 0; i < slotViews.Count; i++)
         {
             slotViews[i].RefreshFromRuntimeEntry();
+        }
+    }
+
+    private void ApplyWorldVisuals()
+    {
+        if (panelBackground == null)
+        {
+            panelBackground = GetComponent<Image>();
+        }
+
+        WorldInventoryUiAssets assets = gameStateManager != null
+            ? gameStateManager.CurrentLevelDefinition?.WorldDefinition?.InventoryUiAssets
+            : null;
+
+        if (panelBackground != null && assets != null && assets.PanelBackground != null)
+        {
+            panelBackground.sprite = assets.PanelBackground;
+            panelBackground.color = Color.white;
         }
     }
 

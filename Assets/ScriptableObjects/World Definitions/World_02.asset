@@ -15,3 +15,5 @@ MonoBehaviour:
   worldId: world_02
   worldName: Construction Zone
   levelSelectorAssets: {fileID: 11400000, guid: a222222222224f22a222222222222222, type: 2}
+  inventoryUiAssets:
+    panelBackground: {fileID: 21300000, guid: a201c7d5e6f7482b9c0d1e2f3a4b5c61, type: 3}

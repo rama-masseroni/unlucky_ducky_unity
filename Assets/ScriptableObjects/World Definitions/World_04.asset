@@ -15,3 +15,5 @@ MonoBehaviour:
   worldId: World_04
   worldName: Cargo Docks
   levelSelectorAssets: {fileID: 11400000, guid: a444444444444f44a444444444444444, type: 2}
+  inventoryUiAssets:
+    panelBackground: {fileID: 0}

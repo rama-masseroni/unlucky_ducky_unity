@@ -15,6 +15,8 @@ public class DefeatScreenManager : MonoBehaviour
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private GameStateManager gameStateManager;
 
+    private bool retryRequested;
+
     public bool IsVisible => container != null && container.activeSelf;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -81,6 +83,13 @@ public class DefeatScreenManager : MonoBehaviour
 
     public void Show(string subtitle)
     {
+        retryRequested = false;
+
+        if (retryButton != null)
+        {
+            retryButton.interactable = true;
+        }
+
         if (subtitleText != null)
         {
             subtitleText.text = string.IsNullOrWhiteSpace(subtitle) ? DefaultSubtitle : subtitle;
@@ -99,9 +108,29 @@ public class DefeatScreenManager : MonoBehaviour
 
     public void RetryButton()
     {
+        if (retryRequested)
+        {
+            return;
+        }
+
+        GameStateManager manager = ResolveGameStateManager();
+
+        if (manager == null)
+        {
+            Debug.LogError("Defeat screen cannot retry the level because GameStateManager is missing.", this);
+            return;
+        }
+
+        retryRequested = true;
+
+        if (retryButton != null)
+        {
+            retryButton.interactable = false;
+        }
+
         Time.timeScale = 1f;
         Hide();
-        gameStateManager?.ResetCurrentLevel();
+        manager.ResetCurrentLevel();
     }
 
     public void ReturnToMainMenuButton()
@@ -114,6 +143,18 @@ public class DefeatScreenManager : MonoBehaviour
     private void Hide()
     {
         container?.SetActive(false);
+    }
+
+    private GameStateManager ResolveGameStateManager()
+    {
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
+        }
+
+        return gameStateManager;
     }
 
     private static void Bind(Button button, UnityEngine.Events.UnityAction action)

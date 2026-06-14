@@ -528,12 +528,13 @@ public static class UiPrefabMigration
         CreateTmpText(titleBlock.transform, "Subtitle", "Una aventura in-quack-\u00edble.", 30f, FontStyles.Normal, Ink, TextAlignmentOptions.Left, true);
 
         GameObject menuCard = CreateCard(root.transform, "MainActions", new Vector2(-190f, 0f), new Vector2(470f, 520f), new Vector2(1f, 0.5f), Panel);
-        AddVerticalLayout(menuCard, 18f, new RectOffset(34, 34, 34, 34), TextAnchor.MiddleCenter);
+        VerticalLayoutGroup menuLayout = AddVerticalLayout(menuCard, 18f, new RectOffset(34, 34, 34, 34), TextAnchor.MiddleCenter);
+        menuLayout.childForceExpandWidth = false;
         CreateTmpText(menuCard.transform, "MenuTitle", "MEN\u00da", 38f, FontStyles.Bold, Ink, TextAlignmentOptions.Center, true);
-        CreateTmpButton(menuCard.transform, "PlayButton", "Jugar", Green, Ink, 30f, 72f);
-        CreateTmpButton(menuCard.transform, "OptionsButton", "Opciones", Accent, Ink, 30f, 72f);
-        CreateTmpButton(menuCard.transform, "CreditsButton", "Cr\u00e9ditos", Accent, Ink, 30f, 72f);
-        CreateTmpButton(menuCard.transform, "ExitButton", "Salir", Red, Ink, 30f, 72f);
+        SetPreferredSize(CreateTmpButton(menuCard.transform, "PlayButton", "Jugar", Green, Ink, 30f).gameObject, 360f, 72f);
+        SetPreferredSize(CreateTmpButton(menuCard.transform, "OptionsButton", "Opciones", Accent, Ink, 30f).gameObject, 360f, 72f);
+        SetPreferredSize(CreateTmpButton(menuCard.transform, "CreditsButton", "Cr\u00e9ditos", Accent, Ink, 30f).gameObject, 360f, 72f);
+        SetPreferredSize(CreateTmpButton(menuCard.transform, "ExitButton", "Salir", Red, Ink, 30f).gameObject, 360f, 72f);
         SavePrefab(root, MainPanelPath);
     }
 
@@ -543,7 +544,19 @@ public static class UiPrefabMigration
         GameObject slotAsset = AssetDatabase.LoadAssetAtPath<GameObject>(LevelSelectSlotPath);
         GameObject root = CreateFullPanel("LevelSelectPanel");
         LevelSelectController controller = root.AddComponent<LevelSelectController>();
-        GameObject card = CreateCard(root.transform, "LevelSelectCard", Vector2.zero, new Vector2(1120f, 560f), new Vector2(0.5f, 0.5f), Panel);
+        GameObject backgroundObject = CreateUiObject(
+            "SelectorBackground",
+            root.transform,
+            typeof(Image),
+            typeof(AspectRatioFitter));
+        Stretch(backgroundObject.GetComponent<RectTransform>());
+        Image selectorBackground = backgroundObject.GetComponent<Image>();
+        selectorBackground.color = Color.white;
+        selectorBackground.raycastTarget = false;
+        AspectRatioFitter backgroundFitter = backgroundObject.GetComponent<AspectRatioFitter>();
+        backgroundFitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+
+        GameObject card = CreateAnchored(root.transform, "LevelSelectCard", Vector2.zero, new Vector2(1120f, 560f), new Vector2(0.5f, 0.5f));
         AddVerticalLayout(card, 20f, new RectOffset(42, 42, 34, 34), TextAnchor.UpperCenter);
         CreateTmpText(card.transform, "Title", "Seleccionar nivel", 44f, FontStyles.Bold, Ink, TextAlignmentOptions.Center, true);
 
@@ -586,6 +599,7 @@ public static class UiPrefabMigration
         SetObject(controller, "previousPageButton", previous);
         SetObject(controller, "nextPageButton", next);
         SetObject(controller, "pageLabel", pageLabel);
+        SetObject(controller, "selectorBackground", selectorBackground);
         SavePrefab(root, LevelSelectPath);
     }
 
