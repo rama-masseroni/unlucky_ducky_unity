@@ -56,7 +56,7 @@ public class LevelManager : MonoBehaviour
             return false;
         }
 
-        if (!TryDestroyTileAtWorldPosition(tilemap, worldPosition))
+        if (!TryDestroyTileAtWorldPosition(tilemap, worldPosition, entry.Definition.DestructionFilter))
         {
             return false;
         }
@@ -91,6 +91,20 @@ public class LevelManager : MonoBehaviour
         return TryDestroyTileAtCell(tilemap, gridPosition);
     }
 
+    public static bool TryDestroyTileAtWorldPosition(
+        Tilemap tilemap,
+        Vector3 worldPosition,
+        TileDestructionFilter destructionFilter)
+    {
+        if (tilemap == null)
+        {
+            return false;
+        }
+
+        Vector3Int gridPosition = tilemap.WorldToCell(worldPosition);
+        return TryDestroyTileAtCell(tilemap, gridPosition, destructionFilter);
+    }
+
     public static bool TryDestroyTileAtCell(Tilemap tilemap, Vector3Int gridPosition)
     {
         if (tilemap == null || !tilemap.HasTile(gridPosition))
@@ -102,6 +116,26 @@ public class LevelManager : MonoBehaviour
         RefreshTilemapCollider(tilemap);
         TilemapDestructionEvents.RaiseTileDestroyed(tilemap, gridPosition);
         return true;
+    }
+
+    public static bool TryDestroyTileAtCell(
+        Tilemap tilemap,
+        Vector3Int gridPosition,
+        TileDestructionFilter destructionFilter)
+    {
+        if (tilemap == null || destructionFilter == null)
+        {
+            return false;
+        }
+
+        TileBase tile = tilemap.GetTile(gridPosition);
+
+        if (!destructionFilter.Allows(tile))
+        {
+            return false;
+        }
+
+        return TryDestroyTileAtCell(tilemap, gridPosition);
     }
 
     private static void RefreshTilemapCollider(Tilemap tilemap)

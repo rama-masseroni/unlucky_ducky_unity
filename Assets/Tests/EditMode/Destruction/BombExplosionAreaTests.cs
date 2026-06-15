@@ -227,8 +227,9 @@ public class BombExplosionAreaTests
 
         Vector3Int centerCell = Vector3Int.zero;
         Vector3Int farFallingCellWithSameCoordinates = centerCell;
-        breakableTilemap.SetTile(centerCell, ScriptableObject.CreateInstance<Tile>());
-        fallingTilemap.SetTile(farFallingCellWithSameCoordinates, ScriptableObject.CreateInstance<Tile>());
+        Tile breakableTile = ScriptableObject.CreateInstance<Tile>();
+        breakableTilemap.SetTile(centerCell, breakableTile);
+        fallingTilemap.SetTile(farFallingCellWithSameCoordinates, breakableTile);
 
         GameObject bombObject = new GameObject("Bomb");
         bombObject.transform.position = referenceTilemap.GetCellCenterWorld(centerCell);
@@ -237,6 +238,7 @@ public class BombExplosionAreaTests
         Component bomb = bombObject.AddComponent(bombControllerType);
         SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
         SetPrivateField(bomb, "destructibleTilemaps", new[] { breakableTilemap, fallingTilemap });
+        SetPrivateField(bomb, "tileDestructionFilter", CreateTileDestructionFilter(breakableTile));
         SetPrivateField(bomb, "destroyBombAfterExplosion", false);
 
         try
@@ -255,6 +257,44 @@ public class BombExplosionAreaTests
             UnityEngine.Object.DestroyImmediate(fallingGridObject);
             UnityEngine.Object.DestroyImmediate(breakableGridObject);
             UnityEngine.Object.DestroyImmediate(referenceGridObject);
+        }
+    }
+
+    [Test]
+    public void BombController_OnlyDestroysAllowedTilesInsideExplosionArea()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        Tilemap referenceTilemap = CreateTilemap(gridObject.transform, "Reference Tilemap");
+        Tilemap breakableTilemap = CreateTilemap(gridObject.transform, "Breakable Tilemap");
+        Tile allowedTile = ScriptableObject.CreateInstance<Tile>();
+        Tile disallowedTile = ScriptableObject.CreateInstance<Tile>();
+        Vector3Int allowedCell = Vector3Int.zero;
+        Vector3Int disallowedCell = new Vector3Int(1, 0, 0);
+        breakableTilemap.SetTile(allowedCell, allowedTile);
+        breakableTilemap.SetTile(disallowedCell, disallowedTile);
+
+        GameObject bombObject = new GameObject("Bomb");
+        bombObject.transform.position = referenceTilemap.GetCellCenterWorld(allowedCell);
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+        Assert.IsNotNull(bombControllerType);
+        Component bomb = bombObject.AddComponent(bombControllerType);
+        SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
+        SetPrivateField(bomb, "destructibleTilemaps", new[] { breakableTilemap });
+        SetPrivateField(bomb, "tileDestructionFilter", CreateTileDestructionFilter(allowedTile));
+        SetPrivateField(bomb, "destroyBombAfterExplosion", false);
+
+        try
+        {
+            bombControllerType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Instance).Invoke(bomb, null);
+
+            Assert.IsFalse(breakableTilemap.HasTile(allowedCell));
+            Assert.IsTrue(breakableTilemap.HasTile(disallowedCell));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(bombObject);
+            UnityEngine.Object.DestroyImmediate(gridObject);
+            DestroyGameStateManager();
         }
     }
 
@@ -310,8 +350,10 @@ public class BombExplosionAreaTests
         Tilemap fallingTilemap = CreateTilemap(gridObject.transform, "Falling Tilemap");
         Vector3Int supportCell = new Vector3Int(0, 1, 0);
         Vector3Int fallingCell = new Vector3Int(0, 2, 0);
-        supportTilemap.SetTile(supportCell, ScriptableObject.CreateInstance<Tile>());
-        fallingTilemap.SetTile(fallingCell, ScriptableObject.CreateInstance<Tile>());
+        Tile supportTile = ScriptableObject.CreateInstance<Tile>();
+        Tile fallingTile = ScriptableObject.CreateInstance<Tile>();
+        supportTilemap.SetTile(supportCell, supportTile);
+        fallingTilemap.SetTile(fallingCell, fallingTile);
         Component fallingLayer = fallingTilemap.gameObject.AddComponent(fallingLayerType);
         SetPrivateField(fallingLayer, "supportTilemaps", new[] { supportTilemap });
         InvokeLevelPhase(fallingLayer, "Execution");
@@ -322,6 +364,7 @@ public class BombExplosionAreaTests
         Component bomb = bombObject.AddComponent(bombControllerType);
         SetPrivateField(bomb, "referenceTilemap", referenceTilemap);
         SetPrivateField(bomb, "destructibleTilemaps", new[] { supportTilemap, fallingTilemap });
+        SetPrivateField(bomb, "tileDestructionFilter", CreateTileDestructionFilter(supportTile, fallingTile));
         SetPrivateField(bomb, "destroyBombAfterExplosion", false);
 
         try
@@ -415,6 +458,23 @@ public class BombExplosionAreaTests
         listener.GetType()
             .GetMethod("OnLevelPhaseChanged", BindingFlags.Public | BindingFlags.Instance)
             .Invoke(listener, new[] { phase });
+    }
+
+    private static object CreateTileDestructionFilter(params TileBase[] allowedTiles)
+    {
+        Type filterType = Type.GetType("TileDestructionFilter, UnluckyDucky.Core");
+        Assert.IsNotNull(filterType);
+        object filter = Activator.CreateInstance(filterType);
+        IList tiles = (IList)filterType
+            .GetField("allowedTiles", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(filter);
+
+        for (int i = 0; i < allowedTiles.Length; i++)
+        {
+            tiles.Add(allowedTiles[i]);
+        }
+
+        return filter;
     }
 
     private static void DestroyFallingBlocksRoot()

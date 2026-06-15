@@ -146,6 +146,9 @@ MonoBehaviour:
   explosionRadiusInCells: 1
   referenceTilemap: {fileID: 0}
   destructibleTilemaps: []
+  tileDestructionFilter:
+    allowedTiles:
+    - {fileID: 11400000, guid: 823190ac712b37d47b19058f62ea7d17, type: 2}
   destructibleObjectMask:
     serializedVersion: 2
     m_Bits: 4294967295
