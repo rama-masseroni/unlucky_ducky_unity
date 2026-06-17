@@ -5,11 +5,6 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 public class PlaceableInventoryPanel : MonoBehaviour
 {
-    private const float TitleHeight = 24f;
-    private const float StartButtonHeight = 40f;
-    private const float BaseSlotHeight = 92f;
-    private const float BaseSlotSpacing = 8f;
-
     [Header("Data")]
     [SerializeField] private PlaceableInventorySet inventorySet;
     [SerializeField] private BuildModePlacementController placementController;
@@ -22,7 +17,6 @@ public class PlaceableInventoryPanel : MonoBehaviour
     [SerializeField] private StartExecutionButtonController startExecutionButton;
     [SerializeField] private RectTransform panelRectTransform;
     [SerializeField] private VerticalLayoutGroup panelLayout;
-    [SerializeField] private Image panelBackground;
 
     private readonly List<PlaceableInventorySlotView> slotViews = new List<PlaceableInventorySlotView>();
     private PlaceableInventorySlotView selectedSlot;
@@ -36,7 +30,6 @@ public class PlaceableInventoryPanel : MonoBehaviour
     {
         gameStateManager = manager;
         placementController = controller;
-        ApplyWorldVisuals();
         startExecutionButton?.SetGameStateManager(gameStateManager);
     }
 
@@ -69,17 +62,11 @@ public class PlaceableInventoryPanel : MonoBehaviour
             panelLayout = GetComponent<VerticalLayoutGroup>();
         }
 
-        if (panelBackground == null)
-        {
-            panelBackground = GetComponent<Image>();
-        }
-
         if (slotsLayout == null && slotsRoot != null)
         {
             slotsLayout = slotsRoot.GetComponent<VerticalLayoutGroup>();
         }
 
-        ApplyWorldVisuals();
         RememberDefaultAnchoredPosition();
         startExecutionButton?.SetGameStateManager(gameStateManager);
     }
@@ -139,17 +126,11 @@ public class PlaceableInventoryPanel : MonoBehaviour
         }
 
         List<PlaceableInventoryRuntimeEntry> entries = GetVisibleEntries();
-        SlotLayout layout = CalculateSlotLayout(entries.Count);
-
-        if (slotsLayout != null)
-        {
-            slotsLayout.spacing = layout.Spacing;
-        }
 
         for (int i = 0; i < entries.Count; i++)
         {
             PlaceableInventorySlotView slotView = Instantiate(slotPrefab, slotsRoot);
-            slotView.Bind(entries[i], placementController, layout.SlotHeight, layout.Scale);
+            slotView.Bind(entries[i], placementController);
             slotView.Clicked.AddListener(SelectSlot);
             slotViews.Add(slotView);
         }
@@ -252,33 +233,6 @@ public class PlaceableInventoryPanel : MonoBehaviour
         return entries;
     }
 
-    private SlotLayout CalculateSlotLayout(int entryCount)
-    {
-        if (entryCount <= 0)
-        {
-            return new SlotLayout(BaseSlotHeight, BaseSlotSpacing, 1f);
-        }
-
-        float availableHeight = GetAvailableSlotsHeight();
-        float desiredHeight = entryCount * BaseSlotHeight + Mathf.Max(0, entryCount - 1) * BaseSlotSpacing;
-        float scale = desiredHeight > 0f ? Mathf.Min(1f, availableHeight / desiredHeight) : 1f;
-        return new SlotLayout(BaseSlotHeight * scale, BaseSlotSpacing * scale, scale);
-    }
-
-    private float GetAvailableSlotsHeight()
-    {
-        float height = panelRectTransform != null ? panelRectTransform.rect.height : 0f;
-
-        if (height <= 0f && panelRectTransform != null)
-        {
-            height = panelRectTransform.sizeDelta.y;
-        }
-
-        float padding = panelLayout != null ? panelLayout.padding.top + panelLayout.padding.bottom : 0f;
-        float spacing = panelLayout != null ? panelLayout.spacing * 2f : 0f;
-        return Mathf.Max(0f, height - padding - TitleHeight - StartButtonHeight - spacing);
-    }
-
     private void HandlePhaseChanged(LevelPhase phase)
     {
         bool planning = phase == LevelPhase.Planning;
@@ -312,35 +266,4 @@ public class PlaceableInventoryPanel : MonoBehaviour
         }
     }
 
-    private void ApplyWorldVisuals()
-    {
-        if (panelBackground == null)
-        {
-            panelBackground = GetComponent<Image>();
-        }
-
-        WorldInventoryUiAssets assets = gameStateManager != null
-            ? gameStateManager.CurrentLevelDefinition?.WorldDefinition?.InventoryUiAssets
-            : null;
-
-        if (panelBackground != null && assets != null && assets.PanelBackground != null)
-        {
-            panelBackground.sprite = assets.PanelBackground;
-            panelBackground.color = Color.white;
-        }
-    }
-
-    private readonly struct SlotLayout
-    {
-        public SlotLayout(float slotHeight, float spacing, float scale)
-        {
-            SlotHeight = slotHeight;
-            Spacing = spacing;
-            Scale = scale;
-        }
-
-        public float SlotHeight { get; }
-        public float Spacing { get; }
-        public float Scale { get; }
-    }
 }

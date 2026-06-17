@@ -25,6 +25,12 @@ del commit para poder rastrear el cambio original.
 - El Mundo 2 incorpora un fondo de inventario industrial propio para verificar el intercambio visual automatico entre mundos.
 - Las pruebas de prefabs UI ya no dependen directamente de tipos runtime ausentes en su assembly de EditMode.
 - Reiniciar desde pausa y reintentar tras una derrota resuelven el manager antes de cerrar el overlay y bloquean solicitudes de recarga duplicadas.
+- El tema de inventario por mundo ahora incluye panel, campo de titulo, tarjeta de item, boton de ejecucion y colores de texto; Mundo 2 incorpora sus variantes industriales.
+- Los items de inventario tienen una altura maxima de 72 px y no pueden expandirse verticalmente para llenar el panel.
+- El grupo de items de inventario se alinea verticalmente al centro del area disponible.
+- Las tarjetas de inventario muestran nombre y cantidad en una linea (`Pico x2`), con texto mas grande y un receptaculo blanco ampliado para el icono en los Mundos 1 y 2.
+- El Mundo 3 incorpora panel, tarjeta de item con receptaculo blanco y boton de ejecucion en acero azul logistico, importados con alfa real.
+- El ancho del panel padre y el ancho de las tarjetas de inventario ahora son valores independientes editables por mundo; Mundo 3 usa un padre de 320 px y tarjetas centradas de 260 px.
 - Se agrego `Unlucky Ducky/Progress/Reset Local Progress` para pruebas desde el Editor.
 - El ultimo nivel catalogado ahora vuelve al menu principal al continuar.
 - Se agregaron tests EditMode para desbloqueo lineal, cargas bloqueadas, persistencia idempotente y datos corruptos.

@@ -558,7 +558,8 @@ composicion sin generar objetos visuales desde scripts.
 
 Cada `WorldDefinition` contiene una configuracion `inventoryUiAssets`. El panel
 consulta el mundo del `LevelDefinition` activo y aplica automaticamente el
-`panelBackground` configurado.
+fondo del panel, la tarjeta de item, el boton de ejecucion y sus colores de
+texto. Los objetos siguen siendo reutilizables; solo cambia su tema visual.
 
 ## Validacion rapida
 
