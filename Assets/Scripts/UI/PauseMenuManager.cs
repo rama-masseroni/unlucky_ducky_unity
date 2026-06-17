@@ -17,6 +17,7 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private Button optionsBackButton;
+    [SerializeField] private Button tutorialButton;
 
     private bool resetRequested;
 
@@ -32,6 +33,7 @@ public class PauseMenuManager : MonoBehaviour
         Bind(optionsButton, OptionsButton);
         Bind(mainMenuButton, ReturnToMainMenuButton);
         Bind(optionsBackButton, BackToPauseButton);
+        Bind(tutorialButton, TutorialButton);
         ShowPauseActions();
 
         if (container != null)
@@ -133,6 +135,25 @@ public class PauseMenuManager : MonoBehaviour
         ShowPauseActions();
     }
 
+    public void TutorialButton()
+    {
+        TutorialCardsOverlay tutorialOverlay = FindTutorialOverlay();
+
+        if (tutorialOverlay == null)
+        {
+            Debug.LogWarning("Pause menu cannot show tutorial because TutorialCardsOverlay is missing.", this);
+            return;
+        }
+
+        if (container != null)
+        {
+            container.SetActive(false);
+        }
+
+        Time.timeScale = 1f;
+        tutorialOverlay.ShowFromStart();
+    }
+
     private void ShowPauseActions()
     {
         if (pauseActions != null)
@@ -167,5 +188,22 @@ public class PauseMenuManager : MonoBehaviour
 
         button.onClick.RemoveListener(action);
         button.onClick.AddListener(action);
+    }
+
+    private static TutorialCardsOverlay FindTutorialOverlay()
+    {
+        TutorialCardsOverlay[] overlays = Resources.FindObjectsOfTypeAll<TutorialCardsOverlay>();
+
+        for (int i = 0; i < overlays.Length; i++)
+        {
+            TutorialCardsOverlay overlay = overlays[i];
+
+            if (overlay != null && overlay.gameObject.scene.IsValid())
+            {
+                return overlay;
+            }
+        }
+
+        return null;
     }
 }
