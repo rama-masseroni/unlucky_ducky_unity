@@ -375,6 +375,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6041974053147347055, guid: 764029526d8589e42acddd89ad3ce843, type: 3}
+      propertyPath: screenOffset.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6509997168327414515, guid: 764029526d8589e42acddd89ad3ce843, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

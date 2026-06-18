@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,9 @@ public class PlaceableInventoryPanel : MonoBehaviour
     private bool hasDefaultAnchoredPosition;
 
     public PlaceableDefinition SelectedDefinition => selectedSlot != null ? selectedSlot.Definition : null;
+    public event Action<PlaceableInventorySlotView> SlotCreated;
+    public event Action<PlaceableInventorySlotView> SlotInteracted;
+    public IReadOnlyList<PlaceableInventorySlotView> SlotViews => slotViews;
 
     public void Configure(GameStateManager manager, BuildModePlacementController controller)
     {
@@ -152,6 +156,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
             slotView.Bind(entries[i], placementController, layout.SlotHeight, layout.Scale);
             slotView.Clicked.AddListener(SelectSlot);
             slotViews.Add(slotView);
+            SlotCreated?.Invoke(slotView);
         }
     }
 
@@ -182,6 +187,7 @@ public class PlaceableInventoryPanel : MonoBehaviour
     private void SelectSlot(PlaceableInventorySlotView slotView)
     {
         selectedSlot = slotView;
+        SlotInteracted?.Invoke(slotView);
 
         for (int i = 0; i < slotViews.Count; i++)
         {

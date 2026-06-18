@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
@@ -27,6 +28,7 @@ public class BuildModePlacementController : MonoBehaviour
     private bool currentCellIsValid;
 
     public bool HasActivePlacementInteraction => activeDefinition != null || activeMoveInstance != null;
+    public event Action<PlaceableDefinition> PlaceablePlaced;
 
     private void Awake()
     {
@@ -190,6 +192,7 @@ public class BuildModePlacementController : MonoBehaviour
         }
 
         placedInstance.Initialize(activeDefinition, this);
+        PlaceablePlaced?.Invoke(activeDefinition);
     }
 
     private void CreatePreview()
