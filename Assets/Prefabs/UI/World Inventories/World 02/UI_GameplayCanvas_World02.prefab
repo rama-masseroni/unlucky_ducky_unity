@@ -642,7 +642,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 578066355763538701, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 81.7
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 578066355763538701, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_SizeDelta.y
@@ -650,11 +650,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 578066355763538701, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 110.5
       objectReference: {fileID: 0}
     - target: {fileID: 578066355763538701, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 594.6
       objectReference: {fileID: 0}
     - target: {fileID: 910000000000000002, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_AnchorMax.x
@@ -771,6 +771,34 @@ PrefabInstance:
     - target: {fileID: 1000000000000000002, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2580659341692201739, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2580659341692201739, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2580659341692201739, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3506768069004959637, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3506768069004959637, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3506768069004959637, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3506768069004959637, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_FontData.m_FontSize
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 4939002367883296765, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_AnchorMax.x

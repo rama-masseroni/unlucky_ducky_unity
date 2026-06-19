@@ -4,6 +4,19 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-19
+
+### Sin commit - Inventario visual del Mundo 4
+
+- Se agregaron sprites con alfa real para el contenedor, las tarjetas de item y el boton de ejecucion del Mundo 4, basados en el arte naval de Barco/Muelle.
+- El receptaculo del icono permanece blanco y vacio para recibir el sprite del objeto en runtime.
+- Los prefabs propios del Mundo 4 referencian estos assets; dimensiones, posiciones y layout siguen serializados y editables desde el Inspector.
+
+### Sin commit - Inventario visual del Mundo 3 rehecho
+
+- Se regeneraron los sprites de contenedor, tarjeta de item y boton de ejecucion con la estetica azul industrial de Centro Logistico.
+- Se conservaron el receptaculo blanco del icono y el alfa real, y los tres prefabs del Mundo 3 ahora referencian sus sprites propios.
+
 ## 2026-06-11
 
 ### Sin commit - Progresion persistente de niveles

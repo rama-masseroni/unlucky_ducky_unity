@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -367,12 +367,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1839735485 &1605964687 stripped
-Tilemap:
-  m_CorrespondingSourceObject: {fileID: 8027300914580357508, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
-  m_PrefabInstance: {fileID: 7619253643994207242}
-  m_PrefabAsset: {fileID: 0}
---- !u!1001 &2045690319
+--- !u!1001 &1167187098
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -380,27 +375,27 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -508,39 +503,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9049183255305171816, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
       propertyPath: m_Name
-      value: UI_GameplayCanvas
+      value: UI_GameplayCanvas_World03
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3506cb5bcf3c4c2eaa6d401452f74caa, type: 3}
+--- !u!1839735485 &1605964687 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 8027300914580357508, guid: b5195c1dcdd271a489b76417518f5d99, type: 3}
+  m_PrefabInstance: {fileID: 7619253643994207242}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &920000000000000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -6055,8 +6031,7 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 7619253643994207242}
   - {fileID: 611252038}
-  - {fileID: 2045690319}
   - {fileID: 930000000000000002}
   - {fileID: 920000000000000002}
   - {fileID: 198964400}
-
+  - {fileID: 1167187098}

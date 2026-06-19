@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -380,27 +380,27 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: 8847b634deee49ea902e63341a14352c, type: 3}
+    - target: {fileID: 1170121560998947147, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -508,33 +508,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: 8847b634deee49ea902e63341a14352c, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9049183255305171816, guid: 8847b634deee49ea902e63341a14352c, type: 3}
       propertyPath: m_Name
-      value: UI_GameplayCanvas
+      value: UI_GameplayCanvas_World02
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5651,4 +5627,3 @@ SceneRoots:
   - {fileID: 920000000000000002}
   - {fileID: 198964400}
   - {fileID: 1617603197}
-
