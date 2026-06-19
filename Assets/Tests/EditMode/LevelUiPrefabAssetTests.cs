@@ -8,8 +8,6 @@ using UnityEngine.UI;
 
 public class LevelUiPrefabAssetTests
 {
-    private const string LevelUiRootPath = "Assets/Prefabs/UI/UI_LevelRoot.prefab";
-    private readonly System.Type levelUiRootType = System.Type.GetType("LevelUiRoot, Assembly-CSharp");
     private readonly System.Type levelHudPanelType = System.Type.GetType("LevelHudPanel, Assembly-CSharp");
     private readonly System.Type inventoryPanelType = System.Type.GetType("PlaceableInventoryPanel, Assembly-CSharp");
     private readonly System.Type pauseMenuType = System.Type.GetType("PauseMenuManager, Assembly-CSharp");
@@ -17,22 +15,26 @@ public class LevelUiPrefabAssetTests
     private readonly System.Type defeatScreenType = System.Type.GetType("DefeatScreenManager, Assembly-CSharp");
 
     [Test]
-    public void LevelUiRoot_ContainsAllAuthoredLevelUiWithoutNestedCanvas()
+    public void WorldGameplayCanvases_ContainAllAuthoredLevelUi()
     {
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LevelUiRootPath);
+        for (int world = 1; world <= 4; world++)
+        {
+            string worldId = world.ToString("00");
+            string path = $"Assets/Prefabs/UI/World Inventories/World {worldId}/UI_GameplayCanvas_World{worldId}.prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
 
-        Assert.IsNotNull(prefab);
-        Assert.IsNotNull(prefab.GetComponent(levelUiRootType));
-        Assert.AreEqual(0, prefab.GetComponentsInChildren<Canvas>(true).Length);
-        Assert.IsNotNull(prefab.GetComponentInChildren(levelHudPanelType, true));
-        Assert.IsNotNull(prefab.GetComponentInChildren(inventoryPanelType, true));
-        Assert.IsNotNull(prefab.GetComponentInChildren(pauseMenuType, true));
-        Assert.IsNotNull(prefab.GetComponentInChildren(victoryScreenType, true));
-        Assert.IsNotNull(prefab.GetComponentInChildren(defeatScreenType, true));
+            Assert.IsNotNull(prefab, path);
+            Assert.AreEqual(1, prefab.GetComponentsInChildren<Canvas>(true).Length, path);
+            Assert.IsNotNull(prefab.GetComponentInChildren(levelHudPanelType, true), path);
+            Assert.IsNotNull(prefab.GetComponentInChildren(inventoryPanelType, true), path);
+            Assert.IsNotNull(prefab.GetComponentInChildren(pauseMenuType, true), path);
+            Assert.IsNotNull(prefab.GetComponentInChildren(victoryScreenType, true), path);
+            Assert.IsNotNull(prefab.GetComponentInChildren(defeatScreenType, true), path);
+        }
     }
 
     [Test]
-    public void GameplayScenes_HaveOneCanvasEventSystemAndLevelUiRoot()
+    public void GameplayScenes_HaveOneCanvasEventSystemAndWorldInventory()
     {
         string[] guids = AssetDatabase.FindAssets("t:Scene", new[] { "Assets/Scenes" });
         int checkedScenes = 0;
@@ -53,7 +55,6 @@ public class LevelUiPrefabAssetTests
             {
                 Assert.AreEqual(1, CountInScene<Canvas>(scene), path);
                 Assert.AreEqual(1, CountInScene<EventSystem>(scene), path);
-                Assert.AreEqual(1, CountInScene(scene, levelUiRootType), path);
                 Assert.AreEqual(1, CountInScene(scene, levelHudPanelType), path);
                 Assert.AreEqual(1, CountInScene(scene, inventoryPanelType), path);
                 Assert.AreEqual(1, CountInScene(scene, pauseMenuType), path);

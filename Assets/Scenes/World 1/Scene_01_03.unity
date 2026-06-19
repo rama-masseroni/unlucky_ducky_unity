@@ -127,27 +127,27 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2062054281204541770, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
+    - target: {fileID: 1170121560998947147, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -255,57 +255,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8874133636672832255, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9049183255305171816, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
       propertyPath: m_Name
-      value: UI_GameplayCanvas
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9187921455868946928, guid: b101c7d5e6f7482b9c0d1e2f3a4b5c64, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: UI_GameplayCanvas_World01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

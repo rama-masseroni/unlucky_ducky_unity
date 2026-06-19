@@ -42,7 +42,7 @@ public class PlaceableInventoryPanelLayoutTests
     }
 
     [Test]
-    public void PlaceableInventoryPanel_WithSixEntries_ScalesSlotsToFitAvailablePanelHeight()
+    public void PlaceableInventoryPanel_Rebuild_UsesAuthoredSlotLayout()
     {
         Assert.IsNotNull(inventoryPanelType);
         ScriptableObject inventorySet = CreateInventorySet(6);
@@ -57,27 +57,18 @@ public class PlaceableInventoryPanelLayoutTests
         Invoke(panel, "Awake");
         Invoke(panel, "Start");
 
-        RectTransform panelRect = panelObject.GetComponent<RectTransform>();
         RectTransform slotsRoot = (RectTransform)GetPrivateField(panel, "slotsRoot");
         VerticalLayoutGroup slotsLayout = slotsRoot.GetComponent<VerticalLayoutGroup>();
-        float availableHeight = panelRect.sizeDelta.y - 20f - 24f - 40f - 16f;
 
         Assert.AreEqual(6, slotsRoot.childCount);
-        Assert.AreEqual(220f, panelRect.sizeDelta.x);
-        Assert.AreEqual(640f, panelRect.sizeDelta.y);
         Assert.IsTrue(slotsLayout.childControlHeight);
-        Assert.Less(slotsLayout.spacing, 8f);
-
-        float usedHeight = slotsLayout.spacing * (slotsRoot.childCount - 1);
 
         for (int i = 0; i < slotsRoot.childCount; i++)
         {
             LayoutElement slotLayout = slotsRoot.GetChild(i).GetComponent<LayoutElement>();
-            Assert.Less(slotLayout.preferredHeight, 92f);
-            usedHeight += slotLayout.preferredHeight;
+            Assert.AreEqual(92f, slotLayout.preferredHeight);
+            Assert.AreEqual(92f, slotLayout.minHeight);
         }
-
-        Assert.LessOrEqual(usedHeight, availableHeight + 0.01f);
     }
 
     private ScriptableObject CreateInventorySet(int entryCount)

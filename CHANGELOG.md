@@ -4,6 +4,19 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-19
+
+### Sin commit - Inventario visual del Mundo 4
+
+- Se agregaron sprites con alfa real para el contenedor, las tarjetas de item y el boton de ejecucion del Mundo 4, basados en el arte naval de Barco/Muelle.
+- El receptaculo del icono permanece blanco y vacio para recibir el sprite del objeto en runtime.
+- Los prefabs propios del Mundo 4 referencian estos assets; dimensiones, posiciones y layout siguen serializados y editables desde el Inspector.
+
+### Sin commit - Inventario visual del Mundo 3 rehecho
+
+- Se regeneraron los sprites de contenedor, tarjeta de item y boton de ejecucion con la estetica azul industrial de Centro Logistico.
+- Se conservaron el receptaculo blanco del icono y el alfa real, y los tres prefabs del Mundo 3 ahora referencian sus sprites propios.
+
 ## 2026-06-11
 
 ### Sin commit - Progresion persistente de niveles
@@ -25,6 +38,12 @@ del commit para poder rastrear el cambio original.
 - El Mundo 2 incorpora un fondo de inventario industrial propio para verificar el intercambio visual automatico entre mundos.
 - Las pruebas de prefabs UI ya no dependen directamente de tipos runtime ausentes en su assembly de EditMode.
 - Reiniciar desde pausa y reintentar tras una derrota resuelven el manager antes de cerrar el overlay y bloquean solicitudes de recarga duplicadas.
+- El tema de inventario por mundo ahora incluye panel, campo de titulo, tarjeta de item, boton de ejecucion y colores de texto; Mundo 2 incorpora sus variantes industriales.
+- Los items de inventario tienen una altura maxima de 72 px y no pueden expandirse verticalmente para llenar el panel.
+- El grupo de items de inventario se alinea verticalmente al centro del area disponible.
+- Las tarjetas de inventario muestran nombre y cantidad en una linea (`Pico x2`), con texto mas grande y un receptaculo blanco ampliado para el icono en los Mundos 1 y 2.
+- El Mundo 3 incorpora panel, tarjeta de item con receptaculo blanco y boton de ejecucion en acero azul logistico, importados con alfa real.
+- El ancho del panel padre y el ancho de las tarjetas de inventario ahora son valores independientes editables por mundo; Mundo 3 usa un padre de 320 px y tarjetas centradas de 260 px.
 - Se agrego `Unlucky Ducky/Progress/Reset Local Progress` para pruebas desde el Editor.
 - El ultimo nivel catalogado ahora vuelve al menu principal al continuar.
 - Se agregaron tests EditMode para desbloqueo lineal, cargas bloqueadas, persistencia idempotente y datos corruptos.
