@@ -1,9 +1,9 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="LevelManagerTilemapTests.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UnluckyDucky.Core.csproj" />
   <Project Path="UnluckyDucky.Player.csproj" />
   <Project Path="UnluckyDucky.Player.Tests.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="UnluckyDucky.Enemies.csproj" />
 </Solution>
