@@ -22,39 +22,79 @@ MonoBehaviour:
     sceneName: Scene_01_02
     worldLabel: Mundo 1
     displayOrder: 2
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: b57c99113211975479b04b94c5243ffa, type: 2}
     sceneName: Scene_01_03
     worldLabel: Mundo 1
     displayOrder: 3
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: 897f5efea691dd24b839d92611636dc4, type: 2}
     sceneName: Scene_01_04
     worldLabel: Mundo 1
     displayOrder: 4
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: 92c3ea0445cca094994804b5d1ca998d, type: 2}
     sceneName: Scene_01_05
     worldLabel: Mundo 1
     displayOrder: 5
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: dc5dae82b0b3d4d4bbdf0637bc6a24dc, type: 2}
     sceneName: Scene_02_01
     worldLabel: Mundo 2
     displayOrder: 6
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: da9e3484f9ffb9e41ae348110838c761, type: 2}
     sceneName: Scene_02_02
     worldLabel: Mundo 2
     displayOrder: 7
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: 439319b21bbba1e408d60c58d7a8ddfe, type: 2}
     sceneName: Scene_02_03
     worldLabel: Mundo 2
     displayOrder: 8
-    unlockedByDefault: 1
+    unlockedByDefault: 0
   - levelDefinition: {fileID: 11400000, guid: 580b05bf673394746a7363f3ec9987f0, type: 2}
     sceneName: Scene_02_04
     worldLabel: Mundo 2
     displayOrder: 9
-    unlockedByDefault: 1
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: f8b448ca4b3c4d6e89912f732524a794, type: 2}
+    sceneName: Scene_03_01
+    worldLabel: Mundo 3
+    displayOrder: 11
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: c6384a5a7f155b941a951c9d2c8e856a, type: 2}
+    sceneName: Scene_03_02
+    worldLabel: Mundo 3
+    displayOrder: 12
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: 620332640c9e9f34597795701f446388, type: 2}
+    sceneName: Scene_03_03
+    worldLabel: Mundo 3
+    displayOrder: 13
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: d3a2f7a48b51ca74b8036f4cc723ad12, type: 2}
+    sceneName: Scene_03_04
+    worldLabel: Mundo 3
+    displayOrder: 14
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: 7c76e1b782a8de34d8be295f5ed27624, type: 2}
+    sceneName: Scene_03_05
+    worldLabel: Mundo 3
+    displayOrder: 15
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: 1ea37f253dcf7f14ca1b32577546cb49, type: 2}
+    sceneName: Scene_04_01
+    worldLabel: Mundo 4
+    displayOrder: 16
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: d2d298bcc5d91774eab4521245c5e7e8, type: 2}
+    sceneName: Scene_04_02
+    worldLabel: Mundo 4
+    displayOrder: 17
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: 19d754bb817e3c741938c04798ac12b5, type: 2}
+    sceneName: Scene_04_03
+    worldLabel: Mundo 4
+    displayOrder: 18
+    unlockedByDefault: 0

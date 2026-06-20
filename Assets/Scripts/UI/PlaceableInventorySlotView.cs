@@ -1,70 +1,73 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    private const float BaseSlotHeight = 92f;
-    private const float BaseIconSize = 68f;
-    private const float MinimumIconSize = 24f;
+    [Header("Authored view")]
+    [SerializeField] private Image background;
+    [SerializeField] private Button button;
+    [SerializeField] private LayoutElement slotLayout;
+    [SerializeField] private HorizontalLayoutGroup contentLayout;
+    [SerializeField] private Image icon;
+    [SerializeField] private LayoutElement iconLayout;
+    [SerializeField] private LayoutElement textBlockLayout;
+    [SerializeField] private VerticalLayoutGroup textBlock;
+    [SerializeField] private Text nameText;
+    [SerializeField] private LayoutElement nameLayout;
+    [SerializeField] private Text amountText;
+    [SerializeField] private LayoutElement amountLayout;
 
     private PlaceableDefinition definition;
     private PlaceableInventoryRuntimeEntry inventoryEntry;
     private BuildModePlacementController placementController;
     private int amount;
-    private Image background;
-    private Text amountText;
     private bool isDragging;
     private bool interactionsAllowed = true;
-    private float slotHeight = BaseSlotHeight;
-    private float layoutScale = 1f;
 
     public UnityEvent<PlaceableInventorySlotView> Clicked { get; } = new UnityEvent<PlaceableInventorySlotView>();
-
     public PlaceableDefinition Definition => definition;
     public int Amount => amount;
 
-    public static PlaceableInventorySlotView Create(
-        Transform parent,
-        PlaceableInventoryRuntimeEntry entry,
-        BuildModePlacementController placementController)
+    private void Awake()
     {
-        return Create(parent, entry, placementController, BaseSlotHeight, 1f);
+        if (button != null)
+        {
+            button.onClick.AddListener(NotifyClicked);
+        }
     }
 
-    public static PlaceableInventorySlotView Create(
-        Transform parent,
-        PlaceableInventoryRuntimeEntry entry,
-        BuildModePlacementController placementController,
-        float slotHeight,
-        float layoutScale)
+    private void OnDestroy()
     {
-        GameObject slotObject = new GameObject(entry.Definition.DisplayName, typeof(RectTransform), typeof(Image), typeof(Button));
-        slotObject.transform.SetParent(parent, false);
+        if (button != null)
+        {
+            button.onClick.RemoveListener(NotifyClicked);
+        }
+    }
 
-        Image slotBackground = slotObject.GetComponent<Image>();
-        slotBackground.color = Color.white;
+    public void Bind(
+        PlaceableInventoryRuntimeEntry entry,
+        BuildModePlacementController controller)
+    {
+        inventoryEntry = entry;
+        definition = entry != null ? entry.Definition : null;
+        placementController = controller;
+        amount = entry != null ? entry.Amount : 0;
+        gameObject.name = definition != null ? definition.DisplayName : "InventorySlot";
 
-        Button button = slotObject.GetComponent<Button>();
-        button.interactable = entry.Amount > 0;
+        if (icon != null)
+        {
+            icon.sprite = definition != null ? definition.Icon : null;
+            icon.color = icon.sprite != null ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
+        }
 
-        LayoutElement layoutElement = slotObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = slotHeight;
-        layoutElement.minHeight = slotHeight;
+        if (nameText != null)
+        {
+            nameText.text = definition != null ? definition.DisplayName : string.Empty;
+        }
 
-        PlaceableInventorySlotView slotView = slotObject.AddComponent<PlaceableInventorySlotView>();
-        slotView.definition = entry.Definition;
-        slotView.inventoryEntry = entry;
-        slotView.placementController = placementController;
-        slotView.amount = entry.Amount;
-        slotView.background = slotBackground;
-        slotView.slotHeight = slotHeight;
-        slotView.layoutScale = Mathf.Max(0.01f, layoutScale);
-        slotView.Build();
-        button.onClick.AddListener(slotView.NotifyClicked);
-
-        return slotView;
+        RefreshAmount();
     }
 
     public void RefreshFromRuntimeEntry()
@@ -92,12 +95,10 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!isDragging || placementController == null)
+        if (isDragging && placementController != null)
         {
-            return;
+            placementController.UpdateDrag(eventData.position);
         }
-
-        placementController.UpdateDrag(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -110,7 +111,7 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         isDragging = false;
         bool placed = placementController.EndDrag();
 
-        if (placed && inventoryEntry.TryConsumeOne())
+        if (placed && inventoryEntry != null && inventoryEntry.TryConsumeOne())
         {
             RefreshFromRuntimeEntry();
         }
@@ -118,35 +119,18 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     public void SetSelected(bool isSelected)
     {
-        if (background == null)
+        if (background != null)
         {
-            return;
+            background.color = isSelected
+                ? new Color(0.86f, 0.92f, 1f, 1f)
+                : Color.white;
         }
-
-        background.color = isSelected
-            ? new Color(0.86f, 0.92f, 1f, 1f)
-            : Color.white;
     }
 
     public void SetInteractionAllowed(bool allowed)
     {
         interactionsAllowed = allowed;
         RefreshAmount();
-    }
-
-    private void Build()
-    {
-        HorizontalLayoutGroup layout = gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(ScaledInt(10f), ScaledInt(10f), ScaledInt(8f), ScaledInt(8f));
-        layout.spacing = Scaled(10f);
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = true;
-        layout.childForceExpandWidth = false;
-
-        CreateIcon();
-        CreateTextBlock();
     }
 
     private void NotifyClicked()
@@ -168,69 +152,6 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
             && placementController.CanUseBuildMode();
     }
 
-    private void CreateIcon()
-    {
-        GameObject iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-        iconObject.transform.SetParent(transform, false);
-
-        Image iconImage = iconObject.GetComponent<Image>();
-        iconImage.sprite = definition.Icon;
-        iconImage.preserveAspect = true;
-        iconImage.color = definition.Icon != null ? Color.white : new Color(0.2f, 0.2f, 0.2f, 1f);
-
-        LayoutElement layoutElement = iconObject.AddComponent<LayoutElement>();
-        float iconSize = Mathf.Max(MinimumIconSize, BaseIconSize * layoutScale);
-        layoutElement.minWidth = iconSize;
-        layoutElement.preferredWidth = iconSize;
-        layoutElement.preferredHeight = Mathf.Min(iconSize, Mathf.Max(8f, slotHeight - Scaled(16f)));
-        layoutElement.flexibleWidth = 0f;
-    }
-
-    private void CreateTextBlock()
-    {
-        GameObject textBlockObject = new GameObject("Text", typeof(RectTransform), typeof(VerticalLayoutGroup));
-        textBlockObject.transform.SetParent(transform, false);
-
-        VerticalLayoutGroup layout = textBlockObject.GetComponent<VerticalLayoutGroup>();
-        layout.spacing = Scaled(4f);
-        layout.childAlignment = TextAnchor.MiddleLeft;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = false;
-        layout.childForceExpandWidth = true;
-
-        LayoutElement blockLayout = textBlockObject.AddComponent<LayoutElement>();
-        blockLayout.minWidth = Scaled(72f);
-        blockLayout.preferredWidth = Scaled(88f);
-        blockLayout.flexibleWidth = 1f;
-
-        CreateText(textBlockObject.transform, definition.DisplayName, 12, FontStyle.Bold, TextAnchor.LowerLeft);
-        amountText = CreateText(textBlockObject.transform, amount.ToString(), 18, FontStyle.Normal, TextAnchor.UpperLeft);
-    }
-
-    private Text CreateText(Transform parent, string content, int baseFontSize, FontStyle fontStyle, TextAnchor alignment)
-    {
-        GameObject textObject = new GameObject(content, typeof(RectTransform), typeof(Text));
-        textObject.transform.SetParent(parent, false);
-
-        Text text = textObject.GetComponent<Text>();
-        text.text = content;
-        text.font = GetBuiltInFont();
-        int fontSize = Mathf.Max(fontStyle == FontStyle.Bold ? 7 : 9, Mathf.RoundToInt(baseFontSize * layoutScale));
-        text.fontSize = fontSize;
-        text.fontStyle = fontStyle;
-        text.alignment = alignment;
-        text.color = Color.black;
-        text.horizontalOverflow = HorizontalWrapMode.Wrap;
-        text.verticalOverflow = VerticalWrapMode.Truncate;
-
-        LayoutElement layoutElement = textObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = fontSize + Mathf.Max(4f, 10f * layoutScale);
-        layoutElement.flexibleWidth = 1f;
-
-        return text;
-    }
-
     private void RefreshAmount()
     {
         if (inventoryEntry != null)
@@ -243,27 +164,10 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
             amountText.text = amount.ToString();
         }
 
-        Button button = GetComponent<Button>();
-
         if (button != null)
         {
             button.interactable = interactionsAllowed && amount > 0;
         }
     }
 
-    private Font GetBuiltInFont()
-    {
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
-    }
-
-    private float Scaled(float value)
-    {
-        return Mathf.Max(1f, value * layoutScale);
-    }
-
-    private int ScaledInt(float value)
-    {
-        return Mathf.Max(1, Mathf.RoundToInt(value * layoutScale));
-    }
 }

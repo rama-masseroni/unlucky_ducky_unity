@@ -4,8 +4,11 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 [InitializeOnLoad]
 public static class LevelSceneBootstrapper
@@ -15,10 +18,17 @@ public static class LevelSceneBootstrapper
     private const string InventorySetsFolder = "Assets/ScriptableObjects/InventorySets";
     private const string WorldDefinitionsFolder = "Assets/ScriptableObjects/World Definitions";
     private const string DefaultWorldDefinitionPath = WorldDefinitionsFolder + "/World_01.asset";
+    private const string DefaultGameplayCanvasPrefabPath =
+        "Assets/Prefabs/UI/World Inventories/World 01/UI_GameplayCanvas_World01.prefab";
     private static readonly HashSet<int> AutoBootstrappedSceneHandles = new HashSet<int>();
 
     static LevelSceneBootstrapper()
     {
+        if (Application.isBatchMode)
+        {
+            return;
+        }
+
         EditorSceneManager.newSceneCreated += HandleNewSceneCreated;
         EditorSceneManager.sceneSaving += HandleSceneSaving;
     }
@@ -118,6 +128,50 @@ public static class LevelSceneBootstrapper
         {
             CreateRoot(scene, "PlacedObjectsRoot");
         }
+
+        EnsureLevelUi(scene);
+    }
+
+    private static void EnsureLevelUi(Scene scene)
+    {
+        Canvas canvas = FindComponentInScene<Canvas>(scene);
+
+        if (canvas == null)
+        {
+            string prefabPath = GetGameplayCanvasPrefabPath(scene);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+            if (prefab != null)
+            {
+                GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                instance.name = "UI_GameplayCanvas";
+                SceneManager.MoveGameObjectToScene(instance, scene);
+            }
+            else
+            {
+                Debug.LogWarning($"Could not load required gameplay UI prefab at {prefabPath}.");
+            }
+        }
+
+        if (FindComponentInScene<EventSystem>(scene) == null)
+        {
+            GameObject eventSystemObject = CreateRoot(scene, "EventSystem");
+            eventSystemObject.AddComponent<EventSystem>();
+            eventSystemObject.AddComponent<InputSystemUIInputModule>();
+        }
+    }
+
+    private static string GetGameplayCanvasPrefabPath(Scene scene)
+    {
+        Match match = Regex.Match(scene.path ?? string.Empty, @"[/\\]World (?<world>\d+)[/\\]");
+
+        if (!match.Success || !int.TryParse(match.Groups["world"].Value, out int worldNumber))
+        {
+            return DefaultGameplayCanvasPrefabPath;
+        }
+
+        string worldId = worldNumber.ToString("00");
+        return $"Assets/Prefabs/UI/World Inventories/World {worldId}/UI_GameplayCanvas_World{worldId}.prefab";
     }
 
     private static Tilemap EnsureTilemap(

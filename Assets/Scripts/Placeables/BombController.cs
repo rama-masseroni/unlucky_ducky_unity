@@ -9,6 +9,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
     [SerializeField] private int explosionRadiusInCells = 1;
     [SerializeField] private Tilemap referenceTilemap;
     [SerializeField] private Tilemap[] destructibleTilemaps;
+    [SerializeField] private TileDestructionFilter tileDestructionFilter = new TileDestructionFilter();
     [SerializeField] private LayerMask destructibleObjectMask = ~0;
     [SerializeField] private bool killsPlayerInExplosionArea = true;
     [SerializeField] private LayerMask playerKillMask = ~0;
@@ -155,7 +156,7 @@ public class BombController : MonoBehaviour, IBreakable, ILevelPhaseListener
             {
                 Vector3 cellCenter = referenceTilemap.GetCellCenterWorld(affectedCells[cellIndex]);
                 Vector3Int tilemapCell = tilemap.WorldToCell(cellCenter);
-                LevelManager.TryDestroyTileAtCell(tilemap, tilemapCell);
+                LevelManager.TryDestroyTileAtCell(tilemap, tilemapCell, tileDestructionFilter);
             }
         }
     }

@@ -52,6 +52,8 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
     private BoundsInt wallBoundaryDrawArea;
     private string placementAreaValidationError;
 
+    public bool HasActivePlacementInteraction => activeDefinition != null || activeMoveInstance != null;
+
     private void Awake()
     {
         ResolveSceneReferences();

@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnluckyDucky.Core::WorldDefinition
   worldId: world_02
   worldName: Construction Zone
-  enableTileDestructionTool: 0
+  levelSelectorAssets: {fileID: 11400000, guid: a222222222224f22a222222222222222, type: 2}
+

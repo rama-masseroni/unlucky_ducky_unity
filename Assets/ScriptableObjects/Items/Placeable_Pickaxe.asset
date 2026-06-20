@@ -17,3 +17,7 @@ MonoBehaviour:
   prefab: {fileID: 0}
   icon: {fileID: 21300000, guid: 4149e022a90b4a0e8fb01741a2250aeb, type: 3}
   useMode: 1
+  destructionFilter:
+    allowedTiles:
+    - {fileID: 11400000, guid: 76acad91c09fde045a305977a5a7aeb5, type: 2}
+    - {fileID: 11400000, guid: 93138ed0b979a4440a341fc3f88368c2, type: 2}

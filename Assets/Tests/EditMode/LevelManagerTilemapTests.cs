@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.TestTools;
@@ -13,6 +14,8 @@ public class LevelManagerTilemapTests
     private GameObject tilemapObject;
     private Tilemap tilemap;
     private MethodInfo tryDestroyTileAtCellMethod;
+    private MethodInfo tryDestroyFilteredTileAtCellMethod;
+    private Type tileDestructionFilterType;
 
     [SetUp]
     public void SetUp()
@@ -25,11 +28,24 @@ public class LevelManagerTilemapTests
         Type levelManagerType = Type.GetType("LevelManager, Assembly-CSharp");
         Assert.IsNotNull(levelManagerType);
 
+        tileDestructionFilterType = Type.GetType("TileDestructionFilter, UnluckyDucky.Core");
+        Assert.IsNotNull(tileDestructionFilterType);
+
         tryDestroyTileAtCellMethod = levelManagerType.GetMethod(
             "TryDestroyTileAtCell",
-            BindingFlags.Public | BindingFlags.Static);
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(Tilemap), typeof(Vector3Int) },
+            null);
+        tryDestroyFilteredTileAtCellMethod = levelManagerType.GetMethod(
+            "TryDestroyTileAtCell",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            new[] { typeof(Tilemap), typeof(Vector3Int), tileDestructionFilterType },
+            null);
 
         Assert.IsNotNull(tryDestroyTileAtCellMethod);
+        Assert.IsNotNull(tryDestroyFilteredTileAtCellMethod);
     }
 
     [TearDown]
@@ -61,9 +77,131 @@ public class LevelManagerTilemapTests
         Assert.IsFalse(destroyed);
     }
 
+    [Test]
+    public void TryDestroyTileAtCell_WithEmptyFilter_DoesNotRemoveTile()
+    {
+        Vector3Int cellPosition = new Vector3Int(2, 3, 0);
+        Tile tile = ScriptableObject.CreateInstance<Tile>();
+        tilemap.SetTile(cellPosition, tile);
+
+        bool destroyed = TryDestroyTileAtCell(cellPosition, CreateTileDestructionFilter());
+
+        Assert.IsFalse(destroyed);
+        Assert.IsTrue(tilemap.HasTile(cellPosition));
+    }
+
+    [Test]
+    public void TryDestroyTileAtCell_WhenTileIsAllowed_RemovesTileAndRaisesEvent()
+    {
+        Vector3Int cellPosition = new Vector3Int(2, 3, 0);
+        Tile tile = ScriptableObject.CreateInstance<Tile>();
+        tilemap.SetTile(cellPosition, tile);
+        Type eventsType = Type.GetType("TilemapDestructionEvents, Assembly-CSharp");
+        Assert.IsNotNull(eventsType);
+        EventInfo tileDestroyedEvent = eventsType.GetEvent("TileDestroyed", BindingFlags.Public | BindingFlags.Static);
+        Assert.IsNotNull(tileDestroyedEvent);
+        int eventCount = 0;
+        Action<Tilemap, Vector3Int> handler = (_, _) => eventCount++;
+        tileDestroyedEvent.AddEventHandler(null, handler);
+
+        try
+        {
+            bool rejected = TryDestroyTileAtCell(cellPosition, CreateTileDestructionFilter());
+            bool destroyed = TryDestroyTileAtCell(cellPosition, CreateTileDestructionFilter(tile));
+
+            Assert.IsFalse(rejected);
+            Assert.IsTrue(destroyed);
+            Assert.IsFalse(tilemap.HasTile(cellPosition));
+            Assert.AreEqual(1, eventCount);
+        }
+        finally
+        {
+            tileDestroyedEvent.RemoveEventHandler(null, handler);
+        }
+    }
+
+    [Test]
+    public void PickaxeAsset_OnlyAllowsHouseTile()
+    {
+        ScriptableObject pickaxe = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+            "Assets/ScriptableObjects/Items/Placeable_Pickaxe.asset");
+        TileBase paletteHouseTile = AssetDatabase.LoadAssetAtPath<TileBase>(
+            "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/House_01.asset");
+        TileBase instancedHouseTile = AssetDatabase.LoadAssetAtPath<TileBase>(
+            "Assets/Tile sets/House_01.asset");
+        TileBase castleTile = AssetDatabase.LoadAssetAtPath<TileBase>(
+            "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/Castle_01.asset");
+
+        Assert.IsNotNull(pickaxe);
+        Assert.IsNotNull(paletteHouseTile);
+        Assert.IsNotNull(instancedHouseTile);
+        Assert.IsNotNull(castleTile);
+
+        object filter = pickaxe.GetType().GetProperty("DestructionFilter").GetValue(pickaxe);
+
+        Assert.IsTrue(AllowsTile(filter, paletteHouseTile));
+        Assert.IsTrue(AllowsTile(filter, instancedHouseTile));
+        Assert.IsFalse(AllowsTile(filter, castleTile));
+    }
+
+    [Test]
+    public void BombPrefab_OnlyAllowsCastleTile()
+    {
+        GameObject bombPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/Placeables/Placeable_Bomb.prefab");
+        TileBase houseTile = AssetDatabase.LoadAssetAtPath<TileBase>(
+            "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/House_01.asset");
+        TileBase castleTile = AssetDatabase.LoadAssetAtPath<TileBase>(
+            "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/Castle_01.asset");
+        Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
+
+        Assert.IsNotNull(bombPrefab);
+        Assert.IsNotNull(houseTile);
+        Assert.IsNotNull(castleTile);
+        Assert.IsNotNull(bombControllerType);
+
+        Component bomb = bombPrefab.GetComponent(bombControllerType);
+        Assert.IsNotNull(bomb);
+        object filter = bombControllerType
+            .GetField("tileDestructionFilter", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(bomb);
+
+        Assert.IsTrue(AllowsTile(filter, castleTile));
+        Assert.IsFalse(AllowsTile(filter, houseTile));
+    }
+
     private bool TryDestroyTileAtCell(Vector3Int cellPosition)
     {
         return (bool)tryDestroyTileAtCellMethod.Invoke(null, new object[] { tilemap, cellPosition });
+    }
+
+    private bool TryDestroyTileAtCell(Vector3Int cellPosition, object destructionFilter)
+    {
+        return (bool)tryDestroyFilteredTileAtCellMethod.Invoke(
+            null,
+            new[] { tilemap, (object)cellPosition, destructionFilter });
+    }
+
+    private object CreateTileDestructionFilter(params TileBase[] allowedTiles)
+    {
+        object filter = Activator.CreateInstance(tileDestructionFilterType);
+        IList tiles = (IList)tileDestructionFilterType
+            .GetField("allowedTiles", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(filter);
+
+        for (int i = 0; i < allowedTiles.Length; i++)
+        {
+            tiles.Add(allowedTiles[i]);
+        }
+
+        return filter;
+    }
+
+    private bool AllowsTile(object filter, TileBase tile)
+    {
+        return (bool)tileDestructionFilterType
+            .GetMethod("Allows", BindingFlags.Public | BindingFlags.Instance)
+            .Invoke(filter, new object[] { tile });
     }
 }
 
@@ -78,6 +216,10 @@ public class LevelPhaseSystemTests
     private readonly Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
     private readonly Type levelDefinitionType = Type.GetType("LevelDefinition, UnluckyDucky.Core");
     private readonly Type goalPointControllerType = Type.GetType("GoalPointController, Assembly-CSharp");
+    private readonly Type victoryScreenManagerType = Type.GetType("VictoryScreenManager, Assembly-CSharp");
+    private readonly Type defeatScreenManagerType = Type.GetType("DefeatScreenManager, Assembly-CSharp");
+    private readonly Type pauseMenuManagerType = Type.GetType("PauseMenuManager, Assembly-CSharp");
+    private readonly Type levelHudPanelType = Type.GetType("LevelHudPanel, Assembly-CSharp");
     private readonly Type playerDuckControllerType = Type.GetType("PlayerDuckController, UnluckyDucky.Player");
     private readonly Type resetLevelButtonControllerType = Type.GetType("ResetLevelButtonController, Assembly-CSharp");
     private readonly Type buildModePlacementControllerType = Type.GetType("BuildModePlacementController, Assembly-CSharp");
@@ -94,6 +236,7 @@ public class LevelPhaseSystemTests
     private GameObject resetButtonObject;
     private GameObject gridObject;
     private GameObject tilemapObject;
+    private GameObject levelUiObject;
 
     [TearDown]
     public void TearDown()
@@ -118,6 +261,13 @@ public class LevelPhaseSystemTests
             UnityEngine.Object.DestroyImmediate(resetButtonObject);
         }
 
+        if (levelUiObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(levelUiObject);
+        }
+
+        Time.timeScale = 1f;
+
         if (gridObject != null)
         {
             UnityEngine.Object.DestroyImmediate(gridObject);
@@ -125,6 +275,8 @@ public class LevelPhaseSystemTests
 
         goalPointControllerType?.GetProperty("SceneLoadOverride").SetValue(null, null);
         gameStateManagerType?.GetProperty("SceneReloadOverride").SetValue(null, null);
+        gameStateManagerType?.GetProperty("PlanningTimeoutHandler").SetValue(null, null);
+        playerDuckControllerType?.GetProperty("DeathScreenHandler").SetValue(null, null);
     }
 
     [Test]
@@ -194,12 +346,111 @@ public class LevelPhaseSystemTests
     }
 
     [Test]
+    public void GameStateManager_PlanningTimer_CountsDownOnlyInPlanning()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(10f);
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+
+        InvokePlanningTimerTick(manager, 3f);
+
+        Assert.AreEqual(7f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+
+        InvokePlanningTimerTick(manager, 3f);
+
+        Assert.AreEqual(7f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+    }
+
+    [Test]
+    public void GameStateManager_PlanningTimer_ZeroLimitDoesNotTimeout()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(0f);
+        bool timedOut = false;
+        RegisterPlanningTimeoutHandler(_ =>
+        {
+            timedOut = true;
+            return true;
+        });
+
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+        InvokePlanningTimerTick(manager, 30f);
+
+        Assert.IsFalse((bool)gameStateManagerType.GetProperty("HasPlanningTimeLimit").GetValue(manager));
+        Assert.AreEqual(0f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.IsFalse(timedOut);
+        Assert.IsTrue((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
+    }
+
+    [Test]
+    public void GameStateManager_PlanningTimer_TimeoutShowsDefeatAndBlocksExecution()
+    {
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(1f);
+        string timeoutMessage = null;
+        RegisterPlanningTimeoutHandler(message =>
+        {
+            timeoutMessage = message;
+            return true;
+        });
+
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+        InvokePlanningTimerTick(manager, 1.1f);
+
+        Assert.AreEqual(0f, (float)gameStateManagerType.GetProperty("RemainingPlanningSeconds").GetValue(manager), 0.001f);
+        Assert.AreEqual("Se acab\u00f3 el tiempo de planeaci\u00f3n", timeoutMessage);
+        Assert.IsFalse((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
+        Assert.IsFalse((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+        Assert.AreEqual("Planning", gameStateManagerType.GetProperty("CurrentPhase").GetValue(manager).ToString());
+    }
+
+    [Test]
+    public void LevelHudPanel_PlanningTimer_ShowsFormattedTimeAndHidesWithoutLimit()
+    {
+        Assert.IsNotNull(levelHudPanelType);
+
+        object manager = CreateGameStateManager();
+        ScriptableObject levelDefinition = CreateLevelDefinitionWithPlanningTime(65.2f);
+        gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
+
+        GameObject hudObject = InstantiateUiPrefab("Assets/Prefabs/UI/UI_LevelHudPanel.prefab");
+        Component hud = hudObject.GetComponent(levelHudPanelType);
+        SetPrivateField(hud, "gameStateManager", manager);
+
+        try
+        {
+            levelHudPanelType.GetMethod("RefreshPlanningTimer").Invoke(hud, null);
+            Type textMeshProType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            Assert.IsNotNull(textMeshProType);
+            Component timerText = (Component)hudObject.transform.Find("PlanningTimerText").GetComponent(textMeshProType);
+            Assert.IsNotNull(timerText);
+
+            Assert.IsTrue(timerText.gameObject.activeSelf);
+            Assert.AreEqual("01:06", textMeshProType.GetProperty("text").GetValue(timerText));
+
+            gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { CreateLevelDefinitionWithPlanningTime(0f) });
+            levelHudPanelType.GetMethod("RefreshPlanningTimer").Invoke(hud, null);
+
+            Assert.IsFalse(timerText.gameObject.activeSelf);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(hudObject);
+        }
+    }
+
+    [Test]
     public void LevelManager_TileDestructionTool_DoesNotDestroyOrConsumeInPlanning()
     {
-        CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        CreateLevelManagerWithPickaxe(
+            1,
+            out Component levelManager,
+            out Tilemap testTilemap,
+            out object runtimeEntry,
+            out Tile allowedTile);
         Vector3Int cellPosition = new Vector3Int(2, 3, 0);
-        Tile tile = ScriptableObject.CreateInstance<Tile>();
-        testTilemap.SetTile(cellPosition, tile);
+        testTilemap.SetTile(cellPosition, allowedTile);
 
         bool used = (bool)levelManagerType
             .GetMethod("TryUseTileDestructionTool")
@@ -213,12 +464,16 @@ public class LevelPhaseSystemTests
     [Test]
     public void LevelManager_TileDestructionTool_DestroyingTileConsumesOneInExecution()
     {
-        object manager = CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        object manager = CreateLevelManagerWithPickaxe(
+            1,
+            out Component levelManager,
+            out Tilemap testTilemap,
+            out object runtimeEntry,
+            out Tile allowedTile);
         Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
 
         Vector3Int cellPosition = new Vector3Int(2, 3, 0);
-        Tile tile = ScriptableObject.CreateInstance<Tile>();
-        testTilemap.SetTile(cellPosition, tile);
+        testTilemap.SetTile(cellPosition, allowedTile);
 
         bool used = (bool)levelManagerType
             .GetMethod("TryUseTileDestructionTool")
@@ -232,7 +487,12 @@ public class LevelPhaseSystemTests
     [Test]
     public void LevelManager_TileDestructionTool_ClickingEmptyCellDoesNotConsume()
     {
-        object manager = CreateLevelManagerWithPickaxe(1, out Component levelManager, out Tilemap testTilemap, out object runtimeEntry);
+        object manager = CreateLevelManagerWithPickaxe(
+            1,
+            out Component levelManager,
+            out Tilemap testTilemap,
+            out object runtimeEntry,
+            out _);
         Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
 
         bool used = (bool)levelManagerType
@@ -240,6 +500,29 @@ public class LevelPhaseSystemTests
             .Invoke(levelManager, new object[] { testTilemap.GetCellCenterWorld(new Vector3Int(2, 3, 0)) });
 
         Assert.IsFalse(used);
+        Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
+    }
+
+    [Test]
+    public void LevelManager_TileDestructionTool_DisallowedTileDoesNotConsume()
+    {
+        object manager = CreateLevelManagerWithPickaxe(
+            1,
+            out Component levelManager,
+            out Tilemap testTilemap,
+            out object runtimeEntry,
+            out _);
+        Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+
+        Vector3Int cellPosition = new Vector3Int(2, 3, 0);
+        testTilemap.SetTile(cellPosition, ScriptableObject.CreateInstance<Tile>());
+
+        bool used = (bool)levelManagerType
+            .GetMethod("TryUseTileDestructionTool")
+            .Invoke(levelManager, new object[] { testTilemap.GetCellCenterWorld(cellPosition) });
+
+        Assert.IsFalse(used);
+        Assert.IsTrue(testTilemap.HasTile(cellPosition));
         Assert.AreEqual(1, runtimeEntry.GetType().GetProperty("Amount").GetValue(runtimeEntry));
     }
 
@@ -260,9 +543,11 @@ public class LevelPhaseSystemTests
     {
         Assert.IsNotNull(levelDefinitionType);
         Assert.IsNotNull(goalPointControllerType);
+        Assert.IsNotNull(victoryScreenManagerType);
         Assert.IsNotNull(playerDuckControllerType);
 
         object manager = CreateGameStateManager();
+        Component victoryScreen = InstantiateLevelUi(victoryScreenManagerType);
         ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
         SetPrivateField(levelDefinition, "nextSceneName", "Level_02_TestEmpty");
         gameStateManagerType.GetMethod("SetLevelDefinition").Invoke(manager, new object[] { levelDefinition });
@@ -289,7 +574,69 @@ public class LevelPhaseSystemTests
             .Invoke(goal, new object[] { duck });
 
         Assert.IsTrue(completedInExecution);
+        Assert.IsNull(requestedScene);
+
+        Assert.IsNotNull(victoryScreen);
+        Assert.IsTrue((bool)GetProperty(victoryScreen, "IsVisible"));
+        Assert.AreEqual("Level_02_TestEmpty", GetProperty(victoryScreen, "NextSceneName"));
+
+        victoryScreenManagerType.GetMethod("ContinueButton").Invoke(victoryScreen, null);
+
         Assert.AreEqual("Level_02_TestEmpty", requestedScene);
+    }
+
+    [Test]
+    public void PlayerDuckController_WhenKilled_ShowsDefeatScreenAndRetryResetsLevel()
+    {
+        Assert.IsNotNull(gameStateManagerType);
+        Assert.IsNotNull(playerDuckControllerType);
+        Assert.IsNotNull(defeatScreenManagerType);
+
+        CreateGameStateManager();
+        Component defeatScreen = InstantiateLevelUi(defeatScreenManagerType);
+        int reloadRequests = 0;
+        gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(null, new Action<int, string>((_, _) => reloadRequests++));
+        RegisterDefeatScreenHandler();
+
+        duckObject = new GameObject("Duck", typeof(Rigidbody2D), typeof(BoxCollider2D));
+        Component duck = duckObject.AddComponent(playerDuckControllerType);
+
+        playerDuckControllerType.GetMethod("Kill").Invoke(duck, null);
+
+        Assert.IsTrue((bool)GetProperty(duck, "IsDead"));
+
+        Assert.IsNotNull(defeatScreen);
+        Assert.IsTrue((bool)GetProperty(defeatScreen, "IsVisible"));
+        Assert.AreEqual(0f, Time.timeScale);
+
+        defeatScreenManagerType.GetMethod("RetryButton").Invoke(defeatScreen, null);
+        defeatScreenManagerType.GetMethod("RetryButton").Invoke(defeatScreen, null);
+
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.AreEqual(1, reloadRequests);
+    }
+
+    [Test]
+    public void PauseMenu_ResetLevelButton_ResumesTimeAndRequestsOneReload()
+    {
+        Assert.IsNotNull(gameStateManagerType);
+        Assert.IsNotNull(pauseMenuManagerType);
+
+        CreateGameStateManager();
+        Component pauseMenu = InstantiateLevelUi(pauseMenuManagerType);
+        int reloadRequests = 0;
+        gameStateManagerType.GetProperty("SceneReloadOverride").SetValue(
+            null,
+            new Action<int, string>((_, _) => reloadRequests++));
+
+        pauseMenuManagerType.GetMethod("PauseButton").Invoke(pauseMenu, null);
+        Assert.AreEqual(0f, Time.timeScale);
+
+        pauseMenuManagerType.GetMethod("ResetLevelButton").Invoke(pauseMenu, null);
+        pauseMenuManagerType.GetMethod("ResetLevelButton").Invoke(pauseMenu, null);
+
+        Assert.AreEqual(1f, Time.timeScale);
+        Assert.AreEqual(1, reloadRequests);
     }
 
     [Test]
@@ -323,6 +670,9 @@ public class LevelPhaseSystemTests
         resetButtonObject = new GameObject("ResetLevelButton", typeof(RectTransform), typeof(Button));
         Button button = resetButtonObject.GetComponent<Button>();
         Component resetButtonController = resetButtonObject.AddComponent(resetLevelButtonControllerType);
+        resetLevelButtonControllerType
+            .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(resetButtonController, null);
         resetLevelButtonControllerType.GetMethod("SetGameStateManager").Invoke(resetButtonController, new object[] { manager });
 
         Assert.IsFalse((bool)gameStateManagerType.GetProperty("CanStartExecution").GetValue(manager));
@@ -852,7 +1202,12 @@ public class LevelPhaseSystemTests
             Assert.IsTrue(fallingTilemap.HasTile(fallingCell));
 
             levelManagerType
-                .GetMethod("TryDestroyTileAtCell", BindingFlags.Public | BindingFlags.Static)
+                .GetMethod(
+                    "TryDestroyTileAtCell",
+                    BindingFlags.Public | BindingFlags.Static,
+                    null,
+                    new[] { typeof(Tilemap), typeof(Vector3Int) },
+                    null)
                 .Invoke(null, new object[] { supportTilemap, supportCell });
 
             Assert.IsFalse(fallingTilemap.HasTile(fallingCell));
@@ -1282,16 +1637,46 @@ public class LevelPhaseSystemTests
         return inventorySet;
     }
 
+    private ScriptableObject CreateLevelDefinitionWithPlanningTime(float planningTimeLimitSeconds)
+    {
+        Assert.IsNotNull(levelDefinitionType);
+        ScriptableObject levelDefinition = ScriptableObject.CreateInstance(levelDefinitionType);
+        SetPrivateField(levelDefinition, "planningTimeLimitSeconds", planningTimeLimitSeconds);
+        return levelDefinition;
+    }
+
+    private void InvokePlanningTimerTick(object manager, float deltaSeconds)
+    {
+        gameStateManagerType
+            .GetMethod("TickPlanningTimer", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(manager, new object[] { deltaSeconds });
+    }
+
+    private void RegisterPlanningTimeoutHandler(Func<string, bool> handler)
+    {
+        PropertyInfo handlerProperty = gameStateManagerType.GetProperty("PlanningTimeoutHandler");
+        Assert.IsNotNull(handlerProperty);
+
+        Delegate handlerDelegate = Delegate.CreateDelegate(handlerProperty.PropertyType, handler.Target, handler.Method);
+        handlerProperty.SetValue(null, handlerDelegate);
+    }
+
     private object CreateLevelManagerWithPickaxe(
         int amount,
         out Component levelManager,
         out Tilemap testTilemap,
-        out object runtimeEntry)
+        out object runtimeEntry,
+        out Tile allowedTile)
     {
         ScriptableObject inventorySet = CreateInventorySetWithOneItem(
             amount,
             GetUseMode("ExecutionClickToDestroyTile"),
-            out _);
+            out object authoredEntry);
+        object definition = inventoryEntryType
+            .GetField("definition", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(authoredEntry);
+        allowedTile = ScriptableObject.CreateInstance<Tile>();
+        SetPrivateField(definition, "destructionFilter", CreateTileDestructionFilter(allowedTile));
         object manager = CreateGameStateManager();
         gameStateManagerType.GetMethod("SetFallbackInventorySet").Invoke(manager, new object[] { inventorySet });
 
@@ -1309,6 +1694,23 @@ public class LevelPhaseSystemTests
         object runtimeInventory = gameStateManagerType.GetProperty("Inventory").GetValue(manager);
         runtimeEntry = GetFirstRuntimeEntry(runtimeInventory);
         return manager;
+    }
+
+    private object CreateTileDestructionFilter(params TileBase[] allowedTiles)
+    {
+        Type filterType = Type.GetType("TileDestructionFilter, UnluckyDucky.Core");
+        Assert.IsNotNull(filterType);
+        object filter = Activator.CreateInstance(filterType);
+        IList tiles = (IList)filterType
+            .GetField("allowedTiles", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(filter);
+
+        for (int i = 0; i < allowedTiles.Length; i++)
+        {
+            tiles.Add(allowedTiles[i]);
+        }
+
+        return filter;
     }
 
     private object GetUseMode(string name)
@@ -1470,6 +1872,37 @@ public class LevelPhaseSystemTests
         return (bool)playerDuckControllerType.GetProperty("IsDead").GetValue(duck);
     }
 
+    private void RegisterDefeatScreenHandler()
+    {
+        MethodInfo handlerMethod = defeatScreenManagerType.GetMethod(
+            "ShowForPlayerDeath",
+            BindingFlags.Public | BindingFlags.Static);
+        Assert.IsNotNull(handlerMethod);
+
+        PropertyInfo handlerProperty = playerDuckControllerType.GetProperty("DeathScreenHandler");
+        Assert.IsNotNull(handlerProperty);
+
+        Delegate handler = Delegate.CreateDelegate(handlerProperty.PropertyType, handlerMethod);
+        handlerProperty.SetValue(null, handler);
+    }
+
+    private Component InstantiateLevelUi(Type componentType)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/UI/UI_LevelRoot.prefab");
+        Assert.IsNotNull(prefab);
+        levelUiObject = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        Component component = levelUiObject.GetComponentInChildren(componentType, true);
+        Assert.IsNotNull(component);
+        return component;
+    }
+
+    private static GameObject InstantiateUiPrefab(string path)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        Assert.IsNotNull(prefab, path);
+        return (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+    }
+
     private static void DestroyFallingBlocksRoot()
     {
         GameObject root = GameObject.Find("FallingBlocksRoot");
@@ -1485,5 +1918,22 @@ public class LevelPhaseSystemTests
         target.GetType()
             .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)
             .SetValue(target, value);
+    }
+
+    private static object GetProperty(object target, string propertyName)
+    {
+        return target.GetType()
+            .GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance)
+            .GetValue(target);
+    }
+
+    private static void DestroyObjectNamed(string objectName)
+    {
+        GameObject gameObject = GameObject.Find(objectName);
+
+        if (gameObject != null)
+        {
+            UnityEngine.Object.DestroyImmediate(gameObject);
+        }
     }
 }

@@ -1,79 +1,197 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform))]
 public class LevelHudPanel : MonoBehaviour
 {
+    [Header("Runtime")]
     [SerializeField] private GameStateManager gameStateManager;
+    [SerializeField] private PauseMenuManager pauseMenuManager;
+
+    [Header("Authored view")]
+    [SerializeField] private TextMeshProUGUI levelTitleText;
+    [SerializeField] private TextMeshProUGUI planningTimerText;
+    [SerializeField] private RectTransform tooltipRoot;
+    [SerializeField] private TextMeshProUGUI tooltipText;
+    [SerializeField] private Button pauseButton;
     [SerializeField] private ResetLevelButtonController resetLevelButton;
-    [SerializeField] private Vector2 resetButtonSize = new Vector2(48f, 48f);
-    [SerializeField] private Vector2 resetButtonOffset = new Vector2(-18f, -18f);
+
+    public void Configure(GameStateManager manager, PauseMenuManager pauseManager)
+    {
+        gameStateManager = manager;
+        pauseMenuManager = pauseManager;
+        resetLevelButton?.SetGameStateManager(gameStateManager);
+    }
 
     private void Awake()
     {
         if (gameStateManager == null)
         {
-            gameStateManager = GameStateManager.FindOrCreate();
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
         }
 
-        EnsureLayout();
-
-        if (resetLevelButton == null)
+        if (pauseMenuManager == null)
         {
-            resetLevelButton = CreateResetButton(transform);
+            pauseMenuManager = FindFirstObjectByType<PauseMenuManager>();
         }
 
-        resetLevelButton.SetGameStateManager(gameStateManager);
+        if (pauseButton != null)
+        {
+            pauseButton.onClick.AddListener(HandlePauseButtonClicked);
+        }
+
+        resetLevelButton?.SetGameStateManager(gameStateManager);
+        HideTooltip();
+        RefreshLevelTitle();
+        RefreshPlanningTimer();
     }
 
-    private void EnsureLayout()
+    private void Start()
     {
-        RectTransform rectTransform = GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0f, 1f);
-        rectTransform.anchorMax = new Vector2(1f, 1f);
-        rectTransform.pivot = new Vector2(0.5f, 1f);
-        rectTransform.anchoredPosition = Vector2.zero;
-        rectTransform.sizeDelta = new Vector2(0f, 72f);
+        RefreshLevelTitle();
+        RefreshPlanningTimer();
     }
 
-    private ResetLevelButtonController CreateResetButton(Transform parent)
+    private void OnEnable()
     {
-        GameObject buttonObject = new GameObject("ResetLevelButton", typeof(RectTransform), typeof(Image), typeof(Button));
-        buttonObject.transform.SetParent(parent, false);
+        if (gameStateManager == null)
+        {
+            gameStateManager = GameStateManager.Instance != null
+                ? GameStateManager.Instance
+                : FindFirstObjectByType<GameStateManager>();
+        }
 
-        RectTransform buttonTransform = buttonObject.GetComponent<RectTransform>();
-        buttonTransform.anchorMin = new Vector2(1f, 1f);
-        buttonTransform.anchorMax = new Vector2(1f, 1f);
-        buttonTransform.pivot = new Vector2(1f, 1f);
-        buttonTransform.sizeDelta = resetButtonSize;
-        buttonTransform.anchoredPosition = resetButtonOffset;
-
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(1f, 1f, 1f, 0.92f);
-
-        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
-        labelObject.transform.SetParent(buttonObject.transform, false);
-
-        RectTransform labelTransform = labelObject.GetComponent<RectTransform>();
-        labelTransform.anchorMin = Vector2.zero;
-        labelTransform.anchorMax = Vector2.one;
-        labelTransform.offsetMin = Vector2.zero;
-        labelTransform.offsetMax = Vector2.zero;
-
-        Text label = labelObject.GetComponent<Text>();
-        label.text = "R";
-        label.font = GetBuiltInFont();
-        label.fontSize = 20;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.MiddleCenter;
-        label.color = Color.black;
-
-        return buttonObject.AddComponent<ResetLevelButtonController>();
+        if (gameStateManager != null)
+        {
+            gameStateManager.PlanningTimerChanged += HandlePlanningTimerChanged;
+        }
     }
 
-    private Font GetBuiltInFont()
+    private void OnDisable()
     {
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
+        if (gameStateManager != null)
+        {
+            gameStateManager.PlanningTimerChanged -= HandlePlanningTimerChanged;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.onClick.RemoveListener(HandlePauseButtonClicked);
+        }
+    }
+
+    public void RefreshLevelTitle()
+    {
+        if (levelTitleText == null)
+        {
+            return;
+        }
+
+        LevelDefinition levelDefinition = gameStateManager != null
+            ? gameStateManager.CurrentLevelDefinition
+            : null;
+
+        if (TryGetLevelNumbers(levelDefinition, out int worldNumber, out int levelNumber)
+            || TryGetLevelNumbers(SceneManager.GetActiveScene().name, out worldNumber, out levelNumber))
+        {
+            levelTitleText.text = $"Mundo {worldNumber} - Nivel {levelNumber}";
+        }
+        else if (levelDefinition != null)
+        {
+            levelTitleText.text = levelDefinition.LevelName;
+        }
+    }
+
+    public void RefreshPlanningTimer()
+    {
+        if (planningTimerText == null)
+        {
+            return;
+        }
+
+        if (gameStateManager == null || !gameStateManager.HasPlanningTimeLimit)
+        {
+            planningTimerText.gameObject.SetActive(false);
+            return;
+        }
+
+        planningTimerText.gameObject.SetActive(true);
+        planningTimerText.text = FormatPlanningTime(gameStateManager.RemainingPlanningSeconds);
+    }
+
+    public void ShowTooltip(string message, RectTransform source)
+    {
+        if (tooltipRoot == null || tooltipText == null || source == null)
+        {
+            return;
+        }
+
+        tooltipText.text = message;
+        tooltipRoot.gameObject.SetActive(true);
+        tooltipRoot.anchoredPosition = new Vector2(
+            source.anchoredPosition.x - source.sizeDelta.x * 0.5f,
+            source.anchoredPosition.y - source.sizeDelta.y - 10f);
+    }
+
+    public void HideTooltip()
+    {
+        if (tooltipRoot != null)
+        {
+            tooltipRoot.gameObject.SetActive(false);
+        }
+    }
+
+    private void HandlePauseButtonClicked()
+    {
+        if (pauseMenuManager == null)
+        {
+            pauseMenuManager = FindFirstObjectByType<PauseMenuManager>();
+        }
+
+        pauseMenuManager?.PauseButton();
+    }
+
+    private void HandlePlanningTimerChanged(float _)
+    {
+        RefreshPlanningTimer();
+    }
+
+    private static bool TryGetLevelNumbers(LevelDefinition levelDefinition, out int worldNumber, out int levelNumber)
+    {
+        worldNumber = 0;
+        levelNumber = 0;
+
+        return levelDefinition != null
+            && (TryGetLevelNumbers(levelDefinition.LevelId, out worldNumber, out levelNumber)
+                || TryGetLevelNumbers(levelDefinition.name, out worldNumber, out levelNumber));
+    }
+
+    private static bool TryGetLevelNumbers(string levelId, out int worldNumber, out int levelNumber)
+    {
+        worldNumber = 0;
+        levelNumber = 0;
+
+        if (string.IsNullOrWhiteSpace(levelId))
+        {
+            return false;
+        }
+
+        string[] parts = levelId.Split('_');
+        return parts.Length >= 3
+            && int.TryParse(parts[1], out worldNumber)
+            && int.TryParse(parts[2], out levelNumber);
+    }
+
+    private static string FormatPlanningTime(float seconds)
+    {
+        int totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, seconds));
+        return $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
     }
 }

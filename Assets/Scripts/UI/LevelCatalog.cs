@@ -48,12 +48,14 @@ public class LevelCatalogEntry
     [SerializeField] private bool unlockedByDefault = true;
 
     public LevelDefinition LevelDefinition => levelDefinition;
+    public WorldDefinition WorldDefinition => levelDefinition != null ? levelDefinition.WorldDefinition : null;
     public string SceneName => sceneName;
     public string WorldLabel => string.IsNullOrWhiteSpace(worldLabel) ? "Mundo" : worldLabel;
     public int DisplayOrder => displayOrder;
     public bool UnlockedByDefault => unlockedByDefault;
     public bool HasSceneName => !string.IsNullOrWhiteSpace(sceneName);
-    public bool IsPlayable => unlockedByDefault && HasSceneName;
+    public string ProgressId => levelDefinition != null ? levelDefinition.LevelId : string.Empty;
+    public bool IsPlayable => HasSceneName && unlockedByDefault;
 
     public string DisplayName
     {

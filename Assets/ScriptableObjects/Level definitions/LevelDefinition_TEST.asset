@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: LevelDefinition_TEST
   m_EditorClassIdentifier: 
   levelId: Level_TEST
-  levelName: Level 1
-  nextSceneName: Scene_01_02
+  levelName: TESTING level
+  nextSceneName: MainMenuScene
   worldDefinition: {fileID: 11400000, guid: e067b34db0a141b3a1de603b070e5154, type: 2}
   placeableInventorySet: {fileID: 11400000, guid: ebaa677c0b8ac2d449aaa9bcd1f23d04, type: 2}
+  planningTimeLimitSeconds: 5

@@ -8,10 +8,15 @@ public class LevelDefinition : ScriptableObject
     [SerializeField] private string nextSceneName;
     [SerializeField] private WorldDefinition worldDefinition;
     [SerializeField] private PlaceableInventorySet placeableInventorySet;
+    [Min(0f)]
+    [SerializeField] private float planningTimeLimitSeconds;
+    [SerializeField] private bool useDynamicPlanningCamera;
 
     public string LevelId => levelId;
     public string LevelName => string.IsNullOrWhiteSpace(levelName) ? name : levelName;
     public string NextSceneName => nextSceneName;
     public WorldDefinition WorldDefinition => worldDefinition;
     public PlaceableInventorySet PlaceableInventorySet => placeableInventorySet;
+    public float PlanningTimeLimitSeconds => Mathf.Max(0f, planningTimeLimitSeconds);
+    public bool UseDynamicPlanningCamera => useDynamicPlanningCamera;
 }

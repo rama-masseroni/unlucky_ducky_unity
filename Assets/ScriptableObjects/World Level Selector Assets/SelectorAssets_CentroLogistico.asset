@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b7c4fd6d6f14f68a88fb62d3d8781c1, type: 3}
+  m_Name: SelectorAssets_CentroLogistico
+  m_EditorClassIdentifier: 
+  background: {fileID: 4475977886318739163, guid: 98ef101f3c3bd4e459f5c31053f5c0bd, type: 3}
+  previousPage: {fileID: -6647168487603957483, guid: fc6e08c7ce8de7f41bb289f354483a44, type: 3}
+  nextPage: {fileID: 232716174070649214, guid: 0b25503e158de1e4485d082bca6a1f8b, type: 3}
+  backButton: {fileID: 2118856551448195418, guid: de9eecfcb3f474f4e8b634fd98dc2e92, type: 3}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedFallbackTint: {r: 0.42, g: 0.42, b: 0.42, a: 1}
+  levelSprites:
+  - displayOrder: 11
+    normal: {fileID: 7751962285171624121, guid: 7e4be16850466ca44a702a2bec9b9729, type: 3}
+    locked: {fileID: 278865050013209638, guid: 2c5909e9671a00b45aa2cce7ac2070b4, type: 3}
+  - displayOrder: 12
+    normal: {fileID: 4250744844285024575, guid: ec1a59f304f3feb458014d6efc30b0f0, type: 3}
+    locked: {fileID: 278865050013209638, guid: 12c64b5a9e4f4afcab420d12e612ca12, type: 3}
+  - displayOrder: 13
+    normal: {fileID: -285771811085520421, guid: 18281cc3688f75448818c8a5fd8fb1d6, type: 3}
+    locked: {fileID: 278865050013209638, guid: 13d75c6baf504bfdac531e23f723db23, type: 3}
+  - displayOrder: 14
+    normal: {fileID: -9094536798481930361, guid: 66e9b5c922dc3264a90902239e9384dc, type: 3}
+    locked: {fileID: 278865050013209638, guid: 14e86d7cb0614c0ead642f340834ec34, type: 3}
+  - displayOrder: 15
+    normal: {fileID: -8334170042405264636, guid: 8ab7b0fa642376a4d80f1d2329e826af, type: 3}
+    locked: {fileID: 278865050013209638, guid: 15f97e8dc1724d1fbe7530451945fd45, type: 3}
