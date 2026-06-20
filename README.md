@@ -307,43 +307,46 @@ No aplica a UI, tilemaps ni hijos visuales.
 
 ## Tilemaps necesarios
 
-Los niveles deben tener un `Grid` con tilemaps separados por responsabilidad. El bootstrapper/editor crea o espera nombres similares a estos:
+Los niveles usan `Map.prefab`, que separa los tilemaps por responsabilidad:
 
 ```text
-Grid
-  Walls Tilemap
-  Breakable Tilemap
-  Hazard Tilemap
+Map
+  Tilemaps
+    Breakable floor grid
+      Breakable tilemap
+    Falling destructiuble tgrid
+      Falling destructible tilemap
+    Spikes grid
+      Spikes tilemap
+    Placement Walls grid
+      Placement Walls
 ```
 
-Tambien puede haber tilemaps extra segun el nivel:
+Los niveles que no permiten colocar objetos pueden mantener sus tilemaps incorporados directamente en la escena y omitir `Placement Walls`.
 
-```text
-Falling destructible tilemap
-Spikes tilemap
-Breakable floor grid
-Walls grid
-```
-
-### Walls Tilemap
+### Placement Walls
 
 Uso:
 
-- Limites y paredes del nivel.
-- Bloquea movimiento y colocacion.
-- Sirve como referencia visual y fisica para cerrar el espacio jugable.
+- Define el contorno logico cerrado dentro del cual se permite colocar objetos.
+- Alimenta el flood fill de `BuildModePlacementController`; no representa terreno ni paredes fisicas.
+- Sus celdas cuentan como bloqueadas para colocacion, pero no afectan movimiento, bombas ni hazards.
 
 Componentes esperados:
 
 - `Tilemap`
 - `TilemapRenderer`
-- `TilemapCollider2D`
+- `PlacementBoundaryTilemapLayer`
+
+No debe tener `TilemapCollider2D`, `Rigidbody2D` ni componentes destructibles.
 
 Como pintarlo:
 
-- Usar tiles solidos de la paleta principal.
-- Pintar el contorno del nivel cerrado.
-- No mezclar hazards o bloques destruibles aca.
+- Usar `PlacementWallTile` desde `Assets/Tile sets/New Tile Palette.prefab`.
+- Pintar un contorno continuo de una celda de espesor, conectado en las cuatro direcciones y sin aberturas.
+- Pintar el contorno como override de cada escena; no aplicar esas celdas al prefab compartido `Map`.
+- El Tile se muestra magenta en edicion y `PlacementBoundaryTilemapLayer` oculta el renderer en Play Mode.
+- Un contorno ausente o abierto bloquea el inicio de `Execution`.
 
 ### Breakable Tilemap
 
@@ -448,10 +451,10 @@ Usar la paleta principal de `Free 2D Platform Tileset` para nuevos niveles salvo
 ## Como pintar un nivel
 
 1. Abrir la escena del nivel.
-2. Verificar que exista `Grid`.
-3. Pintar paredes/limites en `Walls Tilemap`.
-4. Pintar bloques rompibles en `Breakable Tilemap`.
-5. Pintar pinchos/peligros en `Hazard Tilemap` usando `SpikeTile`.
+2. Verificar que exista una instancia de `Map.prefab` con su raiz `Tilemaps`.
+3. Si el nivel usa objetos `DragToPlace`, pintar un contorno cerrado en `Placement Walls` con `PlacementWallTile`.
+4. Pintar bloques rompibles en `Breakable tilemap`.
+5. Pintar pinchos/peligros en `Spikes tilemap` usando `SpikeTile`.
 6. Si hay bloques que deben caer, usar un tilemap separado con `FallingDestructibleTilemapLayer`.
 7. Arrastrar actores de escena:
    - `Player_Duck`
@@ -499,10 +502,11 @@ Variables importantes:
 - `inventoryPanel`: panel de inventario.
 - `occupancyMask`: capas que cuentan como ocupadas.
 - `occupancyBoxInset`: ajuste para detectar ocupacion de celda.
-- `validPreviewColor`: color preview valido.
-- `invalidPreviewColor`: color preview invalido.
+- `previewOpacity`: transparencia del objeto mientras se arrastra.
+- `invalidPlacementMarkerScale`: escala de la cruz de posicion invalida.
+- `invalidPlacementMarkerSortingOffset`: separacion de orden para dibujar la cruz sobre el objeto.
 
-Solo se puede colocar/mover objetos en `Planning`. Al entrar en `Execution`, el inventario queda bloqueado salvo herramientas de ejecucion como el pico.
+Solo se puede colocar/mover objetos en `Planning`. El objeto arrastrado conserva sus colores y muestra una cruz roja superpuesta cuando la celda actual no permite colocarlo. No se dibuja un overlay global de area invalida. Al entrar en `Execution`, el inventario queda bloqueado salvo herramientas de ejecucion como el pico.
 
 ## UI y estado del nivel
 
