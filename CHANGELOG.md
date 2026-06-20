@@ -4,6 +4,14 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
+## 2026-06-20
+
+### Sin commit - Feedback localizado de colocacion
+
+- El area invalida deja de cubrir el escenario completo durante planificacion.
+- El objeto arrastrado conserva su apariencia y muestra una cruz roja superpuesta solo cuando la celda actual no permite colocarlo.
+- Se agrego `Placement Walls` al prefab de mapa y un tile logico sin collider a la palette para dibujar limites por nivel.
+
 ## 2026-06-19
 
 ### Sin commit - Inventario visual del Mundo 4

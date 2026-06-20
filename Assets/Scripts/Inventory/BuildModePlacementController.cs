@@ -11,6 +11,8 @@ public enum PlacementAreaMode
 
 public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, IExecutionStartValidator
 {
+    private const string InvalidPlacementMarkerResourcePath = "UX/InvalidPlacementCross";
+
     [Header("Scene References")]
     [SerializeField] private Camera worldCamera;
     [SerializeField] private Tilemap referenceTilemap;
@@ -28,19 +30,19 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
     [SerializeField] private Vector2Int placementAreaSize = new Vector2Int(16, 8);
     [SerializeField] private int automaticPlacementAreaPadding = 2;
     [SerializeField] private int wallBoundarySearchPadding = 2;
-    [SerializeField] private int invalidAreaOverlayPadding = 4;
-    [SerializeField] private PlacementAreaOverlayVisualizer placementAreaOverlayVisualizer;
 
     [Header("Placement Rules")]
     [SerializeField] private LayerMask occupancyMask = ~0;
     [SerializeField] private float occupancyBoxInset = 0.05f;
-    [SerializeField] private Color validPreviewColor = new Color(1f, 1f, 1f, 0.65f);
-    [SerializeField] private Color invalidPreviewColor = new Color(1f, 0.2f, 0.2f, 0.65f);
+    [SerializeField, Range(0f, 1f)] private float previewOpacity = 0.65f;
+    [SerializeField] private float invalidPlacementMarkerScale = 0.85f;
+    [SerializeField] private int invalidPlacementMarkerSortingOffset = 10;
 
     private PlaceableDefinition activeDefinition;
     private PlacedPlaceableInstance activeMoveInstance;
     private GameObject previewInstance;
-    private SpriteRenderer previewRenderer;
+    private SpriteRenderer[] previewRenderers;
+    private GameObject invalidPlacementMarker;
     private BombExplosionAreaVisualizer previewBombAreaVisualizer;
     private Vector3Int currentCell;
     private Vector3Int originalMoveCell;
@@ -57,7 +59,6 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
     private void Awake()
     {
         ResolveSceneReferences();
-        RefreshPlacementAreaOverlay();
     }
 
     public void BeginDrag(PlaceableDefinition definition)
@@ -88,11 +89,7 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
             previewInstance.transform.position = referenceTilemap.GetCellCenterWorld(currentCell);
             previewInstance.SetActive(true);
             previewBombAreaVisualizer?.Show(referenceTilemap);
-        }
-
-        if (previewRenderer != null)
-        {
-            previewRenderer.color = currentCellIsValid ? validPreviewColor : invalidPreviewColor;
+            SetInvalidPlacementMarkerVisible(!currentCellIsValid);
         }
     }
 
@@ -191,13 +188,9 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
 
     public void OnLevelPhaseChanged(LevelPhase phase)
     {
-        if (phase == LevelPhase.Planning)
+        if (phase != LevelPhase.Planning)
         {
-            RefreshPlacementAreaOverlay();
-        }
-        else
-        {
-            placementAreaOverlayVisualizer?.Hide();
+            invalidPlacementMarker?.SetActive(false);
         }
     }
 
@@ -258,8 +251,15 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
 
         previewInstance = Instantiate(activeDefinition.Prefab);
         previewInstance.name = activeDefinition.Prefab.name + "_Preview";
-        previewRenderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
+        previewRenderers = previewInstance.GetComponentsInChildren<SpriteRenderer>(true);
         previewBombAreaVisualizer = previewInstance.GetComponentInChildren<BombExplosionAreaVisualizer>(true);
+
+        for (int i = 0; i < previewRenderers.Length; i++)
+        {
+            Color previewColor = previewRenderers[i].color;
+            previewColor.a *= Mathf.Clamp01(previewOpacity);
+            previewRenderers[i].color = previewColor;
+        }
 
         Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
 
@@ -275,6 +275,8 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
             behaviours[i].enabled = false;
         }
 
+        CreateInvalidPlacementMarker();
+
         previewInstance.SetActive(false);
     }
 
@@ -286,8 +288,56 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
         }
 
         previewInstance = null;
-        previewRenderer = null;
+        previewRenderers = null;
+        invalidPlacementMarker = null;
         previewBombAreaVisualizer = null;
+    }
+
+    private void CreateInvalidPlacementMarker()
+    {
+        Sprite markerSprite = Resources.Load<Sprite>(InvalidPlacementMarkerResourcePath);
+
+        if (markerSprite == null)
+        {
+            Debug.LogError($"Invalid placement marker sprite was not found at Resources/{InvalidPlacementMarkerResourcePath}.", this);
+            return;
+        }
+
+        invalidPlacementMarker = new GameObject("InvalidPlacementMarker");
+        invalidPlacementMarker.transform.SetParent(previewInstance.transform, false);
+        invalidPlacementMarker.transform.localScale = Vector3.one * Mathf.Max(0.01f, invalidPlacementMarkerScale);
+
+        SpriteRenderer markerRenderer = invalidPlacementMarker.AddComponent<SpriteRenderer>();
+        markerRenderer.sprite = markerSprite;
+
+        SpriteRenderer sortingReference = null;
+
+        for (int i = 0; i < previewRenderers.Length; i++)
+        {
+            SpriteRenderer candidate = previewRenderers[i];
+
+            if (candidate != null && (sortingReference == null || candidate.sortingOrder > sortingReference.sortingOrder))
+            {
+                sortingReference = candidate;
+            }
+        }
+
+        if (sortingReference != null)
+        {
+            markerRenderer.sortingLayerID = sortingReference.sortingLayerID;
+            markerRenderer.sortingOrder = sortingReference.sortingOrder + Mathf.Max(1, invalidPlacementMarkerSortingOffset);
+        }
+        else
+        {
+            markerRenderer.sortingOrder = Mathf.Max(1, invalidPlacementMarkerSortingOffset);
+        }
+
+        invalidPlacementMarker.SetActive(false);
+    }
+
+    private void SetInvalidPlacementMarkerVisible(bool visible)
+    {
+        invalidPlacementMarker?.SetActive(visible);
     }
 
     private void ResetPlacementState()
@@ -403,7 +453,6 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
 
         hasResolvedPlacementArea = false;
         ResolvePlacementArea();
-        ResolvePlacementAreaOverlayVisualizer();
     }
 
     private void ResolvePlacementArea()
@@ -657,46 +706,6 @@ public class BuildModePlacementController : MonoBehaviour, ILevelPhaseListener, 
         return new BoundsInt(
             new Vector3Int(xMin, yMin, zMin),
             new Vector3Int(xMax - xMin, yMax - yMin, zMax - zMin));
-    }
-
-    private void ResolvePlacementAreaOverlayVisualizer()
-    {
-        if (placementAreaOverlayVisualizer != null)
-        {
-            return;
-        }
-
-        placementAreaOverlayVisualizer = GetComponent<PlacementAreaOverlayVisualizer>();
-
-        if (placementAreaOverlayVisualizer == null)
-        {
-            placementAreaOverlayVisualizer = gameObject.AddComponent<PlacementAreaOverlayVisualizer>();
-        }
-    }
-
-    private void RefreshPlacementAreaOverlay()
-    {
-        if (!usePlacementAreaLimit || placementAreaOverlayVisualizer == null)
-        {
-            placementAreaOverlayVisualizer?.Hide();
-            return;
-        }
-
-        if (CanUseBuildMode())
-        {
-            if (placementAreaMode == PlacementAreaMode.WallBoundary && wallBoundaryPlacementCells != null)
-            {
-                placementAreaOverlayVisualizer.Show(referenceTilemap, wallBoundaryDrawArea, wallBoundaryPlacementCells);
-            }
-            else
-            {
-                placementAreaOverlayVisualizer.Show(referenceTilemap, PlacementArea, invalidAreaOverlayPadding);
-            }
-        }
-        else
-        {
-            placementAreaOverlayVisualizer.Hide();
-        }
     }
 
     private bool IsCellInsidePlacementArea(Vector3Int cell)

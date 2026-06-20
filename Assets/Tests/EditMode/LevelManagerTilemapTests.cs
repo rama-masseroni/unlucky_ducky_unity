@@ -725,6 +725,47 @@ public class LevelPhaseSystemTests
     }
 
     [Test]
+    public void BuildModePlacementController_ShowsCrossOnlyForInvalidPreviewCell()
+    {
+        Assert.IsNotNull(buildModePlacementControllerType);
+
+        GameObject controllerObject = new GameObject("BuildModePlacementController");
+        GameObject prefab = new GameObject("BombPrefab", typeof(SpriteRenderer));
+        Component controller = controllerObject.AddComponent(buildModePlacementControllerType);
+        ScriptableObject definition = CreatePlaceableDefinitionWithPrefab(prefab);
+
+        try
+        {
+            SetPrivateField(controller, "activeDefinition", definition);
+            buildModePlacementControllerType
+                .GetMethod("CreatePreview", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(controller, null);
+
+            GameObject marker = (GameObject)buildModePlacementControllerType
+                .GetField("invalidPlacementMarker", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(controller);
+
+            Assert.IsNotNull(marker);
+            Assert.IsNotNull(marker.GetComponent<SpriteRenderer>().sprite);
+            Assert.IsFalse(marker.activeSelf);
+
+            MethodInfo setMarkerVisible = buildModePlacementControllerType
+                .GetMethod("SetInvalidPlacementMarkerVisible", BindingFlags.NonPublic | BindingFlags.Instance);
+            setMarkerVisible.Invoke(controller, new object[] { true });
+            Assert.IsTrue(marker.activeSelf);
+
+            setMarkerVisible.Invoke(controller, new object[] { false });
+            Assert.IsFalse(marker.activeSelf);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(definition);
+            UnityEngine.Object.DestroyImmediate(controllerObject);
+            UnityEngine.Object.DestroyImmediate(prefab);
+        }
+    }
+
+    [Test]
     public void BuildModePlacementController_CannotPlaceOnOccupiedColliderCell()
     {
         Assert.IsNotNull(buildModePlacementControllerType);
