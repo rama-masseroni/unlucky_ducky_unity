@@ -139,7 +139,9 @@ public class FallingDestructibleTilemapLayer : MonoBehaviour, ILevelPhaseListene
 
     private static bool IsInitialSupportTilemap(Tilemap supportTilemap)
     {
-        return supportTilemap != null && supportTilemap.GetComponent<HazardTilemapLayer>() == null;
+        return supportTilemap != null
+            && supportTilemap.GetComponent<HazardTilemapLayer>() == null
+            && supportTilemap.GetComponent<IGameplayIgnoredTilemap>() == null;
     }
 
     private bool HasSupportObjectAtWorldPosition(Vector3 supportWorldPosition)
@@ -258,7 +260,9 @@ public class FallingDestructibleTilemapLayer : MonoBehaviour, ILevelPhaseListene
 
     private static void AddUniqueTilemap(Tilemap tilemap, HashSet<Tilemap> uniqueTilemaps, List<Tilemap> resolvedTilemaps)
     {
-        if (tilemap != null && uniqueTilemaps.Add(tilemap))
+        if (tilemap != null
+            && tilemap.GetComponent<IGameplayIgnoredTilemap>() == null
+            && uniqueTilemaps.Add(tilemap))
         {
             resolvedTilemaps.Add(tilemap);
         }
