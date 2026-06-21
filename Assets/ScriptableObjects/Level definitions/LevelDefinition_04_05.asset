@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd98bae406ae6a440a52b3b6133e2ea9, type: 3}
-  m_Name: LevelDefinition_TEST
+  m_Name: LevelDefinition_04_05
   m_EditorClassIdentifier: 
-  levelId: Level_TEST
-  levelName: TESTING level
+  levelId: Level_04_05
+  levelName: Level 4-5
   nextSceneName: MainMenuScene
-  worldDefinition: {fileID: 11400000, guid: e067b34db0a141b3a1de603b070e5154, type: 2}
-  placeableInventorySet: {fileID: 11400000, guid: ebaa677c0b8ac2d449aaa9bcd1f23d04, type: 2}
+  worldDefinition: {fileID: 11400000, guid: 044a71e220ee9684791c5317f5a12997, type: 2}
+  placeableInventorySet: {fileID: 11400000, guid: 2fa8b700b8a3bd3409beeabeeb20ccaa, type: 2}
   planningTimeLimitSeconds: 0
-  useDynamicPlanningCamera: 0
+  useDynamicPlanningCamera: 1
