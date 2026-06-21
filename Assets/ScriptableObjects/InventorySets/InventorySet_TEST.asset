@@ -18,4 +18,4 @@ MonoBehaviour:
   - definition: {fileID: 11400000, guid: 9940634d1fb015e4b8d62542628ce243, type: 2}
     amount: 0
   - definition: {fileID: 11400000, guid: d0728b15cdbd4b20996301c375bcd5fb, type: 2}
-    amount: 0
+    amount: 1

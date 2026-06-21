@@ -10,13 +10,26 @@ public class PlayerDuckController : GridWalkerController
     [SerializeField] private float deathResetDelaySeconds = 0.5f;
     [SerializeField] private GameStateManager gameStateManager;
     [SerializeField] private float hazardContactProbeDistance = 0.25f;
+    [SerializeField] private bool logBlocksTraveledPerSecond = true;
+    [SerializeField] private float movementLogIntervalSeconds = 1f;
+    [SerializeField] private Grid movementLogReferenceGrid;
 
     private bool isDead;
     private Coroutine deathResetCoroutine;
     private LevelPhase currentPhase = LevelPhase.Planning;
+    private Vector3 movementLogSamplePosition;
+    private float movementLogElapsedSeconds;
+    private float movementLogBlockSize = 1f;
 
     public bool IsDead => isDead;
     public static Func<PlayerDuckController, bool> DeathScreenHandler { get; set; }
+
+    protected override void Awake()
+    {
+        base.Awake();
+        ResolveMovementLogBlockSize();
+        ResetMovementLogSample();
+    }
 
     public void Kill()
     {
@@ -65,12 +78,18 @@ public class PlayerDuckController : GridWalkerController
 
         base.FixedUpdate();
         TryKillIfTouchingHazard();
+        UpdateMovementDistanceLog();
     }
 
     public override void OnLevelPhaseChanged(LevelPhase phase)
     {
         currentPhase = phase;
         base.OnLevelPhaseChanged(phase);
+
+        if (phase == LevelPhase.Execution)
+        {
+            ResetMovementLogSample();
+        }
     }
 
     public bool TryKillIfTouchingHazard()
@@ -111,6 +130,53 @@ public class PlayerDuckController : GridWalkerController
         }
 
         return gameStateManager;
+    }
+
+    private void ResolveMovementLogBlockSize()
+    {
+        if (movementLogReferenceGrid == null)
+        {
+            movementLogReferenceGrid = FindFirstObjectByType<Grid>();
+        }
+
+        if (movementLogReferenceGrid == null)
+        {
+            movementLogBlockSize = 1f;
+            return;
+        }
+
+        Vector3 cellSize = movementLogReferenceGrid.cellSize;
+        movementLogBlockSize = Mathf.Max(Mathf.Abs(cellSize.x), Mathf.Abs(cellSize.y), 0.01f);
+    }
+
+    private void ResetMovementLogSample()
+    {
+        movementLogSamplePosition = transform.position;
+        movementLogElapsedSeconds = 0f;
+    }
+
+    private void UpdateMovementDistanceLog()
+    {
+        if (!logBlocksTraveledPerSecond
+            || currentPhase != LevelPhase.Execution
+            || movementLogIntervalSeconds <= 0f)
+        {
+            return;
+        }
+
+        movementLogElapsedSeconds += Time.fixedDeltaTime;
+
+        if (movementLogElapsedSeconds < movementLogIntervalSeconds)
+        {
+            return;
+        }
+
+        float worldDistance = Vector2.Distance(movementLogSamplePosition, transform.position);
+        float blocksTraveled = worldDistance / movementLogBlockSize;
+        float blocksPerInterval = blocksTraveled * movementLogIntervalSeconds / movementLogElapsedSeconds;
+
+        Debug.Log($"Ducky viajo {blocksPerInterval:F2} bloques en {movementLogIntervalSeconds:F2} s.", this);
+        ResetMovementLogSample();
     }
 
     private bool IsTouchingHazardTile()

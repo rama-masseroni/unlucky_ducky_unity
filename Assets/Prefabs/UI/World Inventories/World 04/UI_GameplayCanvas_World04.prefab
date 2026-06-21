@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 2307288177572101828}
   - component: {fileID: 1471235286770065169}
   - component: {fileID: 4714648179002314749}
-  - component: {fileID: 5598796864886342736}
   m_Layer: 5
   m_Name: UI_GameplayCanvas_World04
   m_TagString: Untagged
@@ -108,23 +107,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &5598796864886342736
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9049183255305171816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f1301f43d9642719c70bf9d69e31bc1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelUiRoot
-  hud: {fileID: 1206677509357289557}
-  inventoryPanel: {fileID: 9133937196124678641}
-  pauseMenu: {fileID: 63578285908989591}
-  victoryScreen: {fileID: 6865705560220870376}
-  defeatScreen: {fileID: 8864729471892013880}
 --- !u!1001 &571296701840897955
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -259,17 +241,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 831506188570144890, guid: 06e37a2cdc11585488c628fed29194fd, type: 3}
   m_PrefabInstance: {fileID: 571296701840897955}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1206677509357289557 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1680790027197872118, guid: 06e37a2cdc11585488c628fed29194fd, type: 3}
-  m_PrefabInstance: {fileID: 571296701840897955}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a05f7eb0e584e56955c6b4bcf2a2d92, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelHudPanel
 --- !u!1001 &3551890580986785992
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -372,17 +343,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8412727296512763027, guid: eba94221077b9d04b900735c886e7a4c, type: 3}
   m_PrefabInstance: {fileID: 3551890580986785992}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6865705560220870376 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7930059933664826912, guid: eba94221077b9d04b900735c886e7a4c, type: 3}
-  m_PrefabInstance: {fileID: 3551890580986785992}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4a6c9fb2f3547f4892a05e8a7b6d31c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VictoryScreenManager
 --- !u!1001 &3792381559451040277
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -485,17 +445,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4546170435745054835, guid: 8c90ba70e18c5354ea7d3c67671a95f6, type: 3}
   m_PrefabInstance: {fileID: 3792381559451040277}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8864729471892013880 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5738965347262626093, guid: 8c90ba70e18c5354ea7d3c67671a95f6, type: 3}
-  m_PrefabInstance: {fileID: 3792381559451040277}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b63885ae099141c8b36c26f0e33ae2bb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DefeatScreenManager
 --- !u!1001 &4243749348575466076
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -917,14 +866,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1000000000000000002, guid: 7739fba06c8d4efd8a54fbbdc9e678a6, type: 3}
   m_PrefabInstance: {fileID: 8296463736480803314}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9133937196124678641 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1000000000000000003, guid: 7739fba06c8d4efd8a54fbbdc9e678a6, type: 3}
-  m_PrefabInstance: {fileID: 8296463736480803314}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6d3846c51654901b62d475460ca7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlaceableInventoryPanel

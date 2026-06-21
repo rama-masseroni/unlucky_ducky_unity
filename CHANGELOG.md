@@ -4,12 +4,6 @@ Historial generado desde `git log --no-merges`, por lo que no incluye merge comm
 Las entradas estan ordenadas de mas reciente a mas antigua y mantienen el hash corto
 del commit para poder rastrear el cambio original.
 
-## 2026-06-21
-
-### Sin commit - Fondo ajustado a camara
-
-- El prefab de fondo de los niveles ahora sigue la posicion de la camara principal y ajusta su escala al encuadre ortografico, incluso durante movimientos y zoom dinamicos.
-
 ## 2026-06-20
 
 ### Sin commit - Feedback localizado de colocacion
@@ -17,13 +11,6 @@ del commit para poder rastrear el cambio original.
 - El area invalida deja de cubrir el escenario completo durante planificacion.
 - El objeto arrastrado conserva su apariencia y muestra una cruz roja superpuesta solo cuando la celda actual no permite colocarlo.
 - Se agrego `Placement Walls` al prefab de mapa y un tile logico sin collider a la palette para dibujar limites por nivel.
-- `Placement Walls` queda excluido de las consultas de suelo, obstaculos y soporte durante `Execution`, por lo que no bloquea al pato, la rata ni los bloques que caen.
-- Los bloques que todavia estan cayendo pueden activar sensores durante `Execution`; los bloques ya apoyados siguen sin activarlos.
-- La bomba ahora puede destruir tambien los tiles `Water_01` usados por los bloques destruibles que caen, ademas de los tiles grises y los objetos rompibles existentes.
-- Las celdas de colocacion invalidas ahora registran una vez por celda la causa concreta: limite de zona, Tilemap bloqueado o collider/trigger detectado.
-- Un bloque que cae ya no usa como soporte durante el mismo paso fisico a una rata o pato que acaba de aplastar, por lo que continua cayendo hasta encontrar soporte real.
-- Los bloques que caen ahora registran inicializacion, actores aplastados, soporte exacto de aterrizaje y destrucciones de tiles observadas mientras estan dinamicos o estaticos.
-- Los bloques que ya aterrizaron vuelven a estado dinamico cuando una destruccion de tile elimina su soporte; permanecen estaticos si todavia detectan otro apoyo real.
 
 ## 2026-06-19
 

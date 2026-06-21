@@ -27,7 +27,7 @@ public class SensorController : MonoBehaviour
 
     public bool TryActivate(Collider2D other)
     {
-        Component activator = GetActivator(other);
+        GridWalkerController activator = other != null ? other.GetComponentInParent<GridWalkerController>() : null;
 
         if (activator == null)
         {
@@ -52,24 +52,6 @@ public class SensorController : MonoBehaviour
         return true;
     }
 
-    private static Component GetActivator(Collider2D other)
-    {
-        if (other == null)
-        {
-            return null;
-        }
-
-        GridWalkerController walker = other.GetComponentInParent<GridWalkerController>();
-
-        if (walker != null)
-        {
-            return walker;
-        }
-
-        FallingTileBlock fallingBlock = other.GetComponentInParent<FallingTileBlock>();
-        return fallingBlock != null && fallingBlock.IsFalling ? fallingBlock : null;
-    }
-
     private GameStateManager GetGameStateManager()
     {
         if (gameStateManager == null)
@@ -80,7 +62,7 @@ public class SensorController : MonoBehaviour
         return gameStateManager;
     }
 
-    private int NotifyReceivers(Component activator)
+    private int NotifyReceivers(GridWalkerController activator)
     {
         int notifiedReceivers = 0;
 
@@ -122,7 +104,7 @@ public class SensorController : MonoBehaviour
         return notifiedReceivers;
     }
 
-    private bool TryNotifyReceiver(MonoBehaviour behaviour, Component activator)
+    private bool TryNotifyReceiver(MonoBehaviour behaviour, GridWalkerController activator)
     {
         if (behaviour is not ISensorReceiver receiver || !ConnectionMatches(receiver))
         {

@@ -145,7 +145,7 @@ public class LevelManagerTilemapTests
     }
 
     [Test]
-    public void BombPrefab_AllowsCastleAndWaterTiles()
+    public void BombPrefab_OnlyAllowsCastleTile()
     {
         GameObject bombPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Prefabs/Placeables/Placeable_Bomb.prefab");
@@ -153,14 +153,11 @@ public class LevelManagerTilemapTests
             "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/House_01.asset");
         TileBase castleTile = AssetDatabase.LoadAssetAtPath<TileBase>(
             "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/Castle_01.asset");
-        TileBase waterTile = AssetDatabase.LoadAssetAtPath<TileBase>(
-            "Assets/Free 2D Platform Tileset/Demo/Palettes/Tileset/Water_01.asset");
         Type bombControllerType = Type.GetType("BombController, Assembly-CSharp");
 
         Assert.IsNotNull(bombPrefab);
         Assert.IsNotNull(houseTile);
         Assert.IsNotNull(castleTile);
-        Assert.IsNotNull(waterTile);
         Assert.IsNotNull(bombControllerType);
 
         Component bomb = bombPrefab.GetComponent(bombControllerType);
@@ -170,7 +167,6 @@ public class LevelManagerTilemapTests
             .GetValue(bomb);
 
         Assert.IsTrue(AllowsTile(filter, castleTile));
-        Assert.IsTrue(AllowsTile(filter, waterTile));
         Assert.IsFalse(AllowsTile(filter, houseTile));
     }
 
@@ -1312,16 +1308,6 @@ public class LevelPhaseSystemTests
 
             Assert.AreEqual(RigidbodyType2D.Static, body.bodyType);
             Assert.AreEqual(1f, blockObject.transform.position.y, 0.001f);
-
-            supportTilemap.SetTile(supportCell, null);
-            Type tilemapDestructionEventsType = Type.GetType("TilemapDestructionEvents, Assembly-CSharp");
-            Assert.IsNotNull(tilemapDestructionEventsType);
-            tilemapDestructionEventsType
-                .GetMethod("RaiseTileDestroyed", BindingFlags.Public | BindingFlags.Static)
-                .Invoke(null, new object[] { supportTilemap, supportCell });
-
-            Assert.AreEqual(RigidbodyType2D.Dynamic, body.bodyType);
-            Assert.IsTrue(blockObject.GetComponent<BoxCollider2D>().isTrigger);
         }
         finally
         {
@@ -1573,7 +1559,7 @@ public class LevelPhaseSystemTests
 
         try
         {
-            InitializeFallingBlock(block, new Tilemap[0], ~0);
+            InitializeFallingBlock(block, new Tilemap[0]);
             Rigidbody2D body = blockObject.GetComponent<Rigidbody2D>();
             blockObject.transform.position = new Vector3(0f, 1.2f, 0f);
             body.linearVelocity = Vector2.down * 8f;
@@ -1582,8 +1568,6 @@ public class LevelPhaseSystemTests
             fallingTileBlockType
                 .GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(block, null);
-
-            Assert.AreEqual(RigidbodyType2D.Dynamic, body.bodyType);
 
             yield return null;
 
@@ -1886,10 +1870,7 @@ public class LevelPhaseSystemTests
         return (Component)blocks[0];
     }
 
-    private void InitializeFallingBlock(
-        Component block,
-        Tilemap[] supportTilemaps,
-        int supportObjectMask = 0)
+    private void InitializeFallingBlock(Component block, Tilemap[] supportTilemaps)
     {
         fallingTileBlockType
             .GetMethod("Initialize")
@@ -1901,7 +1882,7 @@ public class LevelPhaseSystemTests
                 1f,
                 true,
                 supportTilemaps,
-                new LayerMask { value = supportObjectMask }
+                new LayerMask { value = 0 }
             });
     }
 

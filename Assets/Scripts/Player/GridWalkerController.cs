@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -56,38 +55,10 @@ public class GridWalkerController : MonoBehaviour, ILevelPhaseListener
             groundTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
         }
 
-        groundTilemaps = ExcludePlacementBoundaryTilemaps(groundTilemaps);
-
         if (obstacleTilemaps == null || obstacleTilemaps.Length == 0)
         {
             obstacleTilemaps = groundTilemaps;
         }
-        else
-        {
-            obstacleTilemaps = ExcludePlacementBoundaryTilemaps(obstacleTilemaps);
-        }
-    }
-
-    private static Tilemap[] ExcludePlacementBoundaryTilemaps(Tilemap[] tilemaps)
-    {
-        if (tilemaps == null || tilemaps.Length == 0)
-        {
-            return tilemaps;
-        }
-
-        List<Tilemap> gameplayTilemaps = new List<Tilemap>(tilemaps.Length);
-
-        for (int i = 0; i < tilemaps.Length; i++)
-        {
-            Tilemap tilemap = tilemaps[i];
-
-            if (tilemap != null && tilemap.GetComponent<IGameplayIgnoredTilemap>() == null)
-            {
-                gameplayTilemaps.Add(tilemap);
-            }
-        }
-
-        return gameplayTilemaps.ToArray();
     }
 
     protected virtual void FixedUpdate()
