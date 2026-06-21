@@ -3,6 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Tilemaps;
 
 public class SensorInteractionTests
 {
@@ -10,6 +11,7 @@ public class SensorInteractionTests
     private readonly Type sensorControllerType = Type.GetType("SensorController, Assembly-CSharp");
     private readonly Type sensorDoorControllerType = Type.GetType("SensorDoorController, Assembly-CSharp");
     private readonly Type gridWalkerControllerType = Type.GetType("GridWalkerController, UnluckyDucky.Player");
+    private readonly Type fallingTileBlockType = Type.GetType("FallingTileBlock, Assembly-CSharp");
 
     private GameObject gameStateObject;
     private GameObject sensorObject;
@@ -28,14 +30,15 @@ public class SensorInteractionTests
         LogAssert.NoUnexpectedReceived();
     }
 
-    [Test]
-    public void SensorController_WhenExecutionAndGridWalkerActivates_LogsActivation()
+    [TestCase("Duck")]
+    [TestCase("Rat")]
+    public void SensorController_WhenExecutionAndGridWalkerActivates_LogsActivation(string actorName)
     {
         Component sensor = CreateSensor();
-        Collider2D activatorCollider = CreateWalker("Duck").GetComponent<Collider2D>();
+        Collider2D activatorCollider = CreateWalker(actorName).GetComponent<Collider2D>();
         CreateGameStateManagerAndStartExecution();
 
-        LogAssert.Expect(LogType.Log, "Sensor 'Sensor' activated by 'Duck'.");
+        LogAssert.Expect(LogType.Log, $"Sensor 'Sensor' activated by '{actorName}'.");
         LogAssert.Expect(LogType.Warning, "Sensor 'Sensor' has no receivers connected to 'A'.");
 
         bool activated = InvokeTryActivate(sensor, activatorCollider);
@@ -53,6 +56,40 @@ public class SensorInteractionTests
         bool activated = InvokeTryActivate(sensor, activatorCollider);
 
         Assert.IsFalse(activated);
+    }
+
+    [Test]
+    public void SensorController_WhenExecutionAndFallingBlockActivates_TogglesDoor()
+    {
+        Component sensor = CreateSensor();
+        Component door = CreateDoor(startsOpen: false);
+        Collider2D activatorCollider = CreateFallingBlock(isFalling: true);
+        SetPrivateField(sensor, "connectedReceivers", new[] { (MonoBehaviour)door });
+        CreateGameStateManagerAndStartExecution();
+
+        LogAssert.Expect(LogType.Log, "Sensor 'Sensor' activated by 'FallingBlock'.");
+        Assert.IsTrue(InvokeTryActivate(sensor, activatorCollider));
+        Assert.IsTrue((bool)sensorDoorControllerType.GetProperty("IsOpen").GetValue(door));
+    }
+
+    [Test]
+    public void SensorController_WhenPlanningAndFallingBlockEnters_DoesNotActivate()
+    {
+        Component sensor = CreateSensor();
+        Collider2D activatorCollider = CreateFallingBlock(isFalling: true);
+        CreateGameStateManager();
+
+        Assert.IsFalse(InvokeTryActivate(sensor, activatorCollider));
+    }
+
+    [Test]
+    public void SensorController_WhenLandedBlockEnters_DoesNotActivate()
+    {
+        Component sensor = CreateSensor();
+        Collider2D activatorCollider = CreateFallingBlock(isFalling: false);
+        CreateGameStateManagerAndStartExecution();
+
+        Assert.IsFalse(InvokeTryActivate(sensor, activatorCollider));
     }
 
     [Test]
@@ -74,7 +111,7 @@ public class SensorInteractionTests
         Component door = CreateDoor(startsOpen: false);
         Collider2D doorCollider = doorObject.GetComponent<Collider2D>();
         Collider2D activatorCollider = CreateWalker("Duck").GetComponent<Collider2D>();
-        SetPrivateField(sensor, "connectedReceivers", new[] { door });
+        SetPrivateField(sensor, "connectedReceivers", new[] { (MonoBehaviour)door });
         CreateGameStateManagerAndStartExecution();
 
         Assert.IsFalse((bool)sensorDoorControllerType.GetProperty("IsOpen").GetValue(door));
@@ -138,6 +175,30 @@ public class SensorInteractionTests
         walkerObject = new GameObject(name, typeof(Rigidbody2D), typeof(BoxCollider2D));
         walkerObject.AddComponent(gridWalkerControllerType);
         return walkerObject;
+    }
+
+    private Collider2D CreateFallingBlock(bool isFalling)
+    {
+        Assert.IsNotNull(fallingTileBlockType);
+        otherObject = new GameObject("FallingBlock");
+        Component fallingBlock = otherObject.AddComponent(fallingTileBlockType);
+        fallingTileBlockType.GetMethod("Initialize").Invoke(fallingBlock, new object[]
+        {
+            null,
+            Color.white,
+            Vector3.one,
+            1f,
+            true,
+            Array.Empty<Tilemap>(),
+            (LayerMask)0
+        });
+
+        if (!isFalling)
+        {
+            otherObject.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
+        }
+
+        return otherObject.GetComponent<Collider2D>();
     }
 
     private Component CreateDoor(bool startsOpen)

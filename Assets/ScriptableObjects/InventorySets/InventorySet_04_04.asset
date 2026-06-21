@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbd7f21863fd4217964468bc133bdd41, type: 3}
-  m_Name: InventorySet_TEST
+  m_Name: InventorySet_04_04
   m_EditorClassIdentifier: 
   entries:
-  - definition: {fileID: 11400000, guid: 7ba5900b014d4aa2ba7df5936ff908b9, type: 2}
-    amount: 6
   - definition: {fileID: 11400000, guid: 9940634d1fb015e4b8d62542628ce243, type: 2}
-    amount: 0
+    amount: 1
   - definition: {fileID: 11400000, guid: d0728b15cdbd4b20996301c375bcd5fb, type: 2}
-    amount: 0
+    amount: 1
+  - definition: {fileID: 11400000, guid: 7ba5900b014d4aa2ba7df5936ff908b9, type: 2}
+    amount: 1
