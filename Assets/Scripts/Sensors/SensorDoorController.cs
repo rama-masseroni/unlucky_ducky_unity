@@ -28,7 +28,7 @@ public class SensorDoorController : MonoBehaviour, ISensorReceiver, IGridWalkerS
         SetOpen(startsOpen);
     }
 
-    public void OnSensorActivated(SensorController sensor, GridWalkerController activator)
+    public void OnSensorActivated(SensorController sensor, Component activator)
     {
         SetOpen(!IsOpen);
     }

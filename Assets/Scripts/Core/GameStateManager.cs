@@ -136,6 +136,11 @@ public class GameStateManager : MonoBehaviour
             return false;
         }
 
+        if (!ValidateExecutionStart())
+        {
+            return false;
+        }
+
         CurrentPhase = LevelPhase.Execution;
         NotifyPhaseListeners(CurrentPhase);
         PhaseChanged?.Invoke(CurrentPhase);
@@ -211,6 +216,55 @@ public class GameStateManager : MonoBehaviour
     private void HandleInventoryChanged()
     {
         InventoryChanged?.Invoke();
+    }
+
+    private bool ValidateExecutionStart()
+    {
+        if (phaseListeners != null)
+        {
+            for (int i = 0; i < phaseListeners.Length; i++)
+            {
+                if (!ValidateExecutionStart(phaseListeners[i]))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!autoDiscoverPhaseListeners)
+        {
+            return true;
+        }
+
+        MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (!ValidateExecutionStart(behaviours[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidateExecutionStart(MonoBehaviour behaviour)
+    {
+        if (behaviour is not IExecutionStartValidator validator)
+        {
+            return true;
+        }
+
+        if (validator.CanStartExecution(out string failureReason))
+        {
+            return true;
+        }
+
+        Debug.LogError(string.IsNullOrWhiteSpace(failureReason)
+            ? "Execution start was blocked by a scene validator."
+            : failureReason);
+        return false;
     }
 
     private void NotifyPhaseListeners(LevelPhase phase)

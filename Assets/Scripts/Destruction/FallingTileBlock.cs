@@ -21,6 +21,13 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
     private bool hasPreviousBottomY;
     private float previousBottomY;
 
+    public bool IsFalling => body != null && body.bodyType == RigidbodyType2D.Dynamic;
+
+    private void OnEnable()
+    {
+        TilemapDestructionEvents.TileDestroyed += HandleTileDestroyed;
+    }
+
     public void Initialize(
         Sprite sprite,
         Color color,
@@ -79,9 +86,9 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
             return;
         }
 
-        TryCrushActors();
+        HashSet<Transform> crushedWalkerRoots = TryCrushActors();
 
-        if (TryGetLandingY(out float landingY))
+        if (TryGetLandingY(crushedWalkerRoots, out float landingY))
         {
             Bounds bounds = boxCollider.bounds;
             Vector3 position = transform.position;
@@ -114,6 +121,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
 
     private void OnDisable()
     {
+        TilemapDestructionEvents.TileDestroyed -= HandleTileDestroyed;
         RestoreWalkerCollisions();
     }
 
@@ -142,7 +150,7 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         return new Vector3(scaleX, scaleY, 1f);
     }
 
-    private bool TryGetLandingY(out float landingY)
+    private bool TryGetLandingY(HashSet<Transform> ignoredSupportRoots, out float landingY)
     {
         Bounds bounds = boxCollider.bounds;
         float currentBottomY = bounds.min.y;
@@ -167,7 +175,12 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         {
             Vector2 samplePosition = new Vector2(sampleXs[i], currentBottomY);
 
-            if (TryGetObjectSupportTop(samplePosition, sweepStartY, currentBottomY, out float objectSupportTop))
+            if (TryGetObjectSupportTop(
+                samplePosition,
+                sweepStartY,
+                currentBottomY,
+                ignoredSupportRoots,
+                out float objectSupportTop))
             {
                 landingY = Mathf.Max(landingY, objectSupportTop);
             }
@@ -232,7 +245,12 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         return supportTop > float.NegativeInfinity;
     }
 
-    private bool TryGetObjectSupportTop(Vector2 worldPosition, float sweepStartY, float currentBottomY, out float supportTop)
+    private bool TryGetObjectSupportTop(
+        Vector2 worldPosition,
+        float sweepStartY,
+        float currentBottomY,
+        HashSet<Transform> ignoredSupportRoots,
+        out float supportTop)
     {
         supportTop = float.NegativeInfinity;
 
@@ -250,7 +268,9 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         {
             Collider2D hit = hits[i];
 
-            if (hit == null || hit.transform.IsChildOf(transform))
+            if (hit == null
+                || hit.transform.IsChildOf(transform)
+                || IsChildOfAny(hit.transform, ignoredSupportRoots))
             {
                 continue;
             }
@@ -267,11 +287,13 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
         return supportTop > float.NegativeInfinity;
     }
 
-    private void TryCrushActors()
+    private HashSet<Transform> TryCrushActors()
     {
+        HashSet<Transform> crushedWalkerRoots = new();
+
         if (boxCollider == null || playerCrushMask.value == 0)
         {
-            return;
+            return crushedWalkerRoots;
         }
 
         Bounds bounds = boxCollider.bounds;
@@ -289,10 +311,63 @@ public class FallingTileBlock : MonoBehaviour, IBreakable, IGridWalkerSolid
 
             if (hit != null && !hit.transform.IsChildOf(transform))
             {
+                GridWalkerController walker = hit.GetComponentInParent<GridWalkerController>();
+
+                if (walker != null)
+                {
+                    crushedWalkerRoots.Add(walker.transform);
+                }
+
                 PlayerKillRules.TryKillPlayer(hit);
                 TryBreakCrushedWalker(hit, crushedBreakableWalkers);
             }
         }
+
+        return crushedWalkerRoots;
+    }
+
+    private static bool IsChildOfAny(Transform candidate, HashSet<Transform> roots)
+    {
+        if (candidate == null || roots == null)
+        {
+            return false;
+        }
+
+        foreach (Transform root in roots)
+        {
+            if (root != null && candidate.IsChildOf(root))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void HandleTileDestroyed(Tilemap _destroyedTilemap, Vector3Int _destroyedCell)
+    {
+        if (body == null || boxCollider == null || body.bodyType != RigidbodyType2D.Static)
+        {
+            return;
+        }
+
+        if (TryGetLandingY(null, out _))
+        {
+            return;
+        }
+
+        ReactivateFallingAfterSupportLoss();
+    }
+
+    private void ReactivateFallingAfterSupportLoss()
+    {
+        body.bodyType = RigidbodyType2D.Dynamic;
+        body.linearVelocity = Vector2.zero;
+        body.angularVelocity = 0f;
+        boxCollider.isTrigger = true;
+        IgnoreWalkerCollisions();
+        RememberBottomY();
+        body.WakeUp();
     }
 
     private void TryBreakCrushedWalker(Collider2D hit, HashSet<IBreakable> crushedBreakableWalkers)

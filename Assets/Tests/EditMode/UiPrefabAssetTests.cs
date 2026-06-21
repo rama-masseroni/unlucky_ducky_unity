@@ -70,31 +70,44 @@ public class UiPrefabAssetTests
     }
 
     [Test]
-    public void World01Inventory_UsesSeparateAuthoredPrefabs()
+    public void WorldInventories_UseSeparateAuthoredPrefabs()
     {
-        GameObject panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(World01InventoryPanelPath);
-        GameObject itemPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(World01InventoryItemPath);
-        GameObject executePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(World01ExecuteButtonPath);
+        for (int world = 1; world <= 4; world++)
+        {
+            string worldId = world.ToString("00");
+            string basePath = $"Assets/Prefabs/UI/World Inventories/World {worldId}";
+            string panelPath = $"{basePath}/UI_InventoryPanel_World{worldId}.prefab";
+            string itemPath = $"{basePath}/UI_InventoryItem_World{worldId}.prefab";
+            string executePath = $"{basePath}/UI_ExecuteButton_World{worldId}.prefab";
+            string canvasPath = $"{basePath}/UI_GameplayCanvas_World{worldId}.prefab";
 
-        Assert.IsNotNull(panelPrefab);
-        Assert.IsNotNull(itemPrefab);
-        Assert.IsNotNull(executePrefab);
+            GameObject panelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(panelPath);
+            GameObject itemPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(itemPath);
+            GameObject executePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(executePath);
+            GameObject canvasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(canvasPath);
 
-        Component panel = FindComponent(panelPrefab, "PlaceableInventoryPanel");
-        Component item = FindComponent(itemPrefab, "PlaceableInventorySlotView");
-        Component execute = FindComponent(executePrefab, "StartExecutionButtonController");
+            Assert.IsNotNull(panelPrefab, panelPath);
+            Assert.IsNotNull(itemPrefab, itemPath);
+            Assert.IsNotNull(executePrefab, executePath);
+            Assert.IsNotNull(canvasPrefab, canvasPath);
 
-        Assert.IsNotNull(panel);
-        Assert.IsNotNull(item);
-        Assert.IsNotNull(execute);
-        Assert.AreSame(item, GetPrivateField<Component>(panel, "slotPrefab"));
+            Component panel = FindComponent(panelPrefab, "PlaceableInventoryPanel");
+            Component item = FindComponent(itemPrefab, "PlaceableInventorySlotView");
+            Component execute = FindComponent(executePrefab, "StartExecutionButtonController");
 
-        Component nestedExecute = GetPrivateField<Component>(panel, "startExecutionButton");
-        Assert.IsNotNull(nestedExecute);
+            Assert.IsNotNull(panel, panelPath);
+            Assert.IsNotNull(item, itemPath);
+            Assert.IsNotNull(execute, executePath);
+            Assert.IsNotNull(FindComponent(canvasPrefab, "PlaceableInventoryPanel"), canvasPath);
+            Assert.AreSame(item, GetPrivateField<Component>(panel, "slotPrefab"), panelPath);
 
-        Object executeSource = PrefabUtility.GetCorrespondingObjectFromSource(nestedExecute);
-        Assert.IsNotNull(executeSource);
-        Assert.AreEqual(World01ExecuteButtonPath, AssetDatabase.GetAssetPath(executeSource));
+            Component nestedExecute = GetPrivateField<Component>(panel, "startExecutionButton");
+            Assert.IsNotNull(nestedExecute, panelPath);
+
+            Object executeSource = PrefabUtility.GetCorrespondingObjectFromSource(nestedExecute);
+            Assert.IsNotNull(executeSource, panelPath);
+            Assert.AreEqual(executePath, AssetDatabase.GetAssetPath(executeSource), panelPath);
+        }
     }
 
     [Test]
@@ -114,7 +127,7 @@ public class UiPrefabAssetTests
     }
 
     [Test]
-    public void WorldDefinitions_HaveUiAssetPackages()
+    public void WorldDefinitions_HaveLevelSelectorAssetsOnly()
     {
         string[] worldPaths =
         {
@@ -134,37 +147,8 @@ public class UiPrefabAssetTests
             Assert.IsNotNull(selectorAssets.objectReferenceValue, worldPaths[i]);
 
             SerializedProperty inventoryAssets = new SerializedObject(world).FindProperty("inventoryUiAssets");
-            Assert.IsNotNull(inventoryAssets, worldPaths[i]);
-            Assert.IsNotNull(inventoryAssets.FindPropertyRelative("panelBackground"), worldPaths[i]);
+            Assert.IsNull(inventoryAssets, worldPaths[i]);
         }
-    }
-
-    [Test]
-    public void World01InventoryTheme_UsesTheSewerPanelBackground()
-    {
-        Sprite background = GetWorldInventoryBackground(
-            "Assets/ScriptableObjects/World Definitions/World_01.asset");
-
-        Assert.IsNotNull(background);
-        Assert.AreEqual(
-            "Assets/Sprites/UX/Inventario/Mundo Alcantarillas/Inventario Mundo 1 - Contenedor.png",
-            AssetDatabase.GetAssetPath(background));
-    }
-
-    [Test]
-    public void World02InventoryTheme_UsesTheConstructionPanelBackground()
-    {
-        Sprite world01Background = GetWorldInventoryBackground(
-            "Assets/ScriptableObjects/World Definitions/World_01.asset");
-        Sprite world02Background = GetWorldInventoryBackground(
-            "Assets/ScriptableObjects/World Definitions/World_02.asset");
-
-        Assert.IsNotNull(world01Background);
-        Assert.IsNotNull(world02Background);
-        Assert.AreNotSame(world01Background, world02Background);
-        Assert.AreEqual(
-            "Assets/Sprites/UX/Inventario/Mundo Construccion/Inventario Mundo 2 - Contenedor.png",
-            AssetDatabase.GetAssetPath(world02Background));
     }
 
     [Test]
@@ -315,6 +299,12 @@ public class UiPrefabAssetTests
                 Assert.AreEqual(1, eventSystemCount, path);
                 Assert.AreEqual(mainMenu ? 1 : 0, CountNamedRoots(scene, "UI_MainMenuCanvas"), path);
                 Assert.AreEqual(mainMenu ? 0 : 1, CountNamedRoots(scene, "UI_GameplayCanvas"), path);
+
+                if (!mainMenu)
+                {
+                    AssertGameplayCanvasSource(scene, path);
+                }
+
                 checkedScenes.Add(path);
             }
             finally
@@ -336,17 +326,35 @@ public class UiPrefabAssetTests
         Assert.IsFalse(button.transform.GetChild(0).gameObject.activeSelf);
     }
 
-    private static Sprite GetWorldInventoryBackground(string worldPath)
+    private static void AssertGameplayCanvasSource(Scene scene, string scenePath)
     {
-        ScriptableObject world = AssetDatabase.LoadAssetAtPath<ScriptableObject>(worldPath);
-        Assert.IsNotNull(world, worldPath);
+        int worldIndex = scenePath.IndexOf("/World ", System.StringComparison.Ordinal);
 
-        SerializedProperty inventoryAssets = new SerializedObject(world).FindProperty("inventoryUiAssets");
-        Assert.IsNotNull(inventoryAssets, worldPath);
+        if (worldIndex < 0)
+        {
+            return;
+        }
 
-        SerializedProperty background = inventoryAssets.FindPropertyRelative("panelBackground");
-        Assert.IsNotNull(background, worldPath);
-        return background.objectReferenceValue as Sprite;
+        string worldText = scenePath.Substring(worldIndex + "/World ".Length, 1);
+        string worldId = int.Parse(worldText).ToString("00");
+        string expectedPath =
+            $"Assets/Prefabs/UI/World Inventories/World {worldId}/UI_GameplayCanvas_World{worldId}.prefab";
+        GameObject canvasRoot = null;
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        for (int i = 0; i < roots.Length; i++)
+        {
+            if (roots[i].name == "UI_GameplayCanvas")
+            {
+                canvasRoot = roots[i];
+                break;
+            }
+        }
+
+        Assert.IsNotNull(canvasRoot, scenePath);
+        Object source = PrefabUtility.GetCorrespondingObjectFromSource(canvasRoot);
+        Assert.IsNotNull(source, scenePath);
+        Assert.AreEqual(expectedPath, AssetDatabase.GetAssetPath(source), scenePath);
     }
 
     private static int CountComponentsInScene<T>(Scene scene) where T : Component

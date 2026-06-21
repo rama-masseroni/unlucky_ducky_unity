@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -83,11 +84,10 @@ public static class UiPrefabMigration
     [MenuItem("Unlucky Ducky/UI/Migrate All Scenes")]
     public static void MigrateAllScenes()
     {
-        GameObject gameplayPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayCanvasPath);
         GameObject mainMenuPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MainMenuCanvasPath);
         GameObject eventSystemPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(EventSystemPath);
 
-        if (gameplayPrefab == null || mainMenuPrefab == null || eventSystemPrefab == null)
+        if (mainMenuPrefab == null || eventSystemPrefab == null)
         {
             throw new InvalidOperationException("Generate the UI prefabs before migrating scenes.");
         }
@@ -113,11 +113,33 @@ public static class UiPrefabMigration
             else if (path.EndsWith("Test_Scene.unity", StringComparison.Ordinal)
                 || path.Contains("/World ", StringComparison.Ordinal))
             {
+                GameObject gameplayPrefab = LoadGameplayPrefabForScene(path);
                 MigrateGameplayScene(scene, gameplayPrefab, eventSystemPrefab);
             }
 
             EditorSceneManager.SaveScene(scene);
         }
+    }
+
+    private static GameObject LoadGameplayPrefabForScene(string scenePath)
+    {
+        string prefabPath = GameplayCanvasPath;
+        Match match = Regex.Match(scenePath, @"/World (?<world>\d+)/");
+
+        if (match.Success && int.TryParse(match.Groups["world"].Value, out int worldNumber))
+        {
+            string worldId = worldNumber.ToString("00");
+            prefabPath = $"Assets/Prefabs/UI/World Inventories/World {worldId}/UI_GameplayCanvas_World{worldId}.prefab";
+        }
+
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+
+        if (prefab == null)
+        {
+            throw new InvalidOperationException($"Required gameplay UI prefab is missing: {prefabPath}");
+        }
+
+        return prefab;
     }
 
     private static void BuildInventorySlotPrefab()

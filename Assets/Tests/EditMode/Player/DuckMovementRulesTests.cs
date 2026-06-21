@@ -83,6 +83,39 @@ public class DuckMovementRulesTests
     }
 
     [Test]
+    public void GridWalkerController_ExcludesPlacementBoundaryFromGameplayTilemaps()
+    {
+        GameObject gridObject = new GameObject("Grid", typeof(Grid));
+        GameObject groundObject = new GameObject("Ground", typeof(Tilemap), typeof(TilemapRenderer));
+        groundObject.transform.SetParent(gridObject.transform);
+        Tilemap groundTilemap = groundObject.GetComponent<Tilemap>();
+
+        GameObject placementObject = new GameObject("Placement Walls", typeof(Tilemap), typeof(TilemapRenderer));
+        placementObject.transform.SetParent(gridObject.transform);
+        Tilemap placementTilemap = placementObject.GetComponent<Tilemap>();
+        System.Type placementBoundaryType = System.Type.GetType("PlacementBoundaryTilemapLayer, Assembly-CSharp");
+        Assert.IsNotNull(placementBoundaryType);
+        placementObject.AddComponent(placementBoundaryType);
+
+        GameObject walkerObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(GridWalkerController));
+        GridWalkerController controller = walkerObject.GetComponent<GridWalkerController>();
+
+        Tilemap[] groundTilemaps = (Tilemap[])typeof(GridWalkerController)
+            .GetField("groundTilemaps", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(controller);
+        Tilemap[] obstacleTilemaps = (Tilemap[])typeof(GridWalkerController)
+            .GetField("obstacleTilemaps", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(controller);
+
+        CollectionAssert.Contains(groundTilemaps, groundTilemap);
+        CollectionAssert.DoesNotContain(groundTilemaps, placementTilemap);
+        CollectionAssert.DoesNotContain(obstacleTilemaps, placementTilemap);
+
+        Object.DestroyImmediate(walkerObject);
+        Object.DestroyImmediate(gridObject);
+    }
+
+    [Test]
     public void GridWalkerController_WhenToggledBeforeExecution_MovesLeft()
     {
         GameObject walkerObject = new GameObject("GridWalker", typeof(Rigidbody2D), typeof(BoxCollider2D), typeof(GridWalkerController));

@@ -5,9 +5,6 @@ using UnityEngine.UI;
 
 public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    private const float BaseIconSize = 68f;
-    private const float MinimumIconSize = 24f;
-
     [Header("Authored view")]
     [SerializeField] private Image background;
     [SerializeField] private Button button;
@@ -51,17 +48,13 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
 
     public void Bind(
         PlaceableInventoryRuntimeEntry entry,
-        BuildModePlacementController controller,
-        float slotHeight,
-        float layoutScale)
+        BuildModePlacementController controller)
     {
         inventoryEntry = entry;
         definition = entry != null ? entry.Definition : null;
         placementController = controller;
         amount = entry != null ? entry.Amount : 0;
         gameObject.name = definition != null ? definition.DisplayName : "InventorySlot";
-
-        ApplyLayout(slotHeight, Mathf.Max(0.01f, layoutScale));
 
         if (icon != null)
         {
@@ -159,62 +152,6 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
             && placementController.CanUseBuildMode();
     }
 
-    private void ApplyLayout(float slotHeight, float scale)
-    {
-        if (slotLayout != null)
-        {
-            slotLayout.preferredHeight = slotHeight;
-            slotLayout.minHeight = slotHeight;
-        }
-
-        if (contentLayout != null)
-        {
-            contentLayout.padding = new RectOffset(
-                ScaledInt(10f, scale),
-                ScaledInt(10f, scale),
-                ScaledInt(8f, scale),
-                ScaledInt(8f, scale));
-            contentLayout.spacing = Scaled(10f, scale);
-        }
-
-        if (iconLayout != null)
-        {
-            float iconSize = Mathf.Max(MinimumIconSize, BaseIconSize * scale);
-            iconLayout.minWidth = iconSize;
-            iconLayout.preferredWidth = iconSize;
-            iconLayout.preferredHeight = Mathf.Min(iconSize, Mathf.Max(8f, slotHeight - Scaled(16f, scale)));
-        }
-
-        if (textBlock != null)
-        {
-            textBlock.spacing = Scaled(4f, scale);
-        }
-
-        if (textBlockLayout != null)
-        {
-            textBlockLayout.minWidth = Scaled(72f, scale);
-            textBlockLayout.preferredWidth = Scaled(88f, scale);
-        }
-
-        ConfigureText(nameText, nameLayout, 12, true, scale);
-        ConfigureText(amountText, amountLayout, 18, false, scale);
-    }
-
-    private static void ConfigureText(Text text, LayoutElement layout, int baseSize, bool bold, float scale)
-    {
-        int fontSize = Mathf.Max(bold ? 7 : 9, Mathf.RoundToInt(baseSize * scale));
-
-        if (text != null)
-        {
-            text.fontSize = fontSize;
-        }
-
-        if (layout != null)
-        {
-            layout.preferredHeight = fontSize + Mathf.Max(4f, 10f * scale);
-        }
-    }
-
     private void RefreshAmount()
     {
         if (inventoryEntry != null)
@@ -233,13 +170,4 @@ public class PlaceableInventorySlotView : MonoBehaviour, IBeginDragHandler, IDra
         }
     }
 
-    private static float Scaled(float value, float scale)
-    {
-        return Mathf.Max(1f, value * scale);
-    }
-
-    private static int ScaledInt(float value, float scale)
-    {
-        return Mathf.Max(1, Mathf.RoundToInt(value * scale));
-    }
 }
