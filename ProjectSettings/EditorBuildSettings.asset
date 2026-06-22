@@ -5,7 +5,7 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Test_Scene.unity
     guid: c45f306215b8e8b418641a415ec6b261
   - enabled: 1
@@ -62,6 +62,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/World 4/Scene_04_03.unity
     guid: 2693b529d9cc8954eb641a0fe9edac1e
+  - enabled: 1
+    path: Assets/Scenes/World 4/Scene_04_04.unity
+    guid: c93e7c3a0c8ec1949a7a89f814c2a038
+  - enabled: 1
+    path: Assets/Scenes/World 4/Scene_04_05.unity
+    guid: badc72b8b633ef342824d463b302693c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

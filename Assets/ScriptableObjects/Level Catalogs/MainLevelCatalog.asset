@@ -98,3 +98,13 @@ MonoBehaviour:
     worldLabel: Mundo 4
     displayOrder: 18
     unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: fef158f16f7ca17448ec98761c282e53, type: 2}
+    sceneName: Scene_04_04
+    worldLabel: Mundo 4
+    displayOrder: 19
+    unlockedByDefault: 0
+  - levelDefinition: {fileID: 11400000, guid: da71153d2e421c14ab20dada94cd2044, type: 2}
+    sceneName: Scene_04_05
+    worldLabel: Mundo 4
+    displayOrder: 20
+    unlockedByDefault: 0
