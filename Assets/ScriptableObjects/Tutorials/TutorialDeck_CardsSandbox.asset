@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11111111111111111111111111111111, type: 3}
+  m_Name: TutorialDeck_CardsSandbox
+  m_EditorClassIdentifier: 
+  cards:
+  - title: Objetivo
+    body: Usar el listado de objetos solicitados con el cual armar un camino seguro
+      para que Ducky llegue a la meta.
+    icon: {fileID: 0}
+  - title: '"Ciclo" del juego (1/2)'
+    body: "Cada nivel arranca en la fase de <b>Planificaci\xF3n</b>.\r\nNo se mueve
+      nada, pod\xE9s estudiar el nivel y ver qu\xE9 hacer con las herramientas para
+      cumplir el objetivo."
+    icon: {fileID: 0}
+  - title: '"Ciclo" del juego (2/2)'
+    body: "Cuando apret\xE1s el bot\xF3n \"<b>Probar Nivel</b>\", se inicia la fase
+      de <b>Ejecuci\xF3n</b>.\r\nAqu\xED, todo cobra vida: el pato, los objetos,
+      etc.\r\nPero ya no pod\xE9s contolar nada (a excepci\xF3n de unos objetos)"
+    icon: {fileID: 0}
+  - title: "Objetos exclusivos a la <b>Planificaci\xF3n</b>"
+    body: "Los siguientes objetos pueden usarse <i>solamente</i> durante la <b>Planificaci\xF3n</b>.\r\n\r\nArrastra
+      el objeto que quieras usar a una zona libre del mapa.\r\nCada objeto colocado
+      consume un uso.\r\nPuedes moverlo o devolverlo al inventario antes de ejecutar.\r\n\r\n-
+      <b>Bombas</b>: explotan despu\xE9s de unos segundos en un \xE1rea 3x3.\r\n\xA1Cuidado
+      d\xF3nde las pones! Destruyen <b>todo</b> lo que est\xE9 dentro del \xE1rea.\r\n\r\n-
+      <b>Ratas</b>: se mueven igual que Ducky.\r\n\xA1No dejes que terminen en el mismo
+      lugar!"
+    icon: {fileID: 0}
+  - title: "Objetos exclusivos a la <b>Ejecuci\xF3n</b>"
+    body: "Los siguientes objetos pueden usarse <i>solamente</i> durante la <b>Ejecuci\xF3n</b>.\r\nNo
+      van a hacer nada si los intentas usar durante la fase anterior.\r\n\r\n- <b>Picos</b>:
+      haz clic en ciertos bloques rompibles.\r\nCada clic consume un uso."
+    icon: {fileID: 0}
+  - title: "\xA1Atenci\xF3n al <b>mapa</b>!"
+    body: "- \xA1Cuidado con algunos bloques! No se quedan quietos...\r\n\r\n- Si
+      ves <b>sensores y puertas</b>, \xFAsalos con ingenio.\n\r\n- Si el nivel es
+      MUY grande, puedes mover la c\xE1mara <i>llevando el mouse a los bordes de
+      tu pantalla</i> o con <i>las teclas WASD</i>, siendo\nW = Arriba\nS = Abajo\nA
+      = Izquierda\nD = Derecha"
+    icon: {fileID: 0}

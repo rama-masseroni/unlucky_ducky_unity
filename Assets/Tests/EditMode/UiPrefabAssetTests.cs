@@ -200,6 +200,7 @@ public class UiPrefabAssetTests
             "LevelHudPanel",
             "pauseMenuManager",
             "levelTitleText",
+            "phaseIndicatorText",
             "planningTimerText",
             "tooltipRoot",
             "tooltipText",

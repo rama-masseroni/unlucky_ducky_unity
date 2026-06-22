@@ -12,17 +12,24 @@ public class LevelHudPanel : MonoBehaviour
 
     [Header("Authored view")]
     [SerializeField] private TextMeshProUGUI levelTitleText;
+    [SerializeField] private TextMeshProUGUI phaseIndicatorText;
     [SerializeField] private TextMeshProUGUI planningTimerText;
     [SerializeField] private RectTransform tooltipRoot;
     [SerializeField] private TextMeshProUGUI tooltipText;
     [SerializeField] private Button pauseButton;
     [SerializeField] private ResetLevelButtonController resetLevelButton;
 
+    private GameStateManager subscribedGameStateManager;
+
     public void Configure(GameStateManager manager, PauseMenuManager pauseManager)
     {
+        UnsubscribeFromGameStateManager();
         gameStateManager = manager;
         pauseMenuManager = pauseManager;
         resetLevelButton?.SetGameStateManager(gameStateManager);
+        SubscribeToGameStateManager();
+        RefreshPlanningTimer();
+        RefreshPhaseIndicator();
     }
 
     private void Awake()
@@ -48,12 +55,14 @@ public class LevelHudPanel : MonoBehaviour
         HideTooltip();
         RefreshLevelTitle();
         RefreshPlanningTimer();
+        RefreshPhaseIndicator();
     }
 
     private void Start()
     {
         RefreshLevelTitle();
         RefreshPlanningTimer();
+        RefreshPhaseIndicator();
     }
 
     private void OnEnable()
@@ -65,18 +74,12 @@ public class LevelHudPanel : MonoBehaviour
                 : FindFirstObjectByType<GameStateManager>();
         }
 
-        if (gameStateManager != null)
-        {
-            gameStateManager.PlanningTimerChanged += HandlePlanningTimerChanged;
-        }
+        SubscribeToGameStateManager();
     }
 
     private void OnDisable()
     {
-        if (gameStateManager != null)
-        {
-            gameStateManager.PlanningTimerChanged -= HandlePlanningTimerChanged;
-        }
+        UnsubscribeFromGameStateManager();
     }
 
     private void OnDestroy()
@@ -126,6 +129,22 @@ public class LevelHudPanel : MonoBehaviour
         planningTimerText.text = FormatPlanningTime(gameStateManager.RemainingPlanningSeconds);
     }
 
+    public void RefreshPhaseIndicator()
+    {
+        if (phaseIndicatorText == null)
+        {
+            return;
+        }
+
+        LevelPhase phase = gameStateManager != null
+            ? gameStateManager.CurrentPhase
+            : LevelPhase.Planning;
+
+        phaseIndicatorText.text = phase == LevelPhase.Execution
+            ? "Fase: Ejecuci\u00f3n"
+            : "Fase: Planificaci\u00f3n";
+    }
+
     public void ShowTooltip(string message, RectTransform source)
     {
         if (tooltipRoot == null || tooltipText == null || source == null)
@@ -161,6 +180,36 @@ public class LevelHudPanel : MonoBehaviour
     private void HandlePlanningTimerChanged(float _)
     {
         RefreshPlanningTimer();
+    }
+
+    private void HandlePhaseChanged(LevelPhase _)
+    {
+        RefreshPhaseIndicator();
+    }
+
+    private void SubscribeToGameStateManager()
+    {
+        if (gameStateManager == null || subscribedGameStateManager == gameStateManager)
+        {
+            return;
+        }
+
+        UnsubscribeFromGameStateManager();
+        gameStateManager.PlanningTimerChanged += HandlePlanningTimerChanged;
+        gameStateManager.PhaseChanged += HandlePhaseChanged;
+        subscribedGameStateManager = gameStateManager;
+    }
+
+    private void UnsubscribeFromGameStateManager()
+    {
+        if (subscribedGameStateManager == null)
+        {
+            return;
+        }
+
+        subscribedGameStateManager.PlanningTimerChanged -= HandlePlanningTimerChanged;
+        subscribedGameStateManager.PhaseChanged -= HandlePhaseChanged;
+        subscribedGameStateManager = null;
     }
 
     private static bool TryGetLevelNumbers(LevelDefinition levelDefinition, out int worldNumber, out int levelNumber)
