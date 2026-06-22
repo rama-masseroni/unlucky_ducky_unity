@@ -14,30 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cards:
   - title: Objetivo
-    body: Lleva el pato a la meta. Primero preparas la solucion; despues ejecutas
-      y ves si funciona.
+    body: Usar el listado de objetos solicitados con el cual armar un camino seguro
+      para que Ducky llegue a la meta.
     icon: {fileID: 0}
-  - title: "Fase de <b>Planificaci\xF3n</b>"
-    body: "En <b>Planificaci\xF3n</b> el pato espera. Usa el inventario y los objetos
-      indicados para preparar herramientas antes de ejecutar.\nOjo, debes usarlos
-      <b>TODOS</b> antes de poder habilitarte el modo de ejecuci\xF3n."
+  - title: '"Ciclo" del juego (1/2)'
+    body: "Cada nivel arranca en la fase de <b>Planificaci\xF3n</b>.\r\nNo se mueve
+      nada, pod\xE9s estudiar el nivel y ver qu\xE9 hacer con las herramientas para
+      cumplir el objetivo."
     icon: {fileID: 0}
-  - title: "Fase de <b>Ejecuci\xF3n</b>"
-    body: "En <b>Ejecuci\xF3n</b>, se pone en marcha todo, pero ya no puedes controlar
-      (casi) todo. \xA1Planea con intenci\xF3n para que el camino del pato sea exitoso!"
-    icon: {fileID: 0}
-  - title: "Objetos exclusivos a la <b>Ejecuci\xF3n</b>"
-    body: '<b>Picos</b>: puedes hacer clic en ciertos bloques rompibles. Cada clic
-      consume un uso.'
+  - title: '"Ciclo" del juego (2/2)'
+    body: "Cuando apret\xE1s el bot\xF3n \"<b>Probar Nivel</b>\", se inicia la fase
+      de <b>Ejecuci\xF3n</b>.\r\nAqu\xED, todo cobra vida: el pato, los objetos,
+      etc.\r\nPero ya no pod\xE9s contolar nada (a excepci\xF3n de unos objetos)"
     icon: {fileID: 0}
   - title: "Objetos exclusivos a la <b>Planificaci\xF3n</b>"
     body: "Los siguientes objetos pueden usarse <i>solamente</i> durante la <b>Planificaci\xF3n</b>.\r\n\r\nArrastra
-      el objeto que quieras usar a una zona libre del mapa. Cada objeto colocado
-      consume un uso. Puedes moverlo o devolverlo al inventario antes de ejecutar.\r\n\r\n-
-      <b>Bombas</b>: explotan despu\xE9s de unos segundos en un \xE1rea 3x3. \xA1Cuidado
+      el objeto que quieras usar a una zona libre del mapa.\r\nCada objeto colocado
+      consume un uso.\r\nPuedes moverlo o devolverlo al inventario antes de ejecutar.\r\n\r\n-
+      <b>Bombas</b>: explotan despu\xE9s de unos segundos en un \xE1rea 3x3.\r\n\xA1Cuidado
       d\xF3nde las pones! Destruyen <b>todo</b> lo que est\xE9 dentro del \xE1rea.\r\n\r\n-
-      <b>Ratas</b>: se mueven igual que Ducky. \xA1No dejes que terminen en el mismo
+      <b>Ratas</b>: se mueven igual que Ducky.\r\n\xA1No dejes que terminen en el mismo
       lugar!"
+    icon: {fileID: 0}
+  - title: "Objetos exclusivos a la <b>Ejecuci\xF3n</b>"
+    body: "Los siguientes objetos pueden usarse <i>solamente</i> durante la <b>Ejecuci\xF3n</b>.\r\nNo
+      van a hacer nada si los intentas usar durante la fase anterior.\r\n\r\n- <b>Picos</b>:
+      haz clic en ciertos bloques rompibles.\r\nCada clic consume un uso."
     icon: {fileID: 0}
   - title: "\xA1Atenci\xF3n al <b>mapa</b>!"
     body: "- \xA1Cuidado con algunos bloques! No se quedan quietos...\r\n\r\n- Si

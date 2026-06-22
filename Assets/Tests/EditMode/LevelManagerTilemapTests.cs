@@ -445,6 +445,36 @@ public class LevelPhaseSystemTests
     }
 
     [Test]
+    public void LevelHudPanel_PhaseIndicator_ReflectsCurrentPhase()
+    {
+        Assert.IsNotNull(levelHudPanelType);
+
+        object manager = CreateGameStateManager();
+        GameObject hudObject = InstantiateUiPrefab("Assets/Prefabs/UI/UI_LevelHudPanel.prefab");
+        Component hud = hudObject.GetComponent(levelHudPanelType);
+        SetPrivateField(hud, "gameStateManager", manager);
+
+        try
+        {
+            Type textMeshProType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+            Assert.IsNotNull(textMeshProType);
+            Component phaseText = (Component)hudObject.transform.Find("PhaseIndicatorText").GetComponent(textMeshProType);
+            Assert.IsNotNull(phaseText);
+
+            levelHudPanelType.GetMethod("RefreshPhaseIndicator").Invoke(hud, null);
+            Assert.AreEqual("Fase: Planificaci\u00f3n", textMeshProType.GetProperty("text").GetValue(phaseText));
+
+            Assert.IsTrue((bool)gameStateManagerType.GetMethod("TryStartExecution").Invoke(manager, null));
+            levelHudPanelType.GetMethod("RefreshPhaseIndicator").Invoke(hud, null);
+            Assert.AreEqual("Fase: Ejecuci\u00f3n", textMeshProType.GetProperty("text").GetValue(phaseText));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(hudObject);
+        }
+    }
+
+    [Test]
     public void LevelManager_TileDestructionTool_DoesNotDestroyOrConsumeInPlanning()
     {
         CreateLevelManagerWithPickaxe(

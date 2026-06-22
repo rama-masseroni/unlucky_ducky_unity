@@ -823,6 +823,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1385242896796052953, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
+      propertyPath: m_ChildAlignment
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 2580659341692201739, guid: 53d0e7d24b1a4c21bf9d6437355ff5bb, type: 3}
       propertyPath: m_Color.b
       value: 0

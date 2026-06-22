@@ -6,6 +6,14 @@ del commit para poder rastrear el cambio original.
 
 ## 2026-06-21
 
+### Sin commit - Indicador de fase en HUD
+
+- El HUD superior muestra `Fase: Planificacion` o `Fase: Ejecucion` junto al indicador de nivel y se actualiza al comenzar la ejecucion.
+
+### Sin commit - Layout vertical de cards de tutorial
+
+- El contenido de cada card usa un ancho maximo de 800 px y comunica su altura preferida al layout raiz; las acciones se ubican debajo con 32 px de separacion, sin superponerse al texto.
+
 ### Sin commit - Fondo ajustado a camara
 
 - El prefab de fondo de los niveles ahora sigue la posicion de la camara principal y ajusta su escala al encuadre ortografico, incluso durante movimientos y zoom dinamicos.
